@@ -27,7 +27,7 @@ class JInstaller extends JAdapter
 	 * Array of paths needed by the installer
 	 *
 	 * @var    array
-	 * @since  12.1
+	 * @since  3.1
 	 */
 	protected $paths = array();
 
@@ -35,7 +35,7 @@ class JInstaller extends JAdapter
 	 * True if package is an upgrade
 	 *
 	 * @var    boolean
-	 * @since  12.1
+	 * @since  3.1
 	 */
 	protected $upgrade = null;
 
@@ -49,8 +49,9 @@ class JInstaller extends JAdapter
 
 	/**
 	 * True if existing files can be overwritten
+	 *
 	 * @var    boolean
-	 * @since  12.1
+	 * @since  3.1
 	 */
 	protected $overwrite = false;
 
@@ -59,7 +60,7 @@ class JInstaller extends JAdapter
 	 * - Used for installation rollback
 	 *
 	 * @var    array
-	 * @since  12.1
+	 * @since  3.1
 	 */
 	protected $stepStack = array();
 
@@ -93,7 +94,7 @@ class JInstaller extends JAdapter
 	 * @var    string
 	 * @since  3.1
 	 */
-	protected $extension_message = null;
+	public $extension_message = null;
 
 	/**
 	 * The redirect URL if this extension (can be null if no redirect)
@@ -164,14 +165,7 @@ class JInstaller extends JAdapter
 	{
 		$tmp = $this->overwrite;
 
-		if ($state)
-		{
-			$this->overwrite = true;
-		}
-		else
-		{
-			$this->overwrite = false;
-		}
+		$this->overwrite = $state;
 
 		return $tmp;
 	}
@@ -227,14 +221,7 @@ class JInstaller extends JAdapter
 	{
 		$tmp = $this->upgrade;
 
-		if ($state)
-		{
-			$this->upgrade = true;
-		}
-		else
-		{
-			$this->upgrade = false;
-		}
+		$this->upgrade = $state;
 
 		return $tmp;
 	}
@@ -442,7 +429,12 @@ class JInstaller extends JAdapter
 			$dispatcher = JEventDispatcher::getInstance();
 			$dispatcher->trigger(
 				'onExtensionBeforeInstall',
-				array('method' => 'install', 'type' => $type, 'manifest' => $this->manifest, 'extension' => 0)
+				array(
+					'method' => 'install',
+					'type' => $type,
+					'manifest' => $this->manifest,
+					'extension' => 0
+				)
 			);
 
 			// Run the install
@@ -451,7 +443,10 @@ class JInstaller extends JAdapter
 			// Fire the onExtensionAfterInstall
 			$dispatcher->trigger(
 				'onExtensionAfterInstall',
-				array('installer' => clone $this, 'eid' => $result)
+				array(
+					'installer' => clone $this,
+					'eid' => $result
+				)
 			);
 
 			if ($result !== false)
@@ -534,7 +529,10 @@ class JInstaller extends JAdapter
 					// Fire the onExtensionAfterInstall
 					$dispatcher->trigger(
 						'onExtensionAfterInstall',
-						array('installer' => clone $this, 'eid' => $result)
+						array(
+							'installer' => clone $this,
+							'eid' => $result
+						)
 					);
 
 					if ($result !== false)
@@ -634,7 +632,13 @@ class JInstaller extends JAdapter
 			// Fire the onExtensionBeforeUpdate event.
 			JPluginHelper::importPlugin('extension');
 			$dispatcher = JEventDispatcher::getInstance();
-			$dispatcher->trigger('onExtensionBeforeUpdate', array('type' => $type, 'manifest' => $this->manifest));
+			$dispatcher->trigger(
+				'onExtensionBeforeUpdate',
+				array(
+					'type' => $type,
+					'manifest' => $this->manifest
+				)
+			);
 
 			// Run the update
 			$result = $this->_adapters[$type]->update();
@@ -642,7 +646,10 @@ class JInstaller extends JAdapter
 			// Fire the onExtensionAfterUpdate
 			$dispatcher->trigger(
 				'onExtensionAfterUpdate',
-				array('installer' => clone $this, 'eid' => $result)
+				array(
+					'installer' => clone $this,
+					'eid' => $result
+				)
 			);
 
 			if ($result !== false)
@@ -661,15 +668,14 @@ class JInstaller extends JAdapter
 	/**
 	 * Package uninstallation method
 	 *
-	 * @param   string   $type        Package type
-	 * @param   mixed    $identifier  Package identifier for adapter
-	 * @param   integer  $cid         Application ID; deprecated in 1.6
+	 * @param   string  $type        Package type
+	 * @param   mixed   $identifier  Package identifier for adapter
 	 *
 	 * @return  boolean  True if successful
 	 *
 	 * @since   3.1
 	 */
-	public function uninstall($type, $identifier, $cid = 0)
+	public function uninstall($type, $identifier)
 	{
 		if (!isset($this->_adapters[$type]) || !is_object($this->_adapters[$type]))
 		{
@@ -694,7 +700,11 @@ class JInstaller extends JAdapter
 			// Fire the onExtensionAfterInstall
 			$dispatcher->trigger(
 				'onExtensionAfterUninstall',
-				array('installer' => clone $this, 'eid' => $identifier, 'result' => $result)
+				array(
+					'installer' => clone $this,
+					'eid' => $identifier,
+					'result' => $result
+				)
 			);
 
 			return $result;
@@ -1026,13 +1036,12 @@ class JInstaller extends JAdapter
 	 */
 	public function parseSchemaUpdates(SimpleXMLElement $schema, $eid)
 	{
-		$files = array();
 		$update_count = 0;
 
 		// Ensure we have an XML element and a valid extension id
 		if ($eid && $schema)
 		{
-			$db = JFactory::getDBO();
+			$db = $this->getDBO();
 			$schemapaths = $schema->children();
 
 			if (count($schemapaths))
@@ -1153,13 +1162,12 @@ class JInstaller extends JAdapter
 	 * @param   SimpleXMLElement  $element   The XML node to process
 	 * @param   integer           $cid       Application ID of application to install to
 	 * @param   array             $oldFiles  List of old files (SimpleXMLElement's)
-	 * @param   array             $oldMD5    List of old MD5 sums (indexed by filename with value as MD5)
 	 *
 	 * @return  boolean      True on success
 	 *
 	 * @since   3.1
 	 */
-	public function parseFiles(SimpleXMLElement $element, $cid = 0, $oldFiles = null, $oldMD5 = null)
+	public function parseFiles(SimpleXMLElement $element, $cid = 0, $oldFiles = null)
 	{
 		// Get the array of file nodes to process; we checked whether this had children above.
 		if (!$element || !count($element->children()))
@@ -1173,9 +1181,7 @@ class JInstaller extends JAdapter
 		// Get the client info
 		$client = JApplicationHelper::getClientInfo($cid);
 
-		/*
-		 * Here we set the folder we are going to remove the files from.
-		 */
+		// Here we set the folder we are going to remove the files from.
 		if ($client)
 		{
 			$pathname = 'extension_' . $client->name;
@@ -1196,7 +1202,6 @@ class JInstaller extends JAdapter
 		 * folder and we should append the folder attribute to the source path when
 		 * copying files.
 		 */
-
 		$folder = (string) $element->attributes()->folder;
 
 		if ($folder && file_exists($this->getPath('source') . '/' . $folder))
@@ -1300,8 +1305,6 @@ class JInstaller extends JAdapter
 		$client = JApplicationHelper::getClientInfo($cid);
 
 		// Here we set the folder we are going to copy the files to.
-		// 'languages' Files are copied to JPATH_BASE/language/ folder
-
 		$destination = $client->path . '/language';
 
 		/*
@@ -1395,13 +1398,12 @@ class JInstaller extends JAdapter
 	 * action.
 	 *
 	 * @param   SimpleXMLElement  $element  The XML node to process
-	 * @param   integer           $cid      Application ID of application to install to
 	 *
 	 * @return  boolean     True on success
 	 *
 	 * @since   3.1
 	 */
-	public function parseMedia(SimpleXMLElement $element, $cid = 0)
+	public function parseMedia(SimpleXMLElement $element)
 	{
 		if (!$element || !count($element->children()))
 		{
@@ -1486,6 +1488,7 @@ class JInstaller extends JAdapter
 		{
 			return '{}';
 		}
+
 		// Getting the fieldset tags
 		$fieldsets = $this->manifest->config->fields->fieldset;
 
@@ -1504,9 +1507,7 @@ class JInstaller extends JAdapter
 			// Iterating through the fields and collecting the name/default values:
 			foreach ($fieldset as $field)
 			{
-				// Check against the null value since otherwise default values like "0"
-				// cause entire parameters to be skipped.
-
+				// Check against the null value since otherwise default values like "0" cause entire parameters to be skipped.
 				if (($name = $field->attributes()->name) === null)
 				{
 					continue;
@@ -1525,8 +1526,6 @@ class JInstaller extends JAdapter
 	}
 
 	/**
-	 * Copyfiles
-	 *
 	 * Copy files from source directory to the target directory
 	 *
 	 * @param   array    $files      Array with filenames
@@ -1543,7 +1542,6 @@ class JInstaller extends JAdapter
 		 * the $overwrite flag was set and is a boolean value.  If not, use the object
 		 * allowOverwrite flag.
 		 */
-
 		if (is_null($overwrite) || !is_bool($overwrite))
 		{
 			$overwrite = $this->overwrite;
@@ -1555,7 +1553,6 @@ class JInstaller extends JAdapter
 		 */
 		if (is_array($files) && count($files) > 0)
 		{
-
 			foreach ($files as $file)
 			{
 				// Get the source and destination paths
@@ -1565,17 +1562,13 @@ class JInstaller extends JAdapter
 
 				if (!file_exists($filesource))
 				{
-					/*
-					 * The source file does not exist.  Nothing to copy so set an error
-					 * and return false.
-					 */
+					// The source file does not exist.  Nothing to copy so set an error and return false.
 					JLog::add(JText::sprintf('JLIB_INSTALLER_ERROR_NO_FILE', $filesource), JLog::WARNING, 'jerror');
 
 					return false;
 				}
 				elseif (($exists = file_exists($filedest)) && !$overwrite)
 				{
-
 					// It's okay if the manifest already exists
 					if ($this->getPath('manifest') == $filesource)
 					{
@@ -1655,13 +1648,6 @@ class JInstaller extends JAdapter
 
 		$retval = true;
 
-		$debug = false;
-
-		if (isset($GLOBALS['installerdebug']) && $GLOBALS['installerdebug'])
-		{
-			$debug = true;
-		}
-
 		// Get the client info if we're using a specific client
 		if ($cid > -1)
 		{
@@ -1693,10 +1679,6 @@ class JInstaller extends JAdapter
 				if ((string) $element->attributes()->destination)
 				{
 					$folder = (string) $element->attributes()->destination;
-				}
-				else
-				{
-					$folder = '';
 				}
 
 				$source = $client->path . '/media/' . $folder;
@@ -1749,7 +1731,6 @@ class JInstaller extends JAdapter
 			 * <language tag="en_US">en_US.mycomponent.ini</language>
 			 * would go in the en_US subdirectory of the languages directory.
 			 */
-
 			if ($file->getName() == 'language' && (string) $file->attributes()->tag != '')
 			{
 				if ($source)
@@ -1774,7 +1755,6 @@ class JInstaller extends JAdapter
 			}
 
 			// Actually delete the files/folders
-
 			if (is_dir($path))
 			{
 				$val = JFolder::delete($path);
@@ -1793,7 +1773,7 @@ class JInstaller extends JAdapter
 
 		if (!empty($folder))
 		{
-			$val = JFolder::delete($source);
+			JFolder::delete($source);
 		}
 
 		return $retval;
@@ -1834,7 +1814,7 @@ class JInstaller extends JAdapter
 	 *
 	 * @return  boolean  True on success, False on error
 	 *
-	 * @since 3.1
+	 * @since   3.1
 	 */
 	public function findManifest()
 	{
@@ -1844,7 +1824,6 @@ class JInstaller extends JAdapter
 		// If at least one XML file exists
 		if (!empty($xmlfiles))
 		{
-
 			foreach ($xmlfiles as $file)
 			{
 				// Is it a valid Joomla installation manifest file?
@@ -1922,7 +1901,7 @@ class JInstaller extends JAdapter
 	/**
 	 * Generates a manifest cache
 	 *
-	 * @return string serialised manifest data
+	 * @return  string  JSON serialised manifest data
 	 *
 	 * @since   3.1
 	 */
@@ -1939,13 +1918,13 @@ class JInstaller extends JAdapter
 	 * @param   string   $folder   The folder of the extension (plugins; e.g. system)
 	 * @param   integer  $client   The client application (administrator or site)
 	 *
-	 * @return  object    Result of query
+	 * @return  object  Result of query
 	 *
 	 * @since   3.1
 	 */
 	public function cleanDiscoveredExtension($type, $element, $folder = '', $client = 0)
 	{
-		$dbo = JFactory::getDBO();
+		$dbo = $this->getDBO();
 		$query = $dbo->getQuery(true);
 		$query->delete($dbo->quoteName('#__extensions'));
 		$query->where('type = ' . $dbo->Quote($type));
@@ -2106,7 +2085,7 @@ class JInstaller extends JAdapter
 	 *
 	 * @return  array  XML metadata.
 	 *
-	 * @since   12.1
+	 * @since   3.1
 	 */
 	public static function parseXMLInstallFile($path)
 	{
@@ -2118,10 +2097,10 @@ class JInstaller extends JAdapter
 			return false;
 		}
 
-		// Check for a valid XML root tag.
-
-		// Extensions use 'extension' as the root tag.  Languages use 'metafile' instead
-
+		/*
+		 * Check for a valid XML root tag.
+		 * Extensions use 'extension' as the root tag.  Languages use 'metafile' instead
+		 */
 		if ($xml->getName() != 'extension' && $xml->getName() != 'metafile')
 		{
 			unset($xml);

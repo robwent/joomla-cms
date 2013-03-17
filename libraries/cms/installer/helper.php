@@ -278,7 +278,7 @@ abstract class JInstallerHelper
 	 * @return  array  Array of queries
 	 *
 	 * @since   3.1
-	 * @deprecated  13.3  Use JDatabaseDriver::splitSql() directly
+	 * @deprecated  4.0  Use JDatabaseDriver::splitSql() directly
 	 * @codeCoverageIgnore
 	 */
 	public static function splitSql($sql)
