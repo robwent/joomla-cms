@@ -19,6 +19,14 @@ defined('JPATH_PLATFORM') or die;
 class JInstallerAdapterPackage extends JInstallerAdapter
 {
 	/**
+	 * The results of each installed extensions
+	 *
+	 * @var    array
+	 * @since  3.1
+	 */
+	protected $results = array();
+
+	/**
 	 * Load language from a path
 	 *
 	 * @param   string  $path  The path of the language.
@@ -450,21 +458,39 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 
 		if ($this->parent->manifestClass && method_exists($this->parent->manifestClass, $method))
 		{
-			if ($method == 'postflight')
+			switch ($method)
 			{
-				$this->parent->manifestClass->$method($this->route, $this, $this->results);
-				$result = true;
-			}
-			else
-			{
-				$result = $this->parent->manifestClass->$method($this->route, $this);
-			}
+				// The preflight method takes the route as a param
+				case 'preflight':
+					if ($this->parent->manifestClass->$method($this->route, $this) === false)
+					{
+						// The script failed, rollback changes
+						$this->parent->abort(JText::_('JLIB_INSTALLER_ABORT_INSTALL_CUSTOM_INSTALL_FAILURE'));
+						return false;
+					}
+					break;
 
-			if (!$result)
-			{
-				// The script failed, rollback changes
-				$this->parent->abort(JText::_('JLIB_INSTALLER_ABORT_INSTALL_CUSTOM_INSTALL_FAILURE'));
-				return false;
+				// The postflight method takes the route and a results array as params
+				case 'postflight':
+					if ($this->parent->manifestClass->$method($this->route, $this, $this->results) === false)
+					{
+						// The script failed, rollback changes
+						$this->parent->abort(JText::_('JLIB_INSTALLER_ABORT_INSTALL_CUSTOM_INSTALL_FAILURE'));
+						return false;
+					}
+					break;
+
+				// The install, uninstall, and update methods only pass this object as a param
+				case 'install':
+				case 'uninstall':
+				case 'update':
+					if ($this->parent->manifestClass->$method($this) === false)
+					{
+						// The script failed, rollback changes
+						$this->parent->abort(JText::_('JLIB_INSTALLER_ABORT_INSTALL_CUSTOM_INSTALL_FAILURE'));
+						return false;
+					}
+					break;
 			}
 		}
 
@@ -476,6 +502,8 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 		{
 			$this->parent->extension_message = $this->extensionMessage;
 		}
+
+		return true;
 	}
 }
 

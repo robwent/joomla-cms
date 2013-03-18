@@ -286,11 +286,11 @@ abstract class JInstallerAdapter extends JAdapterInstance
 	}
 
 	/**
-	 * Executes the custom preflight method for an install script
+	 * Executes a custom install script method
 	 *
 	 * @param   string  $method  The install method to execute
 	 *
-	 * @return  mixed  Boolean false if there's a failure, void otherwise
+	 * @return  boolean  True on success
 	 *
 	 * @since   3.1
 	 */
@@ -301,11 +301,30 @@ abstract class JInstallerAdapter extends JAdapterInstance
 
 		if ($this->parent->manifestClass && method_exists($this->parent->manifestClass, $method))
 		{
-			if ($this->parent->manifestClass->$method($this->route, $this) === false)
+			switch ($method)
 			{
-				// The script failed, rollback changes
-				$this->parent->abort(JText::_('JLIB_INSTALLER_ABORT_INSTALL_CUSTOM_INSTALL_FAILURE'));
-				return false;
+				// The preflight and postflight take the route as a param
+				case 'preflight':
+				case 'postflight':
+					if ($this->parent->manifestClass->$method($this->route, $this) === false)
+					{
+						// The script failed, rollback changes
+						$this->parent->abort(JText::_('JLIB_INSTALLER_ABORT_INSTALL_CUSTOM_INSTALL_FAILURE'));
+						return false;
+					}
+					break;
+
+				// The install, uninstall, and update methods only pass this object as a param
+				case 'install':
+				case 'uninstall':
+				case 'update':
+					if ($this->parent->manifestClass->$method($this) === false)
+					{
+						// The script failed, rollback changes
+						$this->parent->abort(JText::_('JLIB_INSTALLER_ABORT_INSTALL_CUSTOM_INSTALL_FAILURE'));
+						return false;
+					}
+					break;
 			}
 		}
 
@@ -317,6 +336,8 @@ abstract class JInstallerAdapter extends JAdapterInstance
 		{
 			$this->parent->extension_message = $this->extensionMessage;
 		}
+
+		return true;
 	}
 
 	/**
