@@ -209,10 +209,7 @@ class JInstallerAdapterLibrary extends JInstallerAdapter
 		 */
 
 		// Set the extensions name
-		$name = (string) $this->manifest->name;
-		$name = JFilterInput::getInstance()->clean($name, 'string');
-		$element = str_replace('.xml', '', basename($this->parent->getPath('manifest')));
-		$this->name = $name;
+		$this->getName();
 		$this->element = $element;
 
 		// We don't want to compromise this instance!

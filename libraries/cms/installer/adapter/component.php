@@ -443,19 +443,15 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		 * ---------------------------------------------------------------------------------------------
 		 */
 
-		// Set the extension's name
-		$name = strtolower(JFilterInput::getInstance()->clean((string) $this->manifest->name, 'cmd'));
-
-		if (substr($name, 0, 4) == 'com_')
+		if (substr($this->name, 0, 4) == 'com_')
 		{
-			$element = $name;
+			$element = $this->name;
 		}
 		else
 		{
-			$element = 'com_' . $name;
+			$element = 'com_' . $this->name;
 		}
 
-		$this->name = $name;
 		$this->element = $element;
 
 		// Get the component description
@@ -810,18 +806,13 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 			return false;
 		}
 
-		// Set the extensions name
-		$name = (string) $this->manifest->name;
-		$name = JFilterInput::getInstance()->clean($name, 'string');
-		$this->name = $name;
-
-		if (substr($name, 0, 4) == 'com_')
+		if (substr($this->name, 0, 4) == 'com_')
 		{
-			$element = $name;
+			$element = $this->name;
 		}
 		else
 		{
-			$element = 'com_' . $name;
+			$element = 'com_' . $this->name;
 		}
 
 		$this->element = $element;
@@ -1383,7 +1374,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		 */
 
 		// Set the extensions name
-		$name = strtolower(JFilterInput::getInstance()->clean((string) $this->manifest->name, 'cmd'));
+		$name = $this->getName();
 
 		if (substr($name, 0, 4) == 'com_')
 		{
@@ -1394,7 +1385,6 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 			$element = 'com_' . $name;
 		}
 
-		$this->name    = $name;
 		$this->element = $element;
 
 		// Get the component description

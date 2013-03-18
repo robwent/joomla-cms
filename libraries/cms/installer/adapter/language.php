@@ -94,8 +94,7 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 
 		// Get the language name
 		// Set the extensions name
-		$name = JFilterInput::getInstance()->clean((string) $this->manifest->name, 'cmd');
-		$this->name = $name;
+		$this->getName();
 
 		// Get the Language tag [ISO tag, eg. en-GB]
 		$tag = (string) $this->manifest->tag;
@@ -276,9 +275,7 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 
 		// Get the language name
 		// Set the extensions name
-		$name = (string) $this->manifest->name;
-		$name = JFilterInput::getInstance()->clean($name, 'cmd');
-		$this->name = $name;
+		$this->getName();
 
 		// Get the Language tag [ISO tag, eg. en-GB]
 		$tag = (string) $xml->tag;

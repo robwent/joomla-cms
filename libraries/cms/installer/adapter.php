@@ -212,6 +212,31 @@ abstract class JInstallerAdapter extends JAdapterInstance
 	}
 
 	/**
+	 * Get the filtered component name from the manifest
+	 *
+	 * @return  string  The filtered name
+	 *
+	 * @since   3.1
+	 */
+	public function getName()
+	{
+		// Check if the name has been set already
+		if (is_null($this->name))
+		{
+			// Ensure the name is a string
+			$name = (string) $this->manifest->name;
+
+			// Filter the name for illegal characters
+			$name = JFilterInput::getInstance()->clean($name, 'cmd');
+
+			// Set the name object
+			$this->name = $name;
+		}
+
+		return $this->name;
+	}
+
+	/**
 	 * Get the class name for the install adapter script.
 	 *
 	 * @return  string  The class name.
@@ -235,10 +260,8 @@ abstract class JInstallerAdapter extends JAdapterInstance
 		// Get the extension manifest object
 		$this->manifest = $this->parent->getManifest();
 
-		// Set the extensions name
-		$name = (string) $this->manifest->name;
-		$name = JFilterInput::getInstance()->clean($name, 'string');
-		$this->name = $name;
+		// Set the extension name
+		$this->getName();
 
 		// Get the component description
 		$description = (string) $this->manifest->description;
