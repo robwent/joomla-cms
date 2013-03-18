@@ -21,6 +21,24 @@ jimport('joomla.filesystem.folder');
 class JInstallerAdapterFile extends JInstallerAdapter
 {
 	/**
+	 * Get the filtered extension element from the manifest
+	 *
+	 * @return  string  The filtered element
+	 *
+	 * @since   3.1
+	 */
+	public function getElement($element = null)
+	{
+		if (!$element)
+		{
+			$manifestPath = JPath::clean($this->parent->getPath('manifest'));
+			$element = preg_replace('/\.xml/', '', basename($manifestPath));
+		}
+
+		return $element;
+	}
+
+	/**
 	 * Load language from a path
 	 *
 	 * @param   string  $path  The path of the language.
@@ -53,13 +71,8 @@ class JInstallerAdapterFile extends JInstallerAdapter
 		 * ---------------------------------------------------------------------------------------------
 		 */
 
-		// Set element
-		$manifestPath = JPath::clean($this->parent->getPath('manifest'));
-		$element = preg_replace('/\.xml/', '', basename($manifestPath));
-		$this->element = $element;
-
 		// Check if the extension by the same name is already installed
-		if ($this->extensionExists($element, 'file'))
+		if ($this->extensionExists($this->element, 'file'))
 		{
 			// Package with same name already exists
 			if (!$this->parent->isOverwrite())
@@ -154,7 +167,7 @@ class JInstallerAdapterFile extends JInstallerAdapter
 		$query->select($query->qn('extension_id'))
 			->from($query->qn('#__extensions'))
 			->where($query->qn('type') . ' = ' . $query->q('file'))
-			->where($query->qn('element') . ' = ' . $query->q($element));
+			->where($query->qn('element') . ' = ' . $query->q($this->element));
 		$db->setQuery($query);
 
 		try
@@ -337,14 +350,17 @@ class JInstallerAdapterFile extends JInstallerAdapter
 			return false;
 		}
 
+		// Set element to match the database.
+		$this->element = $row->element;
+
 		$retval = true;
-		$manifestFile = JPATH_MANIFESTS . '/files/' . $row->element . '.xml';
+		$manifestFile = JPATH_MANIFESTS . '/files/' . $this->element . '.xml';
 
 		// Because files may not have their own folders we cannot use the standard method of finding an installation manifest
 		if (file_exists($manifestFile))
 		{
 			// Set the files root path
-			$this->parent->setPath('extension_root', JPATH_MANIFESTS . '/files/' . $row->element);
+			$this->parent->setPath('extension_root', JPATH_MANIFESTS . '/files/' . $this->element);
 
 			$xml = simplexml_load_file($manifestFile);
 

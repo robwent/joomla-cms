@@ -21,6 +21,34 @@ jimport('joomla.filesystem.folder');
 class JInstallerAdapterModule extends JInstallerAdapter
 {
 	/**
+	 * Get the filtered extension element from the manifest
+	 *
+	 * @return  string  The filtered element
+	 *
+	 * @since   3.1
+	 */
+	public function getElement($element = null)
+	{
+		if (!$element)
+		{
+			if (count($this->manifest->files->children()))
+			{
+				foreach ($this->manifest->files->children() as $file)
+				{
+					if ((string) $file->attributes()->module)
+					{
+						$element = (string) $file->attributes()->module;
+
+						break;
+					}
+				}
+			}
+		}
+
+		return $element;
+	}
+
+	/**
 	 * Load language from a path
 	 *
 	 * @param   string  $path  The path of the language.
@@ -123,25 +151,9 @@ class JInstallerAdapterModule extends JInstallerAdapter
 		}
 
 		// Set the installation path
-		$element = '';
-
-		if (count($this->manifest->files->children()))
+		if (!empty($this->element))
 		{
-			foreach ($this->manifest->files->children() as $file)
-			{
-				if ((string) $file->attributes()->module)
-				{
-					$element = (string) $file->attributes()->module;
-					$this->element = $element;
-
-					break;
-				}
-			}
-		}
-
-		if (!empty($element))
-		{
-			$this->parent->setPath('extension_root', $basePath . '/modules/' . $element);
+			$this->parent->setPath('extension_root', $basePath . '/modules/' . $this->element);
 		}
 		else
 		{
@@ -156,27 +168,14 @@ class JInstallerAdapterModule extends JInstallerAdapter
 		 * we can assume that it was (badly) uninstalled
 		 * If it isn't, add an entry to extensions
 		 */
-		$query = $db->getQuery(true);
-		$query->select($query->qn('extension_id'))
-			->from($query->qn('#__extensions'))
-			->where($query->qn('element') . ' = ' . $query->q($element))
-			->where($query->qn('client_id') . ' = ' . (int) $clientId);
-		$db->setQuery($query);
-
-		try
-		{
-			$db->execute();
-		}
-		catch (RuntimeException $e)
-		{
+		$id = $this->extensionExists($this->element, 'module', $clientId);
+		if (!$id) {
 			// Install failed, roll back changes
 			$this->parent
 				->abort(JText::sprintf('JLIB_INSTALLER_ABORT_MOD_ROLLBACK', JText::_('JLIB_INSTALLER_' . $this->route), $db->stderr(true)));
 
 			return false;
 		}
-
-		$id = $db->loadResult();
 
 		/*
 		 * If the module directory already exists, then we will assume that the
@@ -479,10 +478,12 @@ class JInstallerAdapterModule extends JInstallerAdapter
 	 */
 	public function discover_install()
 	{
+		$this->element = $this->parent->extension->element;
+
 		// Modules are like templates, and are one of the easiest
 		// If its not in the extensions table we just add it
 		$client = JApplicationHelper::getClientInfo($this->parent->extension->client_id);
-		$manifestPath = $client->path . '/modules/' . $this->parent->extension->element . '/' . $this->parent->extension->element . '.xml';
+		$manifestPath = $client->path . '/modules/' . $this->element . '/' . $this->element . '.xml';
 		$this->parent->manifest = $this->parent->isManifest($manifestPath);
 		$description = (string) $this->parent->manifest->description;
 
@@ -543,7 +544,6 @@ class JInstallerAdapterModule extends JInstallerAdapter
 	 */
 	public function uninstall($id)
 	{
-		$row = null;
 		$retval = true;
 		$db = $this->parent->getDbo();
 
@@ -568,7 +568,7 @@ class JInstallerAdapterModule extends JInstallerAdapter
 		}
 
 		// Get the extension root path
-		$element = $row->element;
+		$this->element = $row->element;
 		$client = JApplicationHelper::getClientInfo($row->client_id);
 
 		if ($client === false)
@@ -577,7 +577,7 @@ class JInstallerAdapterModule extends JInstallerAdapter
 
 			return false;
 		}
-		$this->parent->setPath('extension_root', $client->path . '/modules/' . $element);
+		$this->parent->setPath('extension_root', $client->path . '/modules/' . $this->element);
 
 		$this->parent->setPath('source', $this->parent->getPath('extension_root'));
 
@@ -587,7 +587,7 @@ class JInstallerAdapterModule extends JInstallerAdapter
 		$this->manifest = $this->parent->getManifest();
 
 		// Attempt to load the language file; might have uninstall strings
-		$this->loadLanguage(($row->client_id ? JPATH_ADMINISTRATOR : JPATH_SITE) . '/modules/' . $element);
+		$this->loadLanguage(($row->client_id ? JPATH_ADMINISTRATOR : JPATH_SITE) . '/modules/' . $this->element);
 
 		$this->setupScriptfile();
 		$this->triggerManifestScript('uninstall');

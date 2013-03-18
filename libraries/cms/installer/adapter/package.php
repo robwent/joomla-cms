@@ -27,6 +27,27 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 	protected $results = array();
 
 	/**
+	 * Get the filtered extension element from the manifest
+	 *
+	 * @return  string  The filtered element
+	 *
+	 * @since   3.1
+	 */
+	public function getElement($element = null)
+	{
+		if (!$element)
+		{
+			// Ensure the element is a string
+			$element = (string) $this->manifest->packagename;
+
+			// Filter the name for illegal characters
+			$element = 'pkg_' . JFilterInput::getInstance()->clean($element, 'cmd');
+		}
+
+		return $element;
+	}
+
+	/**
 	 * Load language from a path
 	 *
 	 * @param   string  $path  The path of the language.
@@ -37,9 +58,7 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 	 */
 	public function loadLanguage($path)
 	{
-		$extension = 'pkg_' . strtolower($this->name);
-
-		$this->doLoadLanguage($extension, $path);
+		$this->doLoadLanguage($this->element, $path);
 	}
 
 	/**
@@ -59,17 +78,13 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 		 * ---------------------------------------------------------------------------------------------
 		 */
 
-		$filter = JFilterInput::getInstance();
-		$element = 'pkg_' . $filter->clean($this->manifest->packagename, 'cmd');
-		$this->element = $element;
-
 		// Set the installation path
 		$files = $this->manifest->files;
-		$group = (string) $this->manifest->packagename;
+		$packagepath = (string) $this->manifest->packagename;
 
-		if (!empty($group))
+		if (!empty($packagepath))
 		{
-			$this->parent->setPath('extension_root', JPATH_MANIFESTS . '/packages/' . implode(DIRECTORY_SEPARATOR, explode('/', $group)));
+			$this->parent->setPath('extension_root', JPATH_MANIFESTS . '/packages/' . $packagepath);
 		}
 		else
 		{
@@ -107,7 +122,8 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 		 * ---------------------------------------------------------------------------------------------
 		 */
 
-		if ($folder = $files->attributes()->folder)
+		$folder = (string) $files->attributes()->folder;
+		if ($folder)
 		{
 			$source = $this->parent->getPath('source') . '/' . $folder;
 		}
@@ -119,11 +135,9 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 		// Install all necessary files
 		if (count($this->manifest->files->children()))
 		{
-			$i = 0;
-
 			foreach ($this->manifest->files->children() as $child)
 			{
-				$file = $source . '/' . $child;
+				$file = $source . '/' . (string) $child;
 
 				if (is_dir($file))
 				{
@@ -153,12 +167,11 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 				}
 				else
 				{
-					$this->results[$i] = array(
-						'name' => $tmpInstaller->manifest->name,
+					$this->results[] = array(
+						'name' => (string) $tmpInstaller->manifest->name,
 						'result' => $installResult
 					);
 				}
-				$i++;
 			}
 		}
 		else
