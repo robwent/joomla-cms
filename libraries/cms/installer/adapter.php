@@ -308,9 +308,12 @@ abstract class JInstallerAdapter extends JAdapterInstance
 				case 'postflight':
 					if ($this->parent->manifestClass->$method($this->route, $this) === false)
 					{
-						// The script failed, rollback changes
-						$this->parent->abort(JText::_('JLIB_INSTALLER_ABORT_INSTALL_CUSTOM_INSTALL_FAILURE'));
-						return false;
+						if ($method != 'postflight')
+						{
+							// The script failed, rollback changes
+							$this->parent->abort(JText::_('JLIB_INSTALLER_ABORT_INSTALL_CUSTOM_INSTALL_FAILURE'));
+							return false;
+						}
 					}
 					break;
 
@@ -320,9 +323,12 @@ abstract class JInstallerAdapter extends JAdapterInstance
 				case 'update':
 					if ($this->parent->manifestClass->$method($this) === false)
 					{
-						// The script failed, rollback changes
-						$this->parent->abort(JText::_('JLIB_INSTALLER_ABORT_INSTALL_CUSTOM_INSTALL_FAILURE'));
-						return false;
+						if ($method != 'uninstall')
+						{
+							// The script failed, rollback changes
+							$this->parent->abort(JText::_('JLIB_INSTALLER_ABORT_INSTALL_CUSTOM_INSTALL_FAILURE'));
+							return false;
+						}
 					}
 					break;
 			}

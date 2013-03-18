@@ -443,7 +443,7 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 	}
 
 	/**
-	 * Executes the custom preflight method for an install script
+	 * Executes a custom install script method
 	 *
 	 * @param   string  $method  The install method to execute
 	 *
@@ -472,12 +472,7 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 
 				// The postflight method takes the route and a results array as params
 				case 'postflight':
-					if ($this->parent->manifestClass->$method($this->route, $this, $this->results) === false)
-					{
-						// The script failed, rollback changes
-						$this->parent->abort(JText::_('JLIB_INSTALLER_ABORT_INSTALL_CUSTOM_INSTALL_FAILURE'));
-						return false;
-					}
+					$this->parent->manifestClass->$method($this->route, $this, $this->results);
 					break;
 
 				// The install, uninstall, and update methods only pass this object as a param
@@ -486,9 +481,12 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 				case 'update':
 					if ($this->parent->manifestClass->$method($this) === false)
 					{
-						// The script failed, rollback changes
-						$this->parent->abort(JText::_('JLIB_INSTALLER_ABORT_INSTALL_CUSTOM_INSTALL_FAILURE'));
-						return false;
+						if ($method != 'uninstall')
+						{
+							// The script failed, rollback changes
+							$this->parent->abort(JText::_('JLIB_INSTALLER_ABORT_INSTALL_CUSTOM_INSTALL_FAILURE'));
+							return false;
+						}
 					}
 					break;
 			}
