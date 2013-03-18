@@ -37,7 +37,7 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 	 */
 	public function loadLanguage($path)
 	{
-		$extension = 'pkg_' . strtolower($this->name);
+		$extension = 'pkg_' . strtolower(JFilterInput::getInstance()->clean((string) $this->manifest->packagename, 'cmd'));
 
 		$this->doLoadLanguage($extension, $path);
 	}

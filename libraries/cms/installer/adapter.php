@@ -94,14 +94,8 @@ abstract class JInstallerAdapter extends JAdapterInstance
 		// Set the manifest object
 		$this->manifest = $this->parent->getManifest();
 
-		// Ensure the name is a string
-		$name = (string) $this->manifest->name;
-
-		// Filter the name for illegal characters
-		$name = JFilterInput::getInstance()->clean($name, 'cmd');
-
 		// Set the name object
-		$this->name = $name;
+		$this->getName();
 	}
 
 	/**
@@ -247,6 +241,18 @@ abstract class JInstallerAdapter extends JAdapterInstance
 	 */
 	public function getName()
 	{
+		if (is_null($this->name))
+		{
+			// Ensure the name is a string
+			$name = (string) $this->manifest->name;
+
+			// Filter the name for illegal characters
+			$name = JFilterInput::getInstance()->clean($name, 'cmd');
+
+			// Set the name object
+			$this->name = $name;
+		}
+
 		return $this->name;
 	}
 
