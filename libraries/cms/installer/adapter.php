@@ -42,7 +42,7 @@ abstract class JInstallerAdapter extends JAdapterInstance
 	 * @var    string
 	 * @since  3.1
 	 */
-	protected $manifest = null;
+	public $manifest = null;
 
 	/**
 	 * A path to the PHP file that the scriptfile declaration in
