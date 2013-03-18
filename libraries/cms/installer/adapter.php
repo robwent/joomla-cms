@@ -37,7 +37,9 @@ abstract class JInstallerAdapter extends JAdapterInstance
 	protected $extensionMessage = '';
 
 	/**
-	 * Copy of the XML manifest file
+	 * Copy of the XML manifest file.
+	 *
+	 * Making this object public allows extensions to customize the manifest in custom scripts.
 	 *
 	 * @var    string
 	 * @since  3.1

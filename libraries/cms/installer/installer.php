@@ -75,9 +75,11 @@ class JInstaller extends JAdapter
 	/**
 	 * The output from the install/uninstall scripts
 	 *
+	 * Setting this object public allows install scripts to set a custom message
+	 *
 	 * @var    string
 	 * @since  3.1
-	 * */
+	 */
 	public $message = null;
 
 	/**
