@@ -61,17 +61,13 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 			$this->parent->setPath('source', $client . '/components/' . $this->parent->extension->element);
 		}
 
-		$this->manifest = $this->parent->getManifest();
-		$name = (string) $this->manifest->name;
-		$name = JFilterInput::getInstance()->clean($name, 'string');
-
-		if (substr($name, 0, 4) == 'com_')
+		if (substr($this->name, 0, 4) == 'com_')
 		{
-			$extension = $name;
+			$extension = $this->name;
 		}
 		else
 		{
-			$extension = 'com_' . $name;
+			$extension = 'com_' . $this->name;
 		}
 
 		$source = $path ? $path : $client . '/components/' . $extension;
@@ -433,9 +429,6 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 
 		// Set the overwrite setting
 		$this->parent->setOverwrite(true);
-
-		// Get the extension manifest object
-		$this->manifest = $this->parent->getManifest();
 
 		/**
 		 * ---------------------------------------------------------------------------------------------
@@ -1363,9 +1356,6 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		}
 
 		// Now we need to run any SQL it has, languages, media or menu stuff
-
-		// Get the extension manifest object
-		$this->manifest = $this->parent->getManifest();
 
 		/**
 		 * ---------------------------------------------------------------------------------------------

@@ -37,8 +37,8 @@ class JInstallerAdapterLibrary extends JInstallerAdapter
 		{
 			$this->parent->setPath('source', JPATH_PLATFORM . '/' . $this->parent->extension->element);
 		}
-		$this->manifest = $this->parent->getManifest();
-		$extension = 'lib_' . strtolower(JFilterInput::getInstance()->clean((string) $this->manifest->name, 'cmd'));
+
+		$extension = 'lib_' . $this->name;
 		$name = strtolower((string) $this->manifest->libraryname);
 		$source = $path ? $path : JPATH_PLATFORM . "/$name";
 
@@ -199,8 +199,6 @@ class JInstallerAdapterLibrary extends JInstallerAdapter
 	public function update()
 	{
 		// Since this is just files, an update removes old files
-		// Get the extension manifest object
-		$this->manifest = $this->parent->getManifest();
 
 		/*
 		 * ---------------------------------------------------------------------------------------------
@@ -209,7 +207,6 @@ class JInstallerAdapterLibrary extends JInstallerAdapter
 		 */
 
 		// Set the extensions name
-		$this->getName();
 		$this->element = $element;
 
 		// We don't want to compromise this instance!

@@ -42,8 +42,6 @@ class JInstallerAdapterModule extends JInstallerAdapter
 			);
 		}
 
-		$this->manifest = $this->parent->getManifest();
-
 		if ($this->manifest->files)
 		{
 			$element = $this->manifest->files;

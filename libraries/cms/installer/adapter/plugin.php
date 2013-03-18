@@ -48,7 +48,6 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 		{
 			$this->parent->setPath('source', JPATH_PLUGINS . '/' . $this->parent->extension->folder . '/' . $this->parent->extension->element);
 		}
-		$this->manifest = $this->parent->getManifest();
 		$element = $this->manifest->files;
 
 		if ($element)

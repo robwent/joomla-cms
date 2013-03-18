@@ -43,7 +43,6 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 				($this->parent->extension->client_id ? JPATH_ADMINISTRATOR : JPATH_SITE) . '/language/' . $this->parent->extension->element
 			);
 		}
-		$this->manifest = $this->parent->getManifest();
 
 		// Get the client application target
 		$cname = (string) $this->manifest->attributes()->client;
@@ -90,12 +89,6 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 	 */
 	protected function _install($cname, $basePath, $clientId, &$element)
 	{
-		$this->manifest = $this->parent->getManifest();
-
-		// Get the language name
-		// Set the extensions name
-		$this->getName();
-
 		// Get the Language tag [ISO tag, eg. en-GB]
 		$tag = (string) $this->manifest->tag;
 
@@ -255,11 +248,7 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 	 */
 	public function update()
 	{
-		$xml = $this->parent->getManifest();
-
-		$this->manifest = $xml;
-
-		$cname = $xml->attributes()->client;
+		$cname = $this->manifest->attributes()->client;
 
 		// Attempt to map the client to a base path
 		$client = JApplicationHelper::getClientInfo($cname, true);
@@ -278,7 +267,7 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 		$this->getName();
 
 		// Get the Language tag [ISO tag, eg. en-GB]
-		$tag = (string) $xml->tag;
+		$tag = (string) $this->manifest->tag;
 
 		// Check if we found the tag - if we didn't, we may be trying to install from an older language package
 		if (!$tag)
@@ -294,7 +283,7 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 		$this->parent->setPath('extension_site', $basePath . '/language/' . $this->tag);
 
 		// Copy all the necessary files
-		if ($this->parent->parseFiles($xml->files) === false)
+		if ($this->parent->parseFiles($this->manifest->files) === false)
 		{
 			// Install failed, rollback changes
 			$this->parent->abort();
@@ -303,13 +292,13 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 		}
 
 		// Parse optional tags
-		$this->parent->parseMedia($xml->media);
+		$this->parent->parseMedia($this->manifest->media);
 
 		// Copy all the necessary font files to the common pdf_fonts directory
 		$this->parent->setPath('extension_site', $basePath . '/language/pdf_fonts');
 		$overwrite = $this->parent->setOverwrite(true);
 
-		if ($this->parent->parseFiles($xml->fonts) === false)
+		if ($this->parent->parseFiles($this->manifest->fonts) === false)
 		{
 			// Install failed, rollback changes
 			$this->parent->abort();
@@ -319,7 +308,7 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 		$this->parent->setOverwrite($overwrite);
 
 		// Get the language description and set it as message
-		$this->parent->message = (string) $xml->description;
+		$this->parent->message = (string) $this->manifest->description;
 
 		/**
 		 * ---------------------------------------------------------------------------------------------

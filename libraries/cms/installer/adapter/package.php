@@ -37,8 +37,7 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 	 */
 	public function loadLanguage($path)
 	{
-		$this->manifest = $this->parent->getManifest();
-		$extension = 'pkg_' . strtolower(JFilterInput::getInstance()->clean((string) $this->manifest->packagename, 'cmd'));
+		$extension = 'pkg_' . strtolower($this->name);
 
 		$this->doLoadLanguage($extension, $path);
 	}
@@ -262,7 +261,7 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 		}
 
 		// And now we run the postflight
-		$this->triggerManifestScript('postflight', $results);
+		$this->triggerManifestScript('postflight', $this->results);
 
 		return $row->extension_id;
 	}

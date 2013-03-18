@@ -42,8 +42,6 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 			);
 		}
 
-		$this->manifest = $this->parent->getManifest();
-		$name = strtolower(JFilterInput::getInstance()->clean((string) $this->manifest->name, 'cmd'));
 		$client = (string) $this->manifest->attributes()->client;
 
 		// Load administrator language if not set.
@@ -52,7 +50,7 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 			$client = 'ADMINISTRATOR';
 		}
 
-		$extension = "tpl_$name";
+		$extension = 'tpl_' . strtolower($this->name);
 		$source = $path ? $path : ($this->parent->extension->client_id ? JPATH_ADMINISTRATOR : JPATH_SITE) . '/templates/' . $name;
 		$this->doLoadLanguage($extension, $source, constant('JPATH_' . strtoupper($client)));
 	}

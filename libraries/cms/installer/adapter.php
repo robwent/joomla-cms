@@ -78,6 +78,33 @@ abstract class JInstallerAdapter extends JAdapterInstance
 	protected $scriptElement = null;
 
 	/**
+	 * Constructor
+	 *
+	 * @param   JAdapter         $parent   Parent object
+	 * @param   JDatabaseDriver  $db       Database object
+	 * @param   array            $options  Configuration Options
+	 *
+	 * @since   11.1
+	 */
+	public function __construct($parent, $db, $options = array())
+	{
+		// Run the parent constructor
+		parent::__construct($parent, $db, $options);
+
+		// Set the manifest object
+		$this->manifest = $this->parent->getManifest();
+
+		// Ensure the name is a string
+		$name = (string) $this->manifest->name;
+
+		// Filter the name for illegal characters
+		$name = JFilterInput::getInstance()->clean($name, 'cmd');
+
+		// Set the name object
+		$this->name = $name;
+	}
+
+	/**
 	 * Method to handle database transactions for the installer
 	 *
 	 * @param   string  $route  The action being performed on the database
@@ -220,19 +247,6 @@ abstract class JInstallerAdapter extends JAdapterInstance
 	 */
 	public function getName()
 	{
-		// Check if the name has been set already
-		if (is_null($this->name))
-		{
-			// Ensure the name is a string
-			$name = (string) $this->manifest->name;
-
-			// Filter the name for illegal characters
-			$name = JFilterInput::getInstance()->clean($name, 'cmd');
-
-			// Set the name object
-			$this->name = $name;
-		}
-
 		return $this->name;
 	}
 
@@ -257,12 +271,6 @@ abstract class JInstallerAdapter extends JAdapterInstance
 	 */
 	public function install()
 	{
-		// Get the extension manifest object
-		$this->manifest = $this->parent->getManifest();
-
-		// Set the extension name
-		$this->getName();
-
 		// Get the component description
 		$description = (string) $this->manifest->description;
 		if ($description)

@@ -31,8 +31,7 @@ class JInstallerAdapterFile extends JInstallerAdapter
 	 */
 	public function loadLanguage($path)
 	{
-		$this->manifest = $this->parent->getManifest();
-		$extension = 'files_' . str_replace('files_', '', strtolower(JFilterInput::getInstance()->clean((string) $this->manifest->name, 'cmd')));
+		$extension = 'files_' . strtolower(str_replace('files_', '', $this->name));
 
 		$this->doLoadLanguage($extension, $path);
 	}
