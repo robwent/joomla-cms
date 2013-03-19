@@ -221,7 +221,7 @@ class JInstallerAdapterLibrary extends JInstallerAdapter
 		 * ---------------------------------------------------------------------------------------------
 		 */
 
-		$extension_id = $this->extensionExists($this->element, 'library');
+		$extension_id = JTable::getInstance('extension')->find(array('element' => $this->element, 'type' => 'library'));
 		if ($extension_id)
 		{
 			// Already installed, which would make sense

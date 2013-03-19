@@ -168,7 +168,7 @@ class JInstallerAdapterModule extends JInstallerAdapter
 		 * we can assume that it was (badly) uninstalled
 		 * If it isn't, add an entry to extensions
 		 */
-		$id = $this->extensionExists($this->element, 'module', $clientId);
+		$id = JTable::getInstance('extension')->find(array('element' => $this->element, 'type' => 'module', 'client_id'=>$clientId));
 		if (!$id) {
 			// Install failed, roll back changes
 			$this->parent

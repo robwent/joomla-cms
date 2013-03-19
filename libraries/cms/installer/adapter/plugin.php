@@ -178,15 +178,9 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 		// Check if we should enable overwrite settings
 
 		// Check to see if a plugin by the same name is already installed.
-		$query = $db->getQuery(true);
-		$query->select($query->qn('extension_id'))->from($query->qn('#__extensions'));
-		$query->where($query->qn('folder') . ' = ' . $query->q($this->group));
-		$query->where($query->qn('element') . ' = ' . $query->q($this->element));
-		$db->setQuery($query);
-
 		try
 		{
-			$db->execute();
+			$id = JTable::getInstance('extension')->find(array('type' => 'plugin', 'element' => $this->element, 'folder'=>$this->group));
 		}
 		catch (RuntimeException $e)
 		{
@@ -196,7 +190,6 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 
 			return false;
 		}
-		$id = $db->loadResult();
 
 		// If it's on the fs...
 		if (file_exists($this->parent->getPath('extension_root')) && (!$this->parent->isOverwrite() || $this->parent->isUpgrade()))

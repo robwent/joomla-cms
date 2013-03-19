@@ -389,54 +389,48 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 	/**
 	 * Gets the extension id.
 	 *
-	 * @param   string   $type    The extension type.
-	 * @param   string   $id      The name of the extension (the element field).
-	 * @param   integer  $client  The application id (0: Joomla CMS site; 1: Joomla CMS administrator).
-	 * @param   string   $group   The extension group (mainly for plugins).
+	 * @param   string   $type       The extension type.
+	 * @param   string   $element    The name of the extension (the element field).
+	 * @param   integer  $client_id  The application id (0: Joomla CMS site; 1: Joomla CMS administrator).
+	 * @param   string   $group      The extension group (mainly for plugins).
 	 *
 	 * @return  integer
 	 *
 	 * @since   3.1
 	 */
-	protected function _getExtensionID($type, $id, $client, $group)
+	protected function _getExtensionID($type, $element, $client_id = 0, $group = null)
 	{
-		$db = $this->parent->getDbo();
+		$client_id = JApplicationHelper::getClientInfo((int) $client_id, true)->id;
 
-		$query = $db->getQuery(true);
-		$query->select('extension_id');
-		$query->from('#__extensions');
-		$query->where('type = ' . $db->Quote($type));
-		$query->where('element = ' . $db->Quote($id));
+		// Be default search by matching all the given fields.
+		$search = array('type' => (string) $type, 'element' => (string) $element, 'client_id' => $client_id);
+		if ((string) $group) $search['folder'] = (string) $group;
 
-		switch ($type)
+		switch ((string) $type)
 		{
 			case 'plugin':
 				// Plugins have a folder but not a client
-				$query->where('folder = ' . $db->Quote($group));
-				break;
-
-			case 'library':
-			case 'package':
-			case 'component':
-				// Components, packages and libraries don't have a folder or client.
-				// Included for completeness.
+				unset($search['client_id']);
 				break;
 
 			case 'language':
 			case 'module':
 			case 'template':
 				// Languages, modules and templates have a client but not a folder
-				$client = JApplicationHelper::getClientInfo($client, true);
-				$query->where('client_id = ' . (int) $client->id);
+				unset($search['folder']);
+				break;
+
+			case 'library':
+			case 'package':
+			case 'component':
+				// Components, packages and libraries don't have a folder or client.
+				unset($search['client_id'], $search['folder']);
 				break;
 		}
 
-		$db->setQuery($query);
-		$result = $db->loadResult();
+		$extension_id = JTable::getInstance('extension')->find($search);
 
-		// Note: For templates, libraries and packages their unique name is their key.
-		// This means they come out the same way they came in.
-		return $result;
+		return $extension_id;
 	}
 
 	/**

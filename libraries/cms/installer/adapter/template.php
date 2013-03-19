@@ -96,15 +96,9 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 		}
 
 		// Check to see if a template by the same name is already installed.
-		$query = $db->getQuery(true);
-		$query->select($query->qn('extension_id'))->from($query->qn('#__extensions'));
-		$query->where($query->qn('type') . ' = ' . $query->q('template'));
-		$query->where($query->qn('element') . ' = ' . $query->q($this->element));
-		$db->setQuery($query);
-
 		try
 		{
-			$id = $db->loadResult();
+			$id = JTable::getInstance('extension')->find(array('type' => 'template', 'element' => $this->element, 'client_id'=>$clientId));
 		}
 		catch (RuntimeException $e)
 		{
