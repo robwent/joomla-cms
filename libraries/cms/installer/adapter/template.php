@@ -122,7 +122,7 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 				if ($id)
 				{
 					// If there is a matching extension mark this as an update; semantics really
-					$this->route = 'update';
+					$this->setRoute('update');
 				}
 			}
 			elseif (!$this->parent->isOverwrite())

@@ -202,7 +202,7 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 				if ($id)
 				{
 					// If there is a matching extension mark this as an update; semantics really
-					$this->route = 'update';
+					$this->setRoute('update');
 				}
 			}
 			elseif (!$this->parent->isOverwrite())
@@ -433,7 +433,7 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 	 */
 	public function uninstall($id)
 	{
-		$this->route = 'uninstall';
+		$this->setRoute('uninstall');
 
 		$db = $this->parent->getDbo();
 

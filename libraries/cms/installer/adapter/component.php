@@ -197,7 +197,6 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		 */
 
 		$this->setupScriptfile();
-		$this->route = 'install';
 		$this->triggerManifestScript('preflight');
 
 		// If the component directory does not exist, let's create it
@@ -483,7 +482,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		 */
 
 		$this->setupScriptfile();
-		$this->route = 'update';
+		$this->setRoute('update');
 		$this->triggerManifestScript('preflight');
 
 		/**
@@ -1340,7 +1339,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		 */
 
 		$this->setupScriptfile();
-		$this->route = 'discover_install';
+		$this->setRoute('discover_install');
 		$this->triggerManifestScript('preflight');
 
 		/*

@@ -243,7 +243,8 @@ abstract class JInstallerAdapter extends JAdapterInstance
 	 */
 	public function getManifest()
 	{
-		if (!$this->manifest) {
+		if (!$this->manifest)
+		{
 			// We are trying to find manifest for the installed extension.
 			// TODO: handle locally in every adapter (see uninstall to get some hints).
 			$this->manifest = $this->parent->getManifest();
@@ -298,6 +299,18 @@ abstract class JInstallerAdapter extends JAdapterInstance
 	}
 
 	/**
+	 * Get the install route being followed
+	 *
+	 * @return  string  The install route
+	 *
+	 * @since   3.1
+	 */
+	public function getRoute()
+	{
+		return $this->route;
+	}
+
+	/**
 	 * Get the class name for the install adapter script.
 	 *
 	 * @return  string  The class name.
@@ -331,6 +344,22 @@ abstract class JInstallerAdapter extends JAdapterInstance
 		{
 			$this->parent->message = '';
 		}
+	}
+
+	/**
+	 * Set the install route being followed
+	 *
+	 * @param   string  $route  The install route being followed
+	 *
+	 * @return  JInstallerAdapter  Instance of this class to support chaining
+	 *
+	 * @since   3.1
+	 */
+	public function setRoute($route)
+	{
+		$this->route = $route;
+
+		return $this;
 	}
 
 	/**
@@ -442,7 +471,7 @@ abstract class JInstallerAdapter extends JAdapterInstance
 		$this->parent->setUpgrade(true);
 
 		// Set the route for the install
-		$this->route = 'update';
+		$this->setRoute('update');
 
 		// Go to install which handles updates properly
 		return $this->install();

@@ -163,7 +163,8 @@ class JInstallerAdapterModule extends JInstallerAdapter
 		 * we can assume that it was (badly) uninstalled
 		 * If it isn't, add an entry to extensions
 		 */
-		try {
+		try
+		{
 			$id = JTable::getInstance('extension')->find(array('element' => $this->element, 'type' => 'module', 'client_id'=>$clientId));
 		}
 		catch (RuntimeException $e)
@@ -195,7 +196,7 @@ class JInstallerAdapterModule extends JInstallerAdapter
 				if ($id)
 				{
 					// If there is a matching extension mark this as an update; semantics really
-					$this->route = 'update';
+					$this->setRoute('update');
 				}
 			}
 			elseif (!$this->parent->isOverwrite())
@@ -204,7 +205,8 @@ class JInstallerAdapterModule extends JInstallerAdapter
 				// We didn't have overwrite set, find an update function or find an update tag so lets call it safe
 				throw new RuntimeException(
 					JText::sprintf(
-						'JLIB_INSTALLER_ABORT_MOD_INSTALL_DIRECTORY', JText::_('JLIB_INSTALLER_' . $this->route),
+						'JLIB_INSTALLER_ABORT_MOD_INSTALL_DIRECTORY',
+						JText::_('JLIB_INSTALLER_' . $this->route),
 						$this->parent->getPath('extension_root')
 					)
 				);

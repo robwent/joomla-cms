@@ -441,7 +441,8 @@ class JInstaller extends JAdapter
 
 			// Run the install.
 			$errorMsg = '';
-			try {
+			try
+			{
 				$eid = (int) $this->_adapters[$type]->install();
 			}
 			catch (Exception $e)
@@ -537,7 +538,8 @@ class JInstaller extends JAdapter
 
 					// Run the discover install.
 					$errorMsg = '';
-					try {
+					try
+					{
 						$eid = (int) $this->_adapters[$type]->discover_install();
 					}
 					catch (Exception $e)
@@ -660,7 +662,8 @@ class JInstaller extends JAdapter
 
 			// Run the update.
 			$errorMsg = '';
-			try {
+			try
+			{
 				$eid = (int) $this->_adapters[$type]->update();
 			}
 			catch (Exception $e)
@@ -725,7 +728,8 @@ class JInstaller extends JAdapter
 
 			// Run the uninstall.
 			$errorMsg = '';
-			try {
+			try
+			{
 				$result = (bool) $this->_adapters[$type]->uninstall($eid);
 			}
 			catch (Exception $e)
@@ -1862,7 +1866,8 @@ class JInstaller extends JAdapter
 	 */
 	public function findManifest()
 	{
-		if (!$this->getPath('source')) {
+		if (!$this->getPath('source'))
+		{
 			return false;
 		}
 

@@ -83,7 +83,7 @@ class JInstallerAdapterFile extends JInstallerAdapter
 			else
 			{
 				// Swap to the update route
-				$this->route = 'update';
+				$this->setRoute('update');
 			}
 		}
 		// Set the file root path

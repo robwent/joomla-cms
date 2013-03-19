@@ -101,7 +101,7 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 			if ($this->parent->isUpgrade() || $updateElement)
 			{
 				// Use the update route for all packaged extensions
-				$this->route = 'update';
+				$this->setRoute('update');
 			}
 		}
 
