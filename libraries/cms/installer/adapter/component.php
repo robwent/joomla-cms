@@ -1341,11 +1341,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 
 		$this->setupScriptfile();
 		$this->route = 'discover_install';
-
-		if (!$this->triggerManifestScript('preflight'))
-		{
-			return false;
-		}
+		$this->triggerManifestScript('preflight');
 
 		/*
 		 *
@@ -1383,10 +1379,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		 * ---------------------------------------------------------------------------------------------
 		 */
 
-		if (!$this->triggerManifestScript('install'))
-		{
-			return false;
-		}
+		$this->triggerManifestScript('install');
 
 		/**
 		 * ---------------------------------------------------------------------------------------------

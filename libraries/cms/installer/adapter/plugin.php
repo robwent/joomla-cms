@@ -225,7 +225,6 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 		 */
 
 		$this->setupScriptfile();
-
 		$this->triggerManifestScript('preflight');
 
 		/*
@@ -490,10 +489,7 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 		$this->setupScriptfile();
 
 		// TODO: shouldn't this be removed?!?
-		if (!$this->triggerManifestScript('preflight'))
-		{
-			return false;
-		}
+		$this->triggerManifestScript('preflight');
 
 		// Let's run the queries for the plugin
 		$result = $this->doDatabaseTransactions('uninstall');
