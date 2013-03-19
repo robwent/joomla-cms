@@ -500,9 +500,11 @@ class JInstaller extends JAdapter
 			}
 
 			// Lazy load the adapter
+			$adapter = null;
 			if (!isset($this->_adapters[$this->extension->type]) || !is_object($this->_adapters[$this->extension->type]))
 			{
-				if (!$this->setAdapter($this->extension->type))
+				$params = array('extension' => $this->extension);
+				if (!$this->setAdapter($this->extension->type, $adapter, $params))
 				{
 					return false;
 				}
@@ -691,17 +693,22 @@ class JInstaller extends JAdapter
 	 * Package uninstallation method
 	 *
 	 * @param   string  $type        Package type
-	 * @param   mixed   $identifier  Package identifier for adapter
+	 * @param   mixed   $eid         Package identifier for adapter
 	 *
 	 * @return  boolean  True if successful
 	 *
 	 * @since   3.1
 	 */
-	public function uninstall($type, $identifier)
+	public function uninstall($type, $eid)
 	{
+		$this->extension = JTable::getInstance('extension');
+		$this->extension->load(array('type'=>$type, 'extension_id'=>$eid));
+
+		$adapter = null;
 		if (!isset($this->_adapters[$type]) || !is_object($this->_adapters[$type]))
 		{
-			if (!$this->setAdapter($type))
+			$params = array('extension' => $this->extension);
+			if (!$this->setAdapter($type, $adapter, $params))
 			{
 				// We failed to get the right adapter
 				return false;
@@ -714,12 +721,12 @@ class JInstaller extends JAdapter
 			// Fire the onExtensionBeforeUninstall event.
 			JPluginHelper::importPlugin('extension');
 			$dispatcher = JEventDispatcher::getInstance();
-			$dispatcher->trigger('onExtensionBeforeUninstall', array('eid' => $identifier));
+			$dispatcher->trigger('onExtensionBeforeUninstall', array('eid' => $eid));
 
 			// Run the uninstall.
 			$errorMsg = '';
 			try {
-				$result = (bool) $this->_adapters[$type]->uninstall($identifier);
+				$result = (bool) $this->_adapters[$type]->uninstall($eid);
 			}
 			catch (Exception $e)
 			{
@@ -735,7 +742,7 @@ class JInstaller extends JAdapter
 				'onExtensionAfterUninstall',
 				array(
 					'installer' => clone $this,
-					'eid' => $identifier,
+					'eid' => $eid,
 					'result' => $result
 				)
 			);
@@ -776,9 +783,11 @@ class JInstaller extends JAdapter
 			}
 
 			// Lazy load the adapter
+			$adapter = null;
 			if (!isset($this->_adapters[$this->extension->type]) || !is_object($this->_adapters[$this->extension->type]))
 			{
-				if (!$this->setAdapter($this->extension->type))
+				$params = array('extension' => $this->extension);
+				if (!$this->setAdapter($this->extension->type, $adapter, $params))
 				{
 					return false;
 				}
@@ -839,9 +848,11 @@ class JInstaller extends JAdapter
 		$type = (string) $this->manifest->attributes()->type;
 
 		// Lazy load the adapter
+		$adapter = null;
 		if (!isset($this->_adapters[$type]) || !is_object($this->_adapters[$type]))
 		{
-			if (!$this->setAdapter($type))
+			$params = array('manifest' => $this->manifest);
+			if (!$this->setAdapter($type, $adapter, $params))
 			{
 				return false;
 			}
@@ -1851,6 +1862,10 @@ class JInstaller extends JAdapter
 	 */
 	public function findManifest()
 	{
+		if (!$this->getPath('source')) {
+			return false;
+		}
+
 		// Get an array of all the XML files from the installation directory
 		$xmlfiles = JFolder::files($this->getPath('source'), '.xml$', 1, true);
 

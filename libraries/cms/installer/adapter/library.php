@@ -53,7 +53,7 @@ class JInstallerAdapterLibrary extends JInstallerAdapter
 
 		if (!$source)
 		{
-			$this->parent->setPath('source', JPATH_PLATFORM . '/' . $this->parent->extension->element);
+			$this->parent->setPath('source', JPATH_PLATFORM . '/' . $this->element);
 		}
 
 		$extension = 'lib_' . $this->element;
@@ -80,7 +80,7 @@ class JInstallerAdapterLibrary extends JInstallerAdapter
 		 * ---------------------------------------------------------------------------------------------
 		 */
 
-		$extension_id = $this->extensionExists($this->element, 'library');
+		$extension_id = JTable::getInstance('extension')->find(array('element' => $this->element, 'type' => 'library'));
 		if ($extension_id)
 		{
 			// Already installed, can we upgrade?
@@ -190,34 +190,6 @@ class JInstallerAdapterLibrary extends JInstallerAdapter
 			throw new RuntimeException(JText::_('JLIB_INSTALLER_ABORT_LIB_INSTALL_COPY_SETUP'));
 		}
 		return $row->extension_id;
-	}
-
-	/**
-	 * Custom update method
-	 *
-	 * @return  boolean  True on success
-	 *
-	 * @since   3.1
-	 */
-	public function update()
-	{
-		// Since this is just files, an update removes old files
-
-		/*
-		 * ---------------------------------------------------------------------------------------------
-		 * Manifest Document Setup Section
-		 * ---------------------------------------------------------------------------------------------
-		 */
-
-		$extension_id = JTable::getInstance('extension')->find(array('element' => $this->element, 'type' => 'library'));
-		if ($extension_id)
-		{
-			// Already installed, which would make sense
-			$installer = new JInstaller;  // We don't want to compromise this instance!
-			$installer->uninstall('library', $extension_id);
-		}
-		// Now create the new files
-		return $this->install();
 	}
 
 	/**
