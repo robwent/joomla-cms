@@ -88,9 +88,7 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 		}
 		else
 		{
-			$this->parent->abort(JText::sprintf('JLIB_INSTALLER_ABORT_PACK_INSTALL_NO_PACK', JText::_('JLIB_INSTALLER_' . strtoupper($this->route))));
-
-			return false;
+			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_PACK_INSTALL_NO_PACK', JText::_('JLIB_INSTALLER_' . strtoupper($this->route))));
 		}
 
 		// If the package manifest already exists, then we will assume that the package is already installed.
@@ -114,11 +112,7 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 		 */
 
 		$this->setupScriptfile();
-
-		if (!$this->triggerManifestScript('preflight'))
-		{
-			return false;
-		}
+		$this->triggerManifestScript('preflight');
 
 		/*
 		 * ---------------------------------------------------------------------------------------------
@@ -160,14 +154,12 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 
 				if (!$installResult)
 				{
-					$this->parent->abort(
+					throw new RuntimeException(
 						JText::sprintf(
 							'JLIB_INSTALLER_ABORT_PACK_INSTALL_ERROR_EXTENSION', JText::_('JLIB_INSTALLER_' . strtoupper($this->route)),
 							basename($file)
 						)
 					);
-
-					return false;
 				}
 				else
 				{
@@ -180,9 +172,7 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 		}
 		else
 		{
-			$this->parent->abort(JText::sprintf('JLIB_INSTALLER_ABORT_PACK_INSTALL_NO_FILES', JText::_('JLIB_INSTALLER_' . strtoupper($this->route))));
-
-			return false;
+			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_PACK_INSTALL_NO_FILES', JText::_('JLIB_INSTALLER_' . strtoupper($this->route))));
 		}
 
 		// Parse optional tags
@@ -224,9 +214,7 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 		if (!$row->store())
 		{
 			// Install failed, roll back changes
-			$this->parent->abort(JText::sprintf('JLIB_INSTALLER_ABORT_PACK_INSTALL_ROLLBACK', $row->getError()));
-
-			return false;
+			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_PACK_INSTALL_ROLLBACK', $row->getError()));
 		}
 
 		/*
@@ -236,10 +224,7 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 		 */
 
 		// Run the custom method based on the route
-		if (!$this->triggerManifestScript($this->route))
-		{
-			return false;
-		}
+		$this->triggerManifestScript($this->route);
 
 		// Lastly, we will copy the manifest file to its appropriate place.
 		$manifest = array();
@@ -249,11 +234,9 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 		if (!$this->parent->copyFiles(array($manifest), true))
 		{
 			// Install failed, rollback changes
-			$this->parent->abort(
+			throw new RuntimeException(
 				JText::sprintf('JLIB_INSTALLER_ABORT_PACK_INSTALL_COPY_SETUP', JText::_('JLIB_INSTALLER_ABORT_PACK_INSTALL_NO_FILES'))
 			);
-
-			return false;
 		}
 
 		// If there is a manifest script, let's copy it.
@@ -273,9 +256,7 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 				if (!$this->parent->copyFiles(array($path)))
 				{
 					// Install failed, rollback changes
-					$this->parent->abort(JText::_('JLIB_INSTALLER_ABORT_PACKAGE_INSTALL_MANIFEST'));
-
-					return false;
+					throw new RuntimeException(JText::_('JLIB_INSTALLER_ABORT_PACKAGE_INSTALL_MANIFEST'));
 				}
 			}
 		}

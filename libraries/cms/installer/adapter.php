@@ -105,6 +105,7 @@ abstract class JInstallerAdapter extends JAdapterInstance
 	 * @param   string  $route  The action being performed on the database
 	 *
 	 * @return  boolean  True on success
+	 * @throws  RuntimeException
 	 *
 	 * @since   3.1
 	 */
@@ -123,10 +124,7 @@ abstract class JInstallerAdapter extends JAdapterInstance
 				// Only rollback if installing
 				if ($route == 'install')
 				{
-					// Install failed, rollback changes
-					$this->parent->abort(
-						JText::sprintf('JLIB_INSTALLER_ABORT_INSTALL_SQL_ERROR', JText::_('JLIB_INSTALLER_' . $this->route), $db->stderr(true))
-					);
+					throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_INSTALL_SQL_ERROR', JText::_('JLIB_INSTALLER_' . $this->route), $db->stderr(true)));
 				}
 
 				return false;
@@ -162,6 +160,7 @@ abstract class JInstallerAdapter extends JAdapterInstance
 	 * @param   string  $manifestPath  Path to the manifest file
 	 *
 	 * @return  boolean  Result of operation, true if updated, false on failure
+	 * @throws  RuntimeException
 	 *
 	 * @since   3.1
 	 */
@@ -180,8 +179,7 @@ abstract class JInstallerAdapter extends JAdapterInstance
 		}
 		catch (RuntimeException $e)
 		{
-			JLog::add(JText::_('JLIB_INSTALLER_ERROR_REFRESH_MANIFEST_CACHE'), JLog::WARNING, 'jerror');
-			return false;
+			throw new RuntimeException(JText::_('JLIB_INSTALLER_ERROR_REFRESH_MANIFEST_CACHE'));
 		}
 	}
 
@@ -193,12 +191,12 @@ abstract class JInstallerAdapter extends JAdapterInstance
 	 * @param   string  $clientId   The ID of the application
 	 *
 	 * @return  boolean  True if extension exists
+	 * @throws  RuntimeException
 	 *
 	 * @since   3.1
 	 */
 	protected function extensionExists($extension, $type, $clientId = null)
 	{
-		// TODO: do we really need this function?
 		// Get a database connector object
 		$db = $this->parent->getDBO();
 
@@ -220,18 +218,12 @@ abstract class JInstallerAdapter extends JAdapterInstance
 		}
 		catch (RuntimeException $e)
 		{
-			// Install failed, roll back changes
-			$this->parent->abort(JText::sprintf('JLIB_INSTALLER_ABORT_ROLLBACK', $db->stderr(true)));
-			return false;
+			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_ROLLBACK', $e->getMessage()));
 		}
 		$id = (int) $db->loadResult();
 
-		if (empty($id))
-		{
-			return false;
-		}
-
-		return $id;
+		// Return true if extension id > 0.
+		return $id > 0;
 	}
 
 	/**
@@ -356,6 +348,7 @@ abstract class JInstallerAdapter extends JAdapterInstance
 	 * @param   string  $method  The install method to execute
 	 *
 	 * @return  boolean  True on success
+	 * @throws  RuntimeException
 	 *
 	 * @since   3.1
 	 */
@@ -376,8 +369,7 @@ abstract class JInstallerAdapter extends JAdapterInstance
 						if ($method != 'postflight')
 						{
 							// The script failed, rollback changes
-							$this->parent->abort(JText::_('JLIB_INSTALLER_ABORT_INSTALL_CUSTOM_INSTALL_FAILURE'));
-							return false;
+							throw new RuntimeException(JText::_('JLIB_INSTALLER_ABORT_INSTALL_CUSTOM_INSTALL_FAILURE'));
 						}
 					}
 					break;
@@ -391,8 +383,7 @@ abstract class JInstallerAdapter extends JAdapterInstance
 						if ($method != 'uninstall')
 						{
 							// The script failed, rollback changes
-							$this->parent->abort(JText::_('JLIB_INSTALLER_ABORT_INSTALL_CUSTOM_INSTALL_FAILURE'));
-							return false;
+							throw new RuntimeException(JText::_('JLIB_INSTALLER_ABORT_INSTALL_CUSTOM_INSTALL_FAILURE'));
 						}
 					}
 					break;

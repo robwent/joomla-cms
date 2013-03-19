@@ -145,9 +145,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		// Make sure that we have an admin element
 		if (!$this->manifest->administration)
 		{
-			JLog::add(JText::_('JLIB_INSTALLER_ERROR_COMP_INSTALL_ADMIN_ELEMENT'), JLog::WARNING, 'jerror');
-
-			return false;
+			throw new RuntimeException(JText::_('JLIB_INSTALLER_ERROR_COMP_INSTALL_ADMIN_ELEMENT'));
 		}
 
 		/*
@@ -178,20 +176,17 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 				if (file_exists($this->parent->getPath('extension_site')))
 				{
 					// If the site exists say so.
-					JLog::add(
-						JText::sprintf('JLIB_INSTALLER_ERROR_COMP_INSTALL_DIR_SITE', $this->parent->getPath('extension_site')),
-						JLog::WARNING, 'jerror'
+					throw new RuntimeException(
+						JText::sprintf('JLIB_INSTALLER_ERROR_COMP_INSTALL_DIR_SITE', $this->parent->getPath('extension_site'))
 					);
 				}
 				else
 				{
 					// If the admin exists say so
-					JLog::add(
-						JText::sprintf('JLIB_INSTALLER_ERROR_COMP_INSTALL_DIR_ADMIN', $this->parent->getPath('extension_administrator')),
-						JLog::WARNING, 'jerror'
+					throw new RuntimeException(
+						JText::sprintf('JLIB_INSTALLER_ERROR_COMP_INSTALL_DIR_ADMIN', $this->parent->getPath('extension_administrator'))
 					);
 				}
-				return false;
 			}
 		}
 
@@ -203,11 +198,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 
 		$this->setupScriptfile();
 		$this->route = 'install';
-
-		if(!$this->triggerManifestScript('preflight'))
-		{
-			return false;
-		}
+		$this->triggerManifestScript('preflight');
 
 		// If the component directory does not exist, let's create it
 		$created = false;
@@ -216,12 +207,9 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		{
 			if (!$created = JFolder::create($this->parent->getPath('extension_site')))
 			{
-				JLog::add(
-					JText::sprintf('JLIB_INSTALLER_ERROR_COMP_INSTALL_FAILED_TO_CREATE_DIRECTORY_SITE', $this->parent->getPath('extension_site')),
-					JLog::WARNING, 'jerror'
+				throw new RuntimeException(
+					JText::sprintf('JLIB_INSTALLER_ERROR_COMP_INSTALL_FAILED_TO_CREATE_DIRECTORY_SITE', $this->parent->getPath('extension_site'))
 				);
-
-				return false;
 			}
 		}
 
@@ -241,15 +229,9 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		{
 			if (!$created = JFolder::create($this->parent->getPath('extension_administrator')))
 			{
-				JLog::add(
-					JText::sprintf('JLIB_INSTALLER_ERROR_COMP_INSTALL_FAILED_TO_CREATE_DIRECTORY_ADMIN', $this->parent->getPath('extension_administrator')),
-					JLog::WARNING, 'jerror'
+				throw new RuntimeException(
+					JText::sprintf('JLIB_INSTALLER_ERROR_COMP_INSTALL_FAILED_TO_CREATE_DIRECTORY_ADMIN', $this->parent->getPath('extension_administrator'))
 				);
-
-				// Install failed, rollback any changes
-				$this->parent->abort();
-
-				return false;
 			}
 		}
 
@@ -267,9 +249,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		{
 			if ($this->parent->parseFiles($this->manifest->files) === false)
 			{
-				// Install failed, rollback any changes
-				$this->parent->abort();
-
+				// TODO: throw exception
 				return false;
 			}
 		}
@@ -279,9 +259,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		{
 			if ($this->parent->parseFiles($this->manifest->administration->files, 1) === false)
 			{
-				// Install failed, rollback any changes
-				$this->parent->abort();
-
+				// TODO: throw exception
 				return false;
 			}
 		}
@@ -301,10 +279,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 			{
 				if (!$this->parent->copyFiles(array($path)))
 				{
-					// Install failed, rollback changes
-					$this->parent->abort(JText::_('JLIB_INSTALLER_ABORT_COMP_INSTALL_MANIFEST'));
-
-					return false;
+					throw new RuntimeException(JText::_('JLIB_INSTALLER_ABORT_COMP_INSTALL_MANIFEST'));
 				}
 			}
 		}
@@ -318,6 +293,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		// Run the install queries for the component
 		if (!$this->doDatabaseTransactions('install'))
 		{
+			// TODO: throw exception
 			return false;
 		}
 
@@ -327,10 +303,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		 * ---------------------------------------------------------------------------------------------
 		 */
 
-		if (!$this->triggerManifestScript('install'))
-		{
-			return false;
-		}
+		$this->triggerManifestScript('install');
 
 		/**
 		 * ---------------------------------------------------------------------------------------------
@@ -356,9 +329,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		if (!$row->store())
 		{
 			// Install failed, roll back changes
-			$this->parent->abort(JText::sprintf('JLIB_INSTALLER_ABORT_COMP_INSTALL_ROLLBACK', $db->stderr(true)));
-
-			return false;
+			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_COMP_INSTALL_ROLLBACK', $db->stderr(true)));
 		}
 
 		$eid = $row->extension_id;
@@ -382,10 +353,8 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		// We will copy the manifest file to its appropriate place.
 		if (!$this->parent->copyManifest())
 		{
-			// Install failed, rollback changes
-			$this->parent->abort(JText::_('JLIB_INSTALLER_ABORT_COMP_INSTALL_COPY_SETUP'));
-
-			return false;
+			// Install failed, roll back changes
+			throw new RuntimeException(JText::_('JLIB_INSTALLER_ABORT_COMP_INSTALL_COPY_SETUP'));
 		}
 
 		// Time to build the admin menus
@@ -411,9 +380,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		if (!$asset->store())
 		{
 			// Install failed, roll back changes
-			$this->parent->abort(JText::sprintf('JLIB_INSTALLER_ABORT_COMP_INSTALL_ROLLBACK', $db->stderr(true)));
-
-			return false;
+			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_COMP_INSTALL_ROLLBACK', $db->stderr(true)));
 		}
 
 		// And now we run the postflight
@@ -506,9 +473,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		// Make sure that we have an admin element
 		if (!$this->manifest->administration)
 		{
-			JLog::add(JText::_('JLIB_INSTALLER_ABORT_COMP_UPDATE_ADMIN_ELEMENT'), JLog::WARNING, 'jerror');
-
-			return false;
+			throw new RuntimeException(JText::_('JLIB_INSTALLER_ABORT_COMP_UPDATE_ADMIN_ELEMENT'));
 		}
 
 		/**
@@ -519,11 +484,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 
 		$this->setupScriptfile();
 		$this->route = 'update';
-
-		if (!$this->triggerManifestScript('preflight'))
-		{
-			return false;
-		}
+		$this->triggerManifestScript('preflight');
 
 		/**
 		 * ---------------------------------------------------------------------------------------------
@@ -538,12 +499,9 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		{
 			if (!$created = JFolder::create($this->parent->getPath('extension_site')))
 			{
-				JLog::add(
-					JText::sprintf('JLIB_INSTALLER_ERROR_COMP_UPDATE_FAILED_TO_CREATE_DIRECTORY_SITE', $this->parent->getPath('extension_site')),
-					JLog::WARNING, 'jerror'
+				throw new RuntimeException(
+					JText::sprintf('JLIB_INSTALLER_ERROR_COMP_UPDATE_FAILED_TO_CREATE_DIRECTORY_SITE', $this->parent->getPath('extension_site'))
 				);
-
-				return false;
 			}
 		}
 
@@ -563,15 +521,9 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		{
 			if (!$created = JFolder::create($this->parent->getPath('extension_administrator')))
 			{
-				JLog::add(
-					JText::sprintf('JLIB_INSTALLER_ERROR_COMP_UPDATE_FAILED_TO_CREATE_DIRECTORY_ADMIN', $this->parent->getPath('extension_administrator')),
-					JLog::WARNING, 'jerror'
+				throw new RuntimeException(
+					JText::sprintf('JLIB_INSTALLER_ERROR_COMP_UPDATE_FAILED_TO_CREATE_DIRECTORY_ADMIN', $this->parent->getPath('extension_administrator'))
 				);
-
-				// Install failed, rollback any changes
-				$this->parent->abort();
-
-				return false;
 			}
 		}
 
@@ -623,9 +575,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 				if (!$this->parent->copyFiles(array($path)))
 				{
 					// Install failed, rollback changes
-					$this->parent->abort(JText::_('JLIB_INSTALLER_ABORT_COMP_UPDATE_MANIFEST'));
-
-					return false;
+					throw new RuntimeException(JText::_('JLIB_INSTALLER_ABORT_COMP_UPDATE_MANIFEST'));
 				}
 			}
 		}
@@ -647,9 +597,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 			if ($result === false)
 			{
 				// Install failed, rollback changes
-				$this->parent->abort(JText::sprintf('JLIB_INSTALLER_ABORT_COMP_UPDATE_SQL_ERROR', $db->stderr(true)));
-
-				return false;
+				throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_COMP_UPDATE_SQL_ERROR', $db->stderr(true)));
 			}
 		}
 
@@ -665,10 +613,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		 * ---------------------------------------------------------------------------------------------
 		 */
 
-		if (!$this->triggerManifestScript('update'))
-		{
-			return false;
-		}
+		$this->triggerManifestScript('update');
 
 		/**
 		 * ---------------------------------------------------------------------------------------------
@@ -710,18 +655,14 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		if (!$row->store())
 		{
 			// Install failed, roll back changes
-			$this->parent->abort(JText::sprintf('JLIB_INSTALLER_ABORT_COMP_UPDATE_ROLLBACK', $db->stderr(true)));
-
-			return false;
+			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_COMP_UPDATE_ROLLBACK', $db->stderr(true)));
 		}
 
 		// We will copy the manifest file to its appropriate place.
 		if (!$this->parent->copyManifest())
 		{
 			// Install failed, rollback changes
-			$this->parent->abort(JText::_('JLIB_INSTALLER_ABORT_COMP_UPDATE_COPY_SETUP'));
-
-			return false;
+			throw new RuntimeException(JText::_('JLIB_INSTALLER_ABORT_COMP_UPDATE_COPY_SETUP'));
 		}
 
 		// And now we run the postflight

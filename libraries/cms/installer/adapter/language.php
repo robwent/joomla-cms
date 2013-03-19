@@ -71,9 +71,7 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 
 			if ($client === null)
 			{
-				$this->parent->abort(JText::sprintf('JLIB_INSTALLER_ABORT', JText::sprintf('JLIB_INSTALLER_ERROR_UNKNOWN_CLIENT_TYPE', $cname)));
-
-				return false;
+				throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT', JText::sprintf('JLIB_INSTALLER_ERROR_UNKNOWN_CLIENT_TYPE', $cname)));
 			}
 			$basePath = $client->path;
 			$clientId = $client->id;
@@ -112,9 +110,7 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 		// Check if we found the tag - if we didn't, we may be trying to install from an older language package
 		if (!$tag)
 		{
-			$this->parent->abort(JText::sprintf('JLIB_INSTALLER_ABORT', JText::_('JLIB_INSTALLER_ERROR_NO_LANGUAGE_TAG')));
-
-			return false;
+			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT', JText::_('JLIB_INSTALLER_ERROR_NO_LANGUAGE_TAG')));
 		}
 
 		$this->tag = $tag;
@@ -129,15 +125,12 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 		{
 			if (!$created = JFolder::create($this->parent->getPath('extension_site')))
 			{
-				$this->parent
-					->abort(
+				throw new RuntimeException(
 					JText::sprintf(
 						'JLIB_INSTALLER_ABORT',
 						JText::sprintf('JLIB_INSTALLER_ERROR_CREATE_FOLDER_FAILED', $this->parent->getPath('extension_site'))
 					)
 				);
-
-				return false;
 			}
 		}
 		else
@@ -157,20 +150,17 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 				if (file_exists($this->parent->getPath('extension_site')))
 				{
 					// If the site exists say so.
-					JLog::add(
-						JText::sprintf('JLIB_INSTALLER_ABORT', JText::sprintf('JLIB_INSTALLER_ERROR_FOLDER_IN_USE', $this->parent->getPath('extension_site'))),
-						JLog::WARNING, 'jerror'
+					throw new RuntimeException(
+						JText::sprintf('JLIB_INSTALLER_ABORT', JText::sprintf('JLIB_INSTALLER_ERROR_FOLDER_IN_USE', $this->parent->getPath('extension_site')))
 					);
 				}
 				else
 				{
 					// If the admin exists say so.
-					JLog::add(
-						JText::sprintf('JLIB_INSTALLER_ABORT', JText::sprintf('JLIB_INSTALLER_ERROR_FOLDER_IN_USE', $this->parent->getPath('extension_administrator'))),
-						JLog::WARNING, 'jerror'
+					throw new RuntimeException(
+						JText::sprintf('JLIB_INSTALLER_ABORT', JText::sprintf('JLIB_INSTALLER_ERROR_FOLDER_IN_USE', $this->parent->getPath('extension_administrator')))
 					);
 				}
-				return false;
 			}
 		}
 
@@ -187,9 +177,7 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 		// Copy all the necessary files
 		if ($this->parent->parseFiles($element) === false)
 		{
-			// Install failed, rollback changes
-			$this->parent->abort();
-
+			// TODO: throw exception
 			return false;
 		}
 
@@ -202,9 +190,7 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 
 		if ($this->parent->parseFiles($this->manifest->fonts) === false)
 		{
-			// Install failed, rollback changes
-			$this->parent->abort();
-
+			// TODO: throw exception
 			return false;
 		}
 		$this->parent->setOverwrite($overwrite);
@@ -239,9 +225,7 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 		if (!$row->store())
 		{
 			// Install failed, roll back changes
-			$this->parent->abort(JText::sprintf('JLIB_INSTALLER_ABORT', $row->getError()));
-
-			return false;
+			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT', $row->getError()));
 		}
 
 		// Clobber any possible pending updates
@@ -272,9 +256,7 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 
 		if ($client === null || (empty($cname) && $cname !== 0))
 		{
-			$this->parent->abort(JText::sprintf('JLIB_INSTALLER_ABORT', JText::sprintf('JLIB_INSTALLER_ERROR_UNKNOWN_CLIENT_TYPE', $cname)));
-
-			return false;
+			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT', JText::sprintf('JLIB_INSTALLER_ERROR_UNKNOWN_CLIENT_TYPE', $cname)));
 		}
 		$basePath = $client->path;
 		$clientId = $client->id;
@@ -289,9 +271,7 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 		// Check if we found the tag - if we didn't, we may be trying to install from an older language package
 		if (!$tag)
 		{
-			$this->parent->abort(JText::sprintf('JLIB_INSTALLER_ABORT', JText::_('JLIB_INSTALLER_ERROR_NO_LANGUAGE_TAG')));
-
-			return false;
+			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT', JText::_('JLIB_INSTALLER_ERROR_NO_LANGUAGE_TAG')));
 		}
 
 		$this->tag = $tag;
@@ -302,9 +282,7 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 		// Copy all the necessary files
 		if ($this->parent->parseFiles($this->manifest->files) === false)
 		{
-			// Install failed, rollback changes
-			$this->parent->abort();
-
+			// TODO: throw exception
 			return false;
 		}
 
@@ -317,9 +295,7 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 
 		if ($this->parent->parseFiles($this->manifest->fonts) === false)
 		{
-			// Install failed, rollback changes
-			$this->parent->abort();
-
+			// TODO: throw exception
 			return false;
 		}
 		$this->parent->setOverwrite($overwrite);
@@ -369,9 +345,7 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 		if (!$row->store())
 		{
 			// Install failed, roll back changes
-			$this->parent->abort(JText::sprintf('JLIB_INSTALLER_ABORT', $row->getError()));
-
-			return false;
+			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT', $row->getError()));
 		}
 
 		return $row->extension_id;
