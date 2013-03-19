@@ -170,9 +170,7 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 		}
 		else
 		{
-			$this->parent->abort(JText::sprintf('JLIB_INSTALLER_ABORT_PLG_INSTALL_NO_FILE', JText::_('JLIB_INSTALLER_' . $this->route)));
-
-			return false;
+			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_PLG_INSTALL_NO_FILE', JText::_('JLIB_INSTALLER_' . $this->route)));
 		}
 
 		// Check if we should enable overwrite settings
@@ -185,10 +183,7 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 		catch (RuntimeException $e)
 		{
 			// Install failed, roll back changes
-			$this->parent
-				->abort(JText::sprintf('JLIB_INSTALLER_ABORT_PLG_INSTALL_ROLLBACK', JText::_('JLIB_INSTALLER_' . $this->route), $db->stderr(true)));
-
-			return false;
+			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_PLG_INSTALL_ROLLBACK', JText::_('JLIB_INSTALLER_' . $this->route), $db->stderr(true)));
 		}
 
 		// If it's on the fs...
@@ -214,15 +209,12 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 			{
 				// Overwrite is set
 				// We didn't have overwrite set, find an update function or find an update tag so lets call it safe
-				$this->parent
-					->abort(
+				throw new RuntimeException(
 					JText::sprintf(
 						'JLIB_INSTALLER_ABORT_PLG_INSTALL_DIRECTORY', JText::_('JLIB_INSTALLER_' . $this->route),
 						$this->parent->getPath('extension_root')
 					)
 				);
-
-				return false;
 			}
 		}
 
@@ -248,15 +240,12 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 		{
 			if (!$created = JFolder::create($this->parent->getPath('extension_root')))
 			{
-				$this->parent
-					->abort(
+				throw new RuntimeException(
 					JText::sprintf(
 						'JLIB_INSTALLER_ABORT_PLG_INSTALL_CREATE_DIRECTORY', JText::_('JLIB_INSTALLER_' . $this->route),
 						$this->parent->getPath('extension_root')
 					)
 				);
-
-				return false;
 			}
 		}
 
@@ -290,9 +279,7 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 		// Copy all necessary files
 		if ($this->parent->parseFiles($this->manifest->files, -1, $this->oldFiles) === false)
 		{
-			// Install failed, roll back changes
-			$this->parent->abort();
-
+			// TODO: throw exception
 			return false;
 		}
 
@@ -311,10 +298,7 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 				if (!$this->parent->copyFiles(array($path)))
 				{
 					// Install failed, rollback changes
-					$this->parent
-						->abort(JText::sprintf('JLIB_INSTALLER_ABORT_PLG_INSTALL_MANIFEST', JText::_('JLIB_INSTALLER_' . $this->route)));
-
-					return false;
+					throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_PLG_INSTALL_MANIFEST', JText::_('JLIB_INSTALLER_' . $this->route)));
 				}
 			}
 		}
@@ -333,15 +317,12 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 			if (!$this->parent->isOverwrite())
 			{
 				// Install failed, roll back changes
-				$this->parent
-					->abort(
+				throw new RuntimeException(
 					JText::sprintf(
 						'JLIB_INSTALLER_ABORT_PLG_INSTALL_ALLREADY_EXISTS', JText::_('JLIB_INSTALLER_' . $this->route),
 						$this->name
 					)
 				);
-
-				return false;
 			}
 			$row->load($id);
 			$row->name = $this->name;
@@ -380,12 +361,9 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 			if (!$row->store())
 			{
 				// Install failed, roll back changes
-				$this->parent
-					->abort(
+				throw new RuntimeException(
 					JText::sprintf('JLIB_INSTALLER_ABORT_PLG_INSTALL_ROLLBACK', JText::_('JLIB_INSTALLER_' . $this->route), $db->stderr(true))
 				);
-
-				return false;
 			}
 
 			// Since we have created a plugin item, we add it to the installation step stack
@@ -417,9 +395,7 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 				if ($result === false)
 				{
 					// Install failed, rollback changes
-					$this->parent->abort(JText::sprintf('JLIB_INSTALLER_ABORT_PLG_UPDATE_SQL_ERROR', $db->stderr(true)));
-
-					return false;
+					throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_PLG_UPDATE_SQL_ERROR', $db->stderr(true)));
 				}
 			}
 		}
@@ -437,9 +413,7 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 		if (!$this->parent->copyManifest(-1))
 		{
 			// Install failed, rollback changes
-			$this->parent->abort(JText::sprintf('JLIB_INSTALLER_ABORT_PLG_INSTALL_COPY_SETUP', JText::_('JLIB_INSTALLER_' . $this->route)));
-
-			return false;
+			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_PLG_INSTALL_COPY_SETUP', JText::_('JLIB_INSTALLER_' . $this->route)));
 		}
 
 		// And now we run the postflight
@@ -513,6 +487,8 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 		 */
 
 		$this->setupScriptfile();
+
+		// TODO: shouldn't this be removed?!?
 		$this->triggerManifestScript('preflight');
 
 		// Let's run the queries for the plugin

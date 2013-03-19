@@ -80,9 +80,7 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 
 			if ($client === false)
 			{
-				$this->parent->abort(JText::sprintf('JLIB_INSTALLER_ABORT_TPL_INSTALL_UNKNOWN_CLIENT', $cname));
-
-				return false;
+				throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_TPL_INSTALL_UNKNOWN_CLIENT', $cname));
 			}
 			$basePath = $client->path;
 			$clientId = $client->id;
@@ -103,9 +101,7 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 		catch (RuntimeException $e)
 		{
 			// Install failed, roll back changes
-			$this->parent->abort(JText::sprintf('JLIB_INSTALLER_ABORT_TPL_INSTALL_ROLLBACK'), $e->getMessage());
-
-			return false;
+			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_TPL_INSTALL_ROLLBACK'), $e->getMessage());
 		}
 
 		// Set the template root path
@@ -133,15 +129,12 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 			{
 				// Overwrite is not set
 				// If we didn't have overwrite set, find an update function or find an update tag so let's call it safe
-				$this->parent
-					->abort(
+				throw new RuntimeException(
 					JText::sprintf(
 						'JLIB_INSTALLER_ABORT_TPL_INSTALL_ANOTHER_TEMPLATE_USING_DIRECTORY', JText::_('JLIB_INSTALLER_' . $this->route),
 						$this->parent->getPath('extension_root')
 					)
 				);
-
-				return false;
 			}
 		}
 
@@ -151,12 +144,9 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 		 */
 		if (file_exists($this->parent->getPath('extension_root')) && !$this->parent->isOverwrite())
 		{
-			JLog::add(
-				JText::sprintf('JLIB_INSTALLER_ABORT_TPL_INSTALL_ANOTHER_TEMPLATE_USING_DIRECTORY', $this->parent->getPath('extension_root')),
-				JLog::WARNING, 'jerror'
+			throw new RuntimeException(
+				JText::sprintf('JLIB_INSTALLER_ABORT_TPL_INSTALL_ANOTHER_TEMPLATE_USING_DIRECTORY', $this->parent->getPath('extension_root'))
 			);
-
-			return false;
 		}
 
 		// If the template directory does not exist, let's create it
@@ -166,10 +156,7 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 		{
 			if (!$created = JFolder::create($this->parent->getPath('extension_root')))
 			{
-				$this->parent
-					->abort(JText::sprintf('JLIB_INSTALLER_ABORT_TPL_INSTALL_FAILED_CREATE_DIRECTORY', $this->parent->getPath('extension_root')));
-
-				return false;
+				throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_TPL_INSTALL_FAILED_CREATE_DIRECTORY', $this->parent->getPath('extension_root')));
 			}
 		}
 
@@ -183,25 +170,19 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 		// Copy all the necessary files
 		if ($this->parent->parseFiles($this->manifest->files, -1) === false)
 		{
-			// Install failed, rollback changes
-			$this->parent->abort();
-
+			// TODO: throw exception
 			return false;
 		}
 
 		if ($this->parent->parseFiles($this->manifest->images, -1) === false)
 		{
-			// Install failed, rollback changes
-			$this->parent->abort();
-
+			// TODO: throw exception
 			return false;
 		}
 
 		if ($this->parent->parseFiles($this->manifest->css, -1) === false)
 		{
-			// Install failed, rollback changes
-			$this->parent->abort();
-
+			// TODO: throw exception
 			return false;
 		}
 
@@ -213,9 +194,7 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 		if (!$this->parent->copyManifest(-1))
 		{
 			// Install failed, rollback changes
-			$this->parent->abort(JText::_('JLIB_INSTALLER_ABORT_TPL_INSTALL_COPY_SETUP'));
-
-			return false;
+			throw new RuntimeException(JText::_('JLIB_INSTALLER_ABORT_TPL_INSTALL_COPY_SETUP'));
 		}
 
 		/**
@@ -254,9 +233,7 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 		if (!$row->store())
 		{
 			// Install failed, roll back changes
-			$this->parent->abort(JText::sprintf('JLIB_INSTALLER_ABORT_TPL_INSTALL_ROLLBACK', $db->stderr(true)));
-
-			return false;
+			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_TPL_INSTALL_ROLLBACK', $db->stderr(true)));
 		}
 
 		if ($this->route == 'install')

@@ -78,9 +78,7 @@ class JInstallerAdapterFile extends JInstallerAdapter
 			if (!$this->parent->isOverwrite())
 			{
 				// We're not overwriting so abort
-				$this->parent->abort(JText::_('JLIB_INSTALLER_ABORT_FILE_SAME_NAME'));
-
-				return false;
+				throw new RuntimeException(JText::_('JLIB_INSTALLER_ABORT_FILE_SAME_NAME'));
 			}
 			else
 			{
@@ -124,12 +122,7 @@ class JInstallerAdapterFile extends JInstallerAdapter
 			{
 				if (!$created = JFolder::create($folder))
 				{
-					JLog::add(JText::sprintf('JLIB_INSTALLER_ABORT_FILE_INSTALL_FAIL_SOURCE_DIRECTORY', $folder), JLog::WARNING, 'jerror');
-
-					// If installation fails, rollback
-					$this->parent->abort();
-
-					return false;
+					throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_FILE_INSTALL_FAIL_SOURCE_DIRECTORY', $folder));
 				}
 
 				// Since we created a directory and will want to remove it if we have to roll back.
@@ -163,28 +156,9 @@ class JInstallerAdapterFile extends JInstallerAdapter
 		 * we can assume that it was (badly) uninstalled
 		 * If it isn't, add an entry to extensions
 		 */
-		$query = $db->getQuery(true);
-		$query->select($query->qn('extension_id'))
-			->from($query->qn('#__extensions'))
-			->where($query->qn('type') . ' = ' . $query->q('file'))
-			->where($query->qn('element') . ' = ' . $query->q($this->element));
-		$db->setQuery($query);
-
-		try
-		{
-			$db->execute();
-		}
-		catch (RuntimeException $e)
-		{
-			// Install failed, roll back changes
-			$this->parent->abort(
-				JText::sprintf('JLIB_INSTALLER_ABORT_FILE_ROLLBACK', JText::_('JLIB_INSTALLER_' . $this->route), $db->stderr(true))
-			);
-
-			return false;
-		}
-		$id = $db->loadResult();
 		$row = JTable::getInstance('extension');
+
+		$id = $row->find(array('type' => 'file', 'element' => $this->element));
 
 		if ($id)
 		{
@@ -200,11 +174,9 @@ class JInstallerAdapterFile extends JInstallerAdapter
 			if (!$row->store())
 			{
 				// Install failed, roll back changes
-				$this->parent->abort(
+				throw new RuntimeException(
 					JText::sprintf('JLIB_INSTALLER_ABORT_FILE_ROLLBACK', JText::_('JLIB_INSTALLER_' . $this->route), $db->stderr(true))
 				);
-
-				return false;
 			}
 		}
 		else
@@ -227,9 +199,7 @@ class JInstallerAdapterFile extends JInstallerAdapter
 			if (!$row->store())
 			{
 				// Install failed, roll back changes
-				$this->parent->abort(JText::sprintf('JLIB_INSTALLER_ABORT_FILE_INSTALL_ROLLBACK', $db->stderr(true)));
-
-				return false;
+				throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_FILE_INSTALL_ROLLBACK', $db->stderr(true)));
 			}
 
 			// Since we have created a module item, we add it to the installation step stack
@@ -242,6 +212,7 @@ class JInstallerAdapterFile extends JInstallerAdapter
 		{
 			if (!$this->doDatabaseTransactions('install'))
 			{
+				// TODO: throw exception
 				return false;
 			}
 
@@ -260,9 +231,7 @@ class JInstallerAdapterFile extends JInstallerAdapter
 				if ($result === false)
 				{
 					// Install failed, rollback changes
-					$this->parent->abort(JText::sprintf('JLIB_INSTALLER_ABORT_FILE_UPDATE_SQL_ERROR', $db->stderr(true)));
-
-					return false;
+					throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_FILE_UPDATE_SQL_ERROR', $db->stderr(true)));
 				}
 			}
 		}
@@ -278,9 +247,7 @@ class JInstallerAdapterFile extends JInstallerAdapter
 		if (!$this->parent->copyFiles(array($manifest), true))
 		{
 			// Install failed, rollback changes
-			$this->parent->abort(JText::_('JLIB_INSTALLER_ABORT_FILE_INSTALL_COPY_SETUP'));
-
-			return false;
+			throw new RuntimeException(JText::_('JLIB_INSTALLER_ABORT_FILE_INSTALL_COPY_SETUP'));
 		}
 
 		// If there is a manifest script, let's copy it.
@@ -300,9 +267,7 @@ class JInstallerAdapterFile extends JInstallerAdapter
 				if (!$this->parent->copyFiles(array($path)))
 				{
 					// Install failed, rollback changes
-					$this->parent->abort(JText::_('JLIB_INSTALLER_ABORT_PACKAGE_INSTALL_MANIFEST'));
-
-					return false;
+					throw new RuntimeException(JText::_('JLIB_INSTALLER_ABORT_PACKAGE_INSTALL_MANIFEST'));
 				}
 			}
 		}

@@ -134,10 +134,7 @@ class JInstallerAdapterModule extends JInstallerAdapter
 
 			if ($client === false)
 			{
-				$this->parent
-					->abort(JText::sprintf('JLIB_INSTALLER_ABORT_MOD_UNKNOWN_CLIENT', JText::_('JLIB_INSTALLER_' . $this->route), $client->name));
-
-				return false;
+				throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_MOD_UNKNOWN_CLIENT', JText::_('JLIB_INSTALLER_' . $this->route), $client->name));
 			}
 
 			$basePath = $client->path;
@@ -157,9 +154,7 @@ class JInstallerAdapterModule extends JInstallerAdapter
 		}
 		else
 		{
-			$this->parent->abort(JText::sprintf('JLIB_INSTALLER_ABORT_MOD_INSTALL_NOFILE', JText::_('JLIB_INSTALLER_' . $this->route)));
-
-			return false;
+			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_MOD_INSTALL_NOFILE', JText::_('JLIB_INSTALLER_' . $this->route)));
 		}
 
 		/*
@@ -168,13 +163,13 @@ class JInstallerAdapterModule extends JInstallerAdapter
 		 * we can assume that it was (badly) uninstalled
 		 * If it isn't, add an entry to extensions
 		 */
-		$id = JTable::getInstance('extension')->find(array('element' => $this->element, 'type' => 'module', 'client_id'=>$clientId));
-		if (!$id) {
+		try {
+			$id = JTable::getInstance('extension')->find(array('element' => $this->element, 'type' => 'module', 'client_id'=>$clientId));
+		}
+		catch (RuntimeException $e)
+		{
 			// Install failed, roll back changes
-			$this->parent
-				->abort(JText::sprintf('JLIB_INSTALLER_ABORT_MOD_ROLLBACK', JText::_('JLIB_INSTALLER_' . $this->route), $db->stderr(true)));
-
-			return false;
+			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_MOD_ROLLBACK', JText::_('JLIB_INSTALLER_' . $this->route), $e->getMessage()));
 		}
 
 		/*
@@ -207,15 +202,12 @@ class JInstallerAdapterModule extends JInstallerAdapter
 			{
 				// Overwrite is set
 				// We didn't have overwrite set, find an update function or find an update tag so lets call it safe
-				$this->parent
-					->abort(
+				throw new RuntimeException(
 					JText::sprintf(
 						'JLIB_INSTALLER_ABORT_MOD_INSTALL_DIRECTORY', JText::_('JLIB_INSTALLER_' . $this->route),
 						$this->parent->getPath('extension_root')
 					)
 				);
-
-				return false;
 			}
 		}
 
@@ -241,15 +233,12 @@ class JInstallerAdapterModule extends JInstallerAdapter
 		{
 			if (!$created = JFolder::create($this->parent->getPath('extension_root')))
 			{
-				$this->parent
-					->abort(
+				throw new RuntimeException(
 					JText::sprintf(
 						'JLIB_INSTALLER_ABORT_MOD_INSTALL_CREATE_DIRECTORY', JText::_('JLIB_INSTALLER_' . $this->route),
 						$this->parent->getPath('extension_root')
 					)
 				);
-
-				return false;
 			}
 		}
 
@@ -267,9 +256,7 @@ class JInstallerAdapterModule extends JInstallerAdapter
 		// Copy all necessary files
 		if ($this->parent->parseFiles($this->manifest->files, -1) === false)
 		{
-			// Install failed, roll back changes
-			$this->parent->abort();
-
+			// TODO: throw exception
 			return false;
 		}
 
@@ -284,9 +271,7 @@ class JInstallerAdapterModule extends JInstallerAdapter
 				if (!$this->parent->copyFiles(array($path)))
 				{
 					// Install failed, rollback changes
-					$this->parent->abort(JText::_('JLIB_INSTALLER_ABORT_MOD_INSTALL_MANIFEST'));
-
-					return false;
+					throw new RuntimeException(JText::_('JLIB_INSTALLER_ABORT_MOD_INSTALL_MANIFEST'));
 				}
 			}
 		}
@@ -318,10 +303,7 @@ class JInstallerAdapterModule extends JInstallerAdapter
 			if (!$row->store())
 			{
 				// Install failed, roll back changes
-				$this->parent
-					->abort(JText::sprintf('JLIB_INSTALLER_ABORT_MOD_ROLLBACK', JText::_('JLIB_INSTALLER_' . $this->route), $db->stderr(true)));
-
-				return false;
+				throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_MOD_ROLLBACK', JText::_('JLIB_INSTALLER_' . $this->route), $db->stderr(true)));
 			}
 		}
 		else
@@ -345,10 +327,7 @@ class JInstallerAdapterModule extends JInstallerAdapter
 			if (!$row->store())
 			{
 				// Install failed, roll back changes
-				$this->parent
-					->abort(JText::sprintf('JLIB_INSTALLER_ABORT_MOD_ROLLBACK', JText::_('JLIB_INSTALLER_' . $this->route), $db->stderr(true)));
-
-				return false;
+				throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_MOD_ROLLBACK', JText::_('JLIB_INSTALLER_' . $this->route), $db->stderr(true)));
 			}
 
 			// Since we have created a module item, we add it to the installation step stack
@@ -376,6 +355,7 @@ class JInstallerAdapterModule extends JInstallerAdapter
 		{
 			if (!$this->doDatabaseTransactions('install'))
 			{
+				// TODO: throw exception
 				return false;
 			}
 
@@ -394,9 +374,7 @@ class JInstallerAdapterModule extends JInstallerAdapter
 				if ($result === false)
 				{
 					// Install failed, rollback changes
-					$this->parent->abort(JText::sprintf('JLIB_INSTALLER_ABORT_MOD_UPDATE_SQL_ERROR', $db->stderr(true)));
-
-					return false;
+					throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_MOD_UPDATE_SQL_ERROR', $db->stderr(true)));
 				}
 			}
 		}
@@ -414,9 +392,7 @@ class JInstallerAdapterModule extends JInstallerAdapter
 		if (!$this->parent->copyManifest(-1))
 		{
 			// Install failed, rollback changes
-			$this->parent->abort(JText::_('JLIB_INSTALLER_ABORT_MOD_INSTALL_COPY_SETUP'));
-
-			return false;
+			throw new RuntimeException(JText::_('JLIB_INSTALLER_ABORT_MOD_INSTALL_COPY_SETUP'));
 		}
 
 		// And now we run the postflight

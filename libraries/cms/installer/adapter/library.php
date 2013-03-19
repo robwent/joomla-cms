@@ -93,9 +93,7 @@ class JInstallerAdapterLibrary extends JInstallerAdapter
 			else
 			{
 				// Abort the install, no upgrade possible
-				$this->parent->abort(JText::_('JLIB_INSTALLER_ABORT_LIB_INSTALL_ALREADY_INSTALLED'));
-
-				return false;
+				throw new RuntimeException(JText::_('JLIB_INSTALLER_ABORT_LIB_INSTALL_ALREADY_INSTALLED'));
 			}
 		}
 
@@ -104,9 +102,7 @@ class JInstallerAdapterLibrary extends JInstallerAdapter
 
 		if (!$librarypath)
 		{
-			$this->parent->abort(JText::_('JLIB_INSTALLER_ABORT_LIB_INSTALL_NOFILE'));
-
-			return false;
+			throw new RuntimeException(JText::_('JLIB_INSTALLER_ABORT_LIB_INSTALL_NOFILE'));
 		}
 		else
 		{
@@ -126,11 +122,9 @@ class JInstallerAdapterLibrary extends JInstallerAdapter
 		{
 			if (!$created = JFolder::create($this->parent->getPath('extension_root')))
 			{
-				$this->parent->abort(
+				throw new RuntimeException(
 					JText::sprintf('JLIB_INSTALLER_ABORT_LIB_INSTALL_FAILED_TO_CREATE_DIRECTORY', $this->parent->getPath('extension_root'))
 				);
-
-				return false;
 			}
 		}
 
@@ -147,9 +141,7 @@ class JInstallerAdapterLibrary extends JInstallerAdapter
 		// Copy all necessary files
 		if ($this->parent->parseFiles($this->manifest->files, -1) === false)
 		{
-			// Install failed, roll back changes
-			$this->parent->abort();
-
+			// TODO: throw exception
 			return false;
 		}
 
@@ -178,9 +170,7 @@ class JInstallerAdapterLibrary extends JInstallerAdapter
 		if (!$row->store())
 		{
 			// Install failed, roll back changes
-			$this->parent->abort(JText::sprintf('JLIB_INSTALLER_ABORT_LIB_INSTALL_ROLLBACK', $row->getError()));
-
-			return false;
+			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_LIB_INSTALL_ROLLBACK', $row->getError()));
 		}
 
 		/**
@@ -197,9 +187,7 @@ class JInstallerAdapterLibrary extends JInstallerAdapter
 		if (!$this->parent->copyFiles(array($manifest), true))
 		{
 			// Install failed, rollback changes
-			$this->parent->abort(JText::_('JLIB_INSTALLER_ABORT_LIB_INSTALL_COPY_SETUP'));
-
-			return false;
+			throw new RuntimeException(JText::_('JLIB_INSTALLER_ABORT_LIB_INSTALL_COPY_SETUP'));
 		}
 		return $row->extension_id;
 	}
