@@ -51,7 +51,7 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 		}
 
 		$extension = 'tpl_' . strtolower($this->name);
-		$source = $path ? $path : ($this->parent->extension->client_id ? JPATH_ADMINISTRATOR : JPATH_SITE) . '/templates/' . $name;
+		$source = $path ? $path : ($this->parent->extension->client_id ? JPATH_ADMINISTRATOR : JPATH_SITE) . '/templates/' . $this->element;
 		$this->doLoadLanguage($extension, $source, constant('JPATH_' . strtoupper($client)));
 	}
 
@@ -72,7 +72,8 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 		$lang = JFactory::getLanguage();
 
 		// Get the client application target
-		if ($cname = (string) $this->manifest->attributes()->client)
+		$cname = (string) $this->manifest->attributes()->client;
+		if ($cname)
 		{
 			// Attempt to map the client to a base path
 			$client = JApplicationHelper::getClientInfo($cname, true);
@@ -94,18 +95,10 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 			$clientId = 0;
 		}
 
-		$this->element = $element;
-
 		// Check to see if a template by the same name is already installed.
-		$query = $db->getQuery(true);
-		$query->select($query->qn('extension_id'))->from($query->qn('#__extensions'));
-		$query->where($query->qn('type') . ' = ' . $query->q('template'));
-		$query->where($query->qn('element') . ' = ' . $query->q($element));
-		$db->setQuery($query);
-
 		try
 		{
-			$id = $db->loadResult();
+			$id = JTable::getInstance('extension')->find(array('type' => 'template', 'element' => $this->element, 'client_id'=>$clientId));
 		}
 		catch (RuntimeException $e)
 		{
@@ -116,7 +109,7 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 		}
 
 		// Set the template root path
-		$this->parent->setPath('extension_root', $basePath . '/templates/' . $element);
+		$this->parent->setPath('extension_root', $basePath . '/templates/' . $this->element);
 
 		// If it's on the fs...
 		if (file_exists($this->parent->getPath('extension_root')) && (!$this->parent->isOverwrite() || $this->parent->isUpgrade()))
@@ -332,11 +325,11 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 			return false;
 		}
 
-		$name = $row->element;
+		$this->element = $row->element;
 		$clientId = $row->client_id;
 
 		// For a template the id will be the template name which represents the subfolder of the templates folder that the template resides in.
-		if (!$name)
+		if (!$this->element)
 		{
 			JLog::add(JText::_('JLIB_INSTALLER_ERROR_TPL_UNINSTALL_TEMPLATE_ID_EMPTY'), JLog::WARNING, 'jerror');
 
@@ -349,7 +342,7 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 		$query->select('COUNT(*)')
 			->from($db->quoteName('#__template_styles'))
 			->where($db->quoteName('home') . ' = ' . $db->quote('1'))
-			->where($db->quoteName('template') . ' = ' . $db->quote($name));
+			->where($db->quoteName('template') . ' = ' . $db->quote($this->element));
 		$db->setQuery($query);
 
 		if ($db->loadResult() != 0)
@@ -369,7 +362,7 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 			return false;
 		}
 
-		$this->parent->setPath('extension_root', $client->path . '/templates/' . strtolower($name));
+		$this->parent->setPath('extension_root', $client->path . '/templates/' . strtolower($this->element));
 		$this->parent->setPath('source', $this->parent->getPath('extension_root'));
 
 		// We do findManifest to avoid problem when uninstalling a list of extensions: getManifest cache its manifest file
@@ -409,7 +402,7 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 			. ' SET template_style_id = 0'
 			. ' WHERE template_style_id in ('
 			. '	SELECT s.id FROM #__template_styles s'
-			. ' WHERE s.template = ' . $db->Quote(strtolower($name)) . ' AND s.client_id = ' . $clientId . ')';
+			. ' WHERE s.template = ' . $db->Quote(strtolower($this->element)) . ' AND s.client_id = ' . $clientId . ')';
 
 		$db->setQuery($query);
 		$db->execute();
@@ -417,7 +410,7 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 		$query = $db->getQuery(true);
 		$query->delete($db->quoteName('#__template_styles'))
 			->where($db->quoteName('client_id') . ' = ' . $clientId)
-			->where($db->quoteName('template') . ' = ' . $db->quote($name));
+			->where($db->quoteName('template') . ' = ' . $db->quote($this->element));
 
 		$db->setQuery($query);
 		$db->execute();
@@ -491,10 +484,12 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 	 */
 	public function discover_install()
 	{
+		$this->element = $this->parent->extension->element;
+
 		// Templates are one of the easiest
 		// If its not in the extensions table we just add it
 		$client = JApplicationHelper::getClientInfo($this->parent->extension->client_id);
-		$manifestPath = $client->path . '/templates/' . $this->parent->extension->element . '/templateDetails.xml';
+		$manifestPath = $client->path . '/templates/' . $this->element . '/templateDetails.xml';
 		$this->parent->manifest = $this->parent->isManifest($manifestPath);
 		$description = (string) $this->parent->manifest->description;
 
@@ -532,7 +527,7 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 			);
 			$query->columns($columns);
 			$query->values(
-				$db->Quote($this->parent->extension->element)
+				$db->Quote($this->element)
 				. ',' . $db->Quote($this->parent->extension->client_id)
 				. ',' . $db->Quote(0)
 				. ',' . $db->Quote(JText::sprintf('JLIB_INSTALLER_DEFAULT_STYLE', $this->parent->extension->name))

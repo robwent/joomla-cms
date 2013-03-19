@@ -94,8 +94,9 @@ abstract class JInstallerAdapter extends JAdapterInstance
 		// Set the manifest object
 		$this->manifest = $this->parent->getManifest();
 
-		// Set the name object
-		$this->getName();
+		// Set name and element
+		$this->name = $this->getName();
+		$this->element = $this->getElement();
 	}
 
 	/**
@@ -197,6 +198,7 @@ abstract class JInstallerAdapter extends JAdapterInstance
 	 */
 	protected function extensionExists($extension, $type, $clientId = null)
 	{
+		// TODO: do we really need this function?
 		// Get a database connector object
 		$db = $this->parent->getDBO();
 
@@ -222,14 +224,14 @@ abstract class JInstallerAdapter extends JAdapterInstance
 			$this->parent->abort(JText::sprintf('JLIB_INSTALLER_ABORT_ROLLBACK', $db->stderr(true)));
 			return false;
 		}
-		$id = $db->loadResult();
+		$id = (int) $db->loadResult();
 
 		if (empty($id))
 		{
 			return false;
 		}
 
-		return true;
+		return $id;
 	}
 
 	/**
@@ -241,19 +243,40 @@ abstract class JInstallerAdapter extends JAdapterInstance
 	 */
 	public function getName()
 	{
-		if (is_null($this->name))
+		// Ensure the name is a string
+		$name = (string) $this->manifest->name;
+
+		// Filter the name for illegal characters
+		$name = JFilterInput::getInstance()->clean($name, 'string');
+
+		return $name;
+	}
+
+	/**
+	 * Get the filtered extension element from the manifest
+	 *
+	 * @param   string  $element  Optional element name to be converted
+	 *
+	 * @return  string  The filtered element
+	 *
+	 * @since   3.1
+	 */
+	public function getElement($element = null)
+	{
+		if (!$element)
 		{
-			// Ensure the name is a string
-			$name = (string) $this->manifest->name;
-
-			// Filter the name for illegal characters
-			$name = JFilterInput::getInstance()->clean($name, 'cmd');
-
-			// Set the name object
-			$this->name = $name;
+			// Ensure the element is a string
+			$element = (string) $this->manifest->element;
+		}
+		if (!$element)
+		{
+			$element = $this->getName();
 		}
 
-		return $this->name;
+		// Filter the name for illegal characters
+		$element = JFilterInput::getInstance()->clean($element, 'cmd');
+
+		return $element;
 	}
 
 	/**
@@ -265,7 +288,10 @@ abstract class JInstallerAdapter extends JAdapterInstance
 	 */
 	protected function getScriptClassName()
 	{
-		return $this->element . 'InstallerScript';
+		// Support element names like 'en-GB'
+		$className = JFilterInput::getInstance()->clean($this->element, 'cmd') . 'InstallerScript';
+
+		return $className;
 	}
 
 	/**

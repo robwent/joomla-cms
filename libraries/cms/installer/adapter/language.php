@@ -21,6 +21,23 @@ jimport('joomla.filesystem.folder');
 class JInstallerAdapterLanguage extends JInstallerAdapter
 {
 	/**
+	 * Get the filtered extension element from the manifest
+	 *
+	 * @return  string  The filtered element
+	 *
+	 * @since   3.1
+	 */
+	public function getElement($element = null)
+	{
+		if (!$element)
+		{
+			$element = (string) $this->manifest->tag;
+		}
+
+		return $element;
+	}
+
+	/**
 	 * Custom install method
 	 *
 	 * Note: This behaves badly due to hacks made in the middle of 1.5.x to add

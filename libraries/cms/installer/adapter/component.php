@@ -43,6 +43,25 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 	protected $oldFiles = null;
 
 	/**
+	 * Get the filtered extension element from the manifest
+	 *
+	 * @return  string  The filtered element
+	 *
+	 * @since   3.1
+	 */
+	public function getElement($element = null)
+	{
+		$element = parent::getElement($element);
+
+		if (substr($element, 0, 4) != 'com_')
+		{
+			$element = 'com_' . $element;
+		}
+
+		return $element;
+	}
+
+	/**
 	 * Load language from a path
 	 *
 	 * @param   string  $path  The path of the language.
@@ -61,33 +80,24 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 			$this->parent->setPath('source', $client . '/components/' . $this->parent->extension->element);
 		}
 
-		if (substr($this->name, 0, 4) == 'com_')
-		{
-			$extension = $this->name;
-		}
-		else
-		{
-			$extension = 'com_' . $this->name;
-		}
-
-		$source = $path ? $path : $client . '/components/' . $extension;
+		$source = $path ? $path : $client . '/components/' . $this->element;
 
 		if ($this->manifest->administration->files)
 		{
-			$element = $this->manifest->administration->files;
+			$xmlElement = $this->manifest->administration->files;
 		}
 		elseif ($this->manifest->files)
 		{
-			$element = $this->manifest->files;
+			$xmlElement = $this->manifest->files;
 		}
 		else
 		{
-			$element = null;
+			$xmlElement = null;
 		}
 
-		if ($element)
+		if ($xmlElement)
 		{
-			$folder = (string) $element->attributes()->folder;
+			$folder = (string) $xmlElement->attributes()->folder;
 
 			if ($folder && file_exists($path . '/' . $folder))
 			{
@@ -95,7 +105,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 			}
 		}
 
-		$this->doLoadLanguage($extension, $source, JPATH_ADMINISTRATOR);
+		$this->doLoadLanguage($this->element, $source, JPATH_ADMINISTRATOR);
 	}
 
 	/**
@@ -118,16 +128,6 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		 * Manifest Document Setup Section
 		 * ---------------------------------------------------------------------------------------------
 		 */
-
-		// The element needs to be prefaced with com_, check if the name has it already
-		if (substr($this->name, 0, 4) == 'com_')
-		{
-			$this->element = $this->name;
-		}
-		else
-		{
-			$this->element = 'com_' . $this->name;
-		}
 
 		// Set the installation target paths
 		$this->parent->setPath('extension_site', JPath::clean(JPATH_SITE . '/components/' . $this->element));
@@ -436,17 +436,6 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		 * ---------------------------------------------------------------------------------------------
 		 */
 
-		if (substr($this->name, 0, 4) == 'com_')
-		{
-			$element = $this->name;
-		}
-		else
-		{
-			$element = 'com_' . $this->name;
-		}
-
-		$this->element = $element;
-
 		// Get the component description
 		$description = (string) $this->manifest->description;
 
@@ -739,7 +728,6 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 	public function uninstall($id)
 	{
 		$db = $this->parent->getDbo();
-		$row = null;
 		$retval = true;
 
 		// First order of business will be to load the component object table from the database.
@@ -762,9 +750,12 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 			return false;
 		}
 
+		// Make sure that element name is in correct format.
+		$this->element = $this->getElement($row->element);
+
 		// Get the admin and site paths for the component
-		$this->parent->setPath('extension_administrator', JPath::clean(JPATH_ADMINISTRATOR . '/components/' . $row->element));
-		$this->parent->setPath('extension_site', JPath::clean(JPATH_SITE . '/components/' . $row->element));
+		$this->parent->setPath('extension_administrator', JPath::clean(JPATH_ADMINISTRATOR . '/components/' . $this->element));
+		$this->parent->setPath('extension_site', JPath::clean(JPATH_SITE . '/components/' . $this->element));
 
 		// Copy the admin path as it's used as a common base
 		$this->parent->setPath('extension_root', $this->parent->getPath('extension_administrator'));
@@ -799,19 +790,8 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 			return false;
 		}
 
-		if (substr($this->name, 0, 4) == 'com_')
-		{
-			$element = $this->name;
-		}
-		else
-		{
-			$element = 'com_' . $this->name;
-		}
-
-		$this->element = $element;
-
 		// Attempt to load the admin language file; might have uninstall strings
-		$this->loadLanguage(JPATH_ADMINISTRATOR . '/components/' . $element);
+		$this->loadLanguage(JPATH_ADMINISTRATOR . '/components/' . $this->element);
 
 		/**
 		 * ---------------------------------------------------------------------------------------------
@@ -864,7 +844,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		// Remove the component container in the assets table.
 		$asset = JTable::getInstance('Asset');
 
-		if ($asset->loadByName($element))
+		if ($asset->loadByName($this->element))
 		{
 			$asset->delete();
 		}
@@ -872,8 +852,8 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		// Remove categories for this component
 		$query = $db->getQuery(true);
 		$query->delete($db->quoteName('#__categories'))
-			->where($db->quoteName('extension') . ' = ' . $db->quote($element), 'OR')
-			->where($db->quoteName('extension') . ' LIKE ' . $db->quote($element . '.%'));
+			->where($db->quoteName('extension') . ' = ' . $db->quote($this->element), 'OR')
+			->where($db->quoteName('extension') . ' LIKE ' . $db->quote($this->element . '.%'));
 		$db->setQuery($query);
 		$db->execute();
 
@@ -894,7 +874,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		}
 
 		// Now we need to delete the installation directories. This is the final step in uninstalling the component.
-		if (trim($row->element))
+		if (trim($this->element))
 		{
 			// Delete the component site directory
 			if (is_dir($this->parent->getPath('extension_site')))
@@ -1328,13 +1308,15 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 	 */
 	public function discover_install()
 	{
+		$this->element = $this->parent->extension->element;
+
 		// Need to find to find where the XML file is since we don't store this normally
 		$client = JApplicationHelper::getClientInfo($this->parent->extension->client_id);
-		$short_element = str_replace('com_', '', $this->parent->extension->element);
-		$manifestPath = $client->path . '/components/' . $this->parent->extension->element . '/' . $short_element . '.xml';
+		$short_element = str_replace('com_', '', $this->element);
+		$manifestPath = $client->path . '/components/' . $this->element . '/' . $short_element . '.xml';
 		$this->parent->manifest = $this->parent->isManifest($manifestPath);
 		$this->parent->setPath('manifest', $manifestPath);
-		$this->parent->setPath('source', $client->path . '/components/' . $this->parent->extension->element);
+		$this->parent->setPath('source', $client->path . '/components/' . $this->element);
 		$this->parent->setPath('extension_root', $this->parent->getPath('source'));
 
 		$manifest_details = JInstaller::parseXMLInstallFile($this->parent->getPath('manifest'));
@@ -1362,20 +1344,6 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		 * Manifest Document Setup Section
 		 * ---------------------------------------------------------------------------------------------
 		 */
-
-		// Set the extensions name
-		$name = $this->getName();
-
-		if (substr($name, 0, 4) == 'com_')
-		{
-			$element = $name;
-		}
-		else
-		{
-			$element = 'com_' . $name;
-		}
-
-		$this->element = $element;
 
 		// Get the component description
 		$description = (string) $this->manifest->description;
