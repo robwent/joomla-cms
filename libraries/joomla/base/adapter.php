@@ -102,20 +102,26 @@ class JAdapter extends JObject
 	{
 		if (!is_object($adapter))
 		{
-			$fullpath = $this->_basepath . '/' . $this->_adapterfolder . '/' . strtolower($name) . '.php';
-
-			if (!file_exists($fullpath))
-			{
-				return false;
-			}
-
-			// Try to load the adapter object
-			require_once $fullpath;
-
 			$class = $this->_classprefix . ucfirst($name);
+
+			// Check to see if the class exists first; if not, then attempt to find it in the file structure
 			if (!class_exists($class))
 			{
-				return false;
+				$fullpath = $this->_basepath . '/' . $this->_adapterfolder . '/' . strtolower($name) . '.php';
+
+				if (!file_exists($fullpath))
+				{
+					return false;
+				}
+
+				// Try to load the adapter object
+				require_once $fullpath;
+
+				// If the class still doesn't exist, there's nothing else we can do
+				if (!class_exists($class))
+				{
+					return false;
+				}
 			}
 
 			$adapter = new $class($this, $this->_db, $options);
