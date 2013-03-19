@@ -233,7 +233,11 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 		 */
 
 		$this->setupScriptfile();
-		$this->triggerManifestScript('preflight');
+
+		if (!$this->triggerManifestScript('preflight'))
+		{
+			return false;
+		}
 
 		/*
 		 * ---------------------------------------------------------------------------------------------
@@ -425,7 +429,10 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 		}
 
 		// Run the custom method based on the route
-		$this->triggerManifestScript($this->route);
+		if (!$this->triggerManifestScript($this->route))
+		{
+			return false;
+		}
 
 		/**
 		 * ---------------------------------------------------------------------------------------------
@@ -513,7 +520,12 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 		 */
 
 		$this->setupScriptfile();
-		$this->triggerManifestScript('preflight');
+
+		// TODO: shouldn't this be removed?!?
+		if (!$this->triggerManifestScript('preflight'))
+		{
+			return false;
+		}
 
 		// Let's run the queries for the plugin
 		$result = $this->doDatabaseTransactions('uninstall');

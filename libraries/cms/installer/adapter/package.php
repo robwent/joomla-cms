@@ -114,7 +114,11 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 		 */
 
 		$this->setupScriptfile();
-		$this->triggerManifestScript('preflight');
+
+		if (!$this->triggerManifestScript('preflight'))
+		{
+			return false;
+		}
 
 		/*
 		 * ---------------------------------------------------------------------------------------------
@@ -232,7 +236,10 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 		 */
 
 		// Run the custom method based on the route
-		$this->triggerManifestScript($this->route);
+		if (!$this->triggerManifestScript($this->route))
+		{
+			return false;
+		}
 
 		// Lastly, we will copy the manifest file to its appropriate place.
 		$manifest = array();

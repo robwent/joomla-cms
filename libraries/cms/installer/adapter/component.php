@@ -203,7 +203,11 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 
 		$this->setupScriptfile();
 		$this->route = 'install';
-		$this->triggerManifestScript('preflight');
+
+		if(!$this->triggerManifestScript('preflight'))
+		{
+			return false;
+		}
 
 		// If the component directory does not exist, let's create it
 		$created = false;
@@ -323,7 +327,10 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		 * ---------------------------------------------------------------------------------------------
 		 */
 
-		$this->triggerManifestScript('install');
+		if (!$this->triggerManifestScript('install'))
+		{
+			return false;
+		}
 
 		/**
 		 * ---------------------------------------------------------------------------------------------
@@ -512,7 +519,11 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 
 		$this->setupScriptfile();
 		$this->route = 'update';
-		$this->triggerManifestScript('preflight');
+
+		if (!$this->triggerManifestScript('preflight'))
+		{
+			return false;
+		}
 
 		/**
 		 * ---------------------------------------------------------------------------------------------
@@ -654,7 +665,10 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		 * ---------------------------------------------------------------------------------------------
 		 */
 
-		$this->triggerManifestScript('update');
+		if (!$this->triggerManifestScript('update'))
+		{
+			return false;
+		}
 
 		/**
 		 * ---------------------------------------------------------------------------------------------
@@ -1386,7 +1400,11 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 
 		$this->setupScriptfile();
 		$this->route = 'discover_install';
-		$this->triggerManifestScript('preflight');
+
+		if (!$this->triggerManifestScript('preflight'))
+		{
+			return false;
+		}
 
 		/*
 		 *
@@ -1424,7 +1442,10 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		 * ---------------------------------------------------------------------------------------------
 		 */
 
-		$this->triggerManifestScript('install');
+		if (!$this->triggerManifestScript('install'))
+		{
+			return false;
+		}
 
 		/**
 		 * ---------------------------------------------------------------------------------------------

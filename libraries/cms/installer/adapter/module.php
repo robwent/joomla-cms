@@ -229,7 +229,11 @@ class JInstallerAdapterModule extends JInstallerAdapter
 		 */
 
 		$this->setupScriptfile();
-		$this->triggerManifestScript('preflight');
+
+		if (!$this->triggerManifestScript('preflight'))
+		{
+			return false;
+		}
 
 		/*
 		 * ---------------------------------------------------------------------------------------------
@@ -405,7 +409,10 @@ class JInstallerAdapterModule extends JInstallerAdapter
 		}
 
 		// Run the custom method based on the route
-		$this->triggerManifestScript($this->route);
+		if (!$this->triggerManifestScript($this->route))
+		{
+			return false;
+		}
 
 		/**
 		 * ---------------------------------------------------------------------------------------------
