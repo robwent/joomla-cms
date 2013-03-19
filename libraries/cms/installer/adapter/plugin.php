@@ -433,8 +433,6 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 	 */
 	public function uninstall($id)
 	{
-		$this->setRoute('uninstall');
-
 		$db = $this->parent->getDbo();
 
 		// First order of business will be to load the plugin object table from the database.

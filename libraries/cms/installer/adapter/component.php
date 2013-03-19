@@ -482,7 +482,6 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		 */
 
 		$this->setupScriptfile();
-		$this->setRoute('update');
 		$this->triggerManifestScript('preflight');
 
 		/**
@@ -1339,7 +1338,6 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		 */
 
 		$this->setupScriptfile();
-		$this->setRoute('discover_install');
 		$this->triggerManifestScript('preflight');
 
 		/*

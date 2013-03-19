@@ -99,6 +99,12 @@ abstract class JInstallerAdapter extends JAdapterInstance
 		// Run the parent constructor
 		parent::__construct($parent, $db, $options);
 
+		// Set the install route from the options if set
+		if (isset($options['route']))
+		{
+			$this->setRoute($options['route']);
+		}
+
 		// Set the manifest object
 		$this->manifest = $this->getManifest();
 
@@ -469,9 +475,6 @@ abstract class JInstallerAdapter extends JAdapterInstance
 		// Set the overwrite setting
 		$this->parent->setOverwrite(true);
 		$this->parent->setUpgrade(true);
-
-		// Set the route for the install
-		$this->setRoute('update');
 
 		// Go to install which handles updates properly
 		return $this->install();
