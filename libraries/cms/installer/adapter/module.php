@@ -168,11 +168,14 @@ class JInstallerAdapterModule extends JInstallerAdapter
 		 * we can assume that it was (badly) uninstalled
 		 * If it isn't, add an entry to extensions
 		 */
-		$id = JTable::getInstance('extension')->find(array('element' => $this->element, 'type' => 'module', 'client_id'=>$clientId));
-		if (!$id) {
+		try {
+			$id = JTable::getInstance('extension')->find(array('element' => $this->element, 'type' => 'module', 'client_id'=>$clientId));
+		}
+		catch (RuntimeException $e)
+		{
 			// Install failed, roll back changes
 			$this->parent
-				->abort(JText::sprintf('JLIB_INSTALLER_ABORT_MOD_ROLLBACK', JText::_('JLIB_INSTALLER_' . $this->route), $db->stderr(true)));
+				->abort(JText::sprintf('JLIB_INSTALLER_ABORT_MOD_ROLLBACK', JText::_('JLIB_INSTALLER_' . $this->route), $e->getMessage()));
 
 			return false;
 		}
