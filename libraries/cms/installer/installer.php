@@ -439,14 +439,19 @@ class JInstaller extends JAdapter
 				)
 			);
 
-			// Run the install
+			// Run the install.
+			$errorMsg = '';
 			try {
-				$result = $this->_adapters[$type]->install();
+				$eid = (int) $this->_adapters[$type]->install();
 			}
 			catch (Exception $e)
 			{
-				$result = false;
-				$this->abort($e->getMessage(), $type);
+				$errorMsg = $e->getMessage();
+			}
+			if (!$eid)
+			{
+				$eid = false;
+				$this->abort($errorMsg, $type);
 			}
 
 			// Fire the onExtensionAfterInstall
@@ -454,12 +459,12 @@ class JInstaller extends JAdapter
 				'onExtensionAfterInstall',
 				array(
 					'installer' => clone $this,
-					'eid' => $result
+					'eid' => $eid
 				)
 			);
 
 			// Return true if extension id > 0.
-			return $result > 0;
+			return $eid > 0;
 		}
 
 		return false;
@@ -526,14 +531,21 @@ class JInstaller extends JAdapter
 						)
 					);
 
-					// Run the install
+					$type = $this->extension->type;
+
+					// Run the discover install.
+					$errorMsg = '';
 					try {
-						$result = $this->_adapters[$this->extension->type]->discover_install();
+						$eid = (int) $this->_adapters[$type]->discover_install();
 					}
 					catch (Exception $e)
 					{
-						$result = false;
-						$this->abort($e->getMessage(), $this->extension->type);
+						$errorMsg = $e->getMessage();
+					}
+					if (!$eid)
+					{
+						$eid = false;
+						$this->abort($errorMsg, $type);
 					}
 
 					// Fire the onExtensionAfterInstall
@@ -541,12 +553,12 @@ class JInstaller extends JAdapter
 						'onExtensionAfterInstall',
 						array(
 							'installer' => clone $this,
-							'eid' => $result
+							'eid' => $eid
 						)
 					);
 
 					// Return true if extension id > 0.
-					return $result > 0;
+					return $eid > 0;
 				}
 				else
 				{
@@ -644,14 +656,19 @@ class JInstaller extends JAdapter
 				)
 			);
 
-			// Run the update
+			// Run the update.
+			$errorMsg = '';
 			try {
-				$result = $this->_adapters[$type]->update();
+				$eid = (int) $this->_adapters[$type]->update();
 			}
 			catch (Exception $e)
 			{
-				$result = false;
-				$this->abort($e->getMessage(), $type);
+				$errorMsg = $e->getMessage();
+			}
+			if (!$eid)
+			{
+				$eid = false;
+				$this->abort($errorMsg, $type);
 			}
 
 			// Fire the onExtensionAfterUpdate
@@ -659,12 +676,12 @@ class JInstaller extends JAdapter
 				'onExtensionAfterUpdate',
 				array(
 					'installer' => clone $this,
-					'eid' => $result
+					'eid' => $eid
 				)
 			);
 
 			// Return true if extension id > 0.
-			return $result > 0;
+			return $eid > 0;
 		}
 
 		return false;
@@ -699,14 +716,18 @@ class JInstaller extends JAdapter
 			$dispatcher = JEventDispatcher::getInstance();
 			$dispatcher->trigger('onExtensionBeforeUninstall', array('eid' => $identifier));
 
-			// Run the uninstall
+			// Run the uninstall.
+			$errorMsg = '';
 			try {
-				$result = $this->_adapters[$type]->uninstall($identifier);
+				$result = (bool) $this->_adapters[$type]->uninstall($identifier);
 			}
 			catch (Exception $e)
 			{
-				$result = false;
-				$this->abort($e->getMessage(), $type);
+				$errorMsg = $e->getMessage();
+			}
+			if (!$result)
+			{
+				$this->abort($errorMsg, $type);
 			}
 
 			// Fire the onExtensionAfterInstall
