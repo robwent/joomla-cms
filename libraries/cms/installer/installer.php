@@ -440,7 +440,14 @@ class JInstaller extends JAdapter
 			);
 
 			// Run the install
-			$result = $this->_adapters[$type]->install();
+			try {
+				$result = $this->_adapters[$type]->install();
+			}
+			catch (Exception $e)
+			{
+				$result = false;
+				$this->abort($e->getMessage(), $type);
+			}
 
 			// Fire the onExtensionAfterInstall
 			$dispatcher->trigger(
@@ -451,14 +458,8 @@ class JInstaller extends JAdapter
 				)
 			);
 
-			if ($result !== false)
-			{
-				return true;
-			}
-			else
-			{
-				return false;
-			}
+			// Return true if extension id > 0.
+			return $result > 0;
 		}
 
 		return false;
@@ -526,7 +527,14 @@ class JInstaller extends JAdapter
 					);
 
 					// Run the install
-					$result = $this->_adapters[$this->extension->type]->discover_install();
+					try {
+						$result = $this->_adapters[$this->extension->type]->discover_install();
+					}
+					catch (Exception $e)
+					{
+						$result = false;
+						$this->abort($e->getMessage(), $this->extension->type);
+					}
 
 					// Fire the onExtensionAfterInstall
 					$dispatcher->trigger(
@@ -537,14 +545,8 @@ class JInstaller extends JAdapter
 						)
 					);
 
-					if ($result !== false)
-					{
-						return true;
-					}
-					else
-					{
-						return false;
-					}
+					// Return true if extension id > 0.
+					return $result > 0;
 				}
 				else
 				{
@@ -643,7 +645,14 @@ class JInstaller extends JAdapter
 			);
 
 			// Run the update
-			$result = $this->_adapters[$type]->update();
+			try {
+				$result = $this->_adapters[$type]->update();
+			}
+			catch (Exception $e)
+			{
+				$result = false;
+				$this->abort($e->getMessage(), $type);
+			}
 
 			// Fire the onExtensionAfterUpdate
 			$dispatcher->trigger(
@@ -654,14 +663,8 @@ class JInstaller extends JAdapter
 				)
 			);
 
-			if ($result !== false)
-			{
-				return true;
-			}
-			else
-			{
-				return false;
-			}
+			// Return true if extension id > 0.
+			return $result > 0;
 		}
 
 		return false;
@@ -697,7 +700,14 @@ class JInstaller extends JAdapter
 			$dispatcher->trigger('onExtensionBeforeUninstall', array('eid' => $identifier));
 
 			// Run the uninstall
-			$result = $this->_adapters[$type]->uninstall($identifier);
+			try {
+				$result = $this->_adapters[$type]->uninstall($identifier);
+			}
+			catch (Exception $e)
+			{
+				$result = false;
+				$this->abort($e->getMessage(), $type);
+			}
 
 			// Fire the onExtensionAfterInstall
 			$dispatcher->trigger(
