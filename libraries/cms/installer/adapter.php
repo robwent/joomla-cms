@@ -29,6 +29,14 @@ abstract class JInstallerAdapter extends JAdapterInstance
 	protected $element = null;
 
 	/**
+	 * Extension object.
+	 *
+	 * @var    JTableExtension
+	 * @since  3.1
+	 * */
+	protected $extension = null;
+
+	/**
 	 * Messages rendered by custom scripts
 	 *
 	 * @var    string
@@ -92,7 +100,7 @@ abstract class JInstallerAdapter extends JAdapterInstance
 		parent::__construct($parent, $db, $options);
 
 		// Set the manifest object
-		$this->manifest = $this->parent->getManifest();
+		$this->manifest = $this->getManifest();
 
 		// Set name and element
 		$this->name = $this->getName();
@@ -224,6 +232,24 @@ abstract class JInstallerAdapter extends JAdapterInstance
 
 		// Return true if extension id > 0.
 		return $id > 0;
+	}
+
+	/**
+	 * Get the manifest object.
+	 *
+	 * @return  object  Manifest object
+	 *
+	 * @since   3.1
+	 */
+	public function getManifest()
+	{
+		if (!$this->manifest) {
+			// We are trying to find manifest for the installed extension.
+			// TODO: handle locally in every adapter (see uninstall to get some hints).
+			$this->manifest = $this->parent->getManifest();
+		}
+
+		return $this->manifest;
 	}
 
 	/**
