@@ -311,27 +311,26 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		 */
 
 		// Add an entry to the extension table with a whole heap of defaults
-		$row = JTable::getInstance('extension');
-		$row->name = $this->name;
-		$row->type = 'component';
-		$row->element = $this->element;
+		$this->extension->name = $this->name;
+		$this->extension->type = 'component';
+		$this->extension->element = $this->element;
 
 		// There is no folder for components
-		$row->folder = '';
-		$row->enabled = 1;
-		$row->protected = 0;
-		$row->access = 0;
-		$row->client_id = 1;
-		$row->params = $this->parent->getParams();
-		$row->manifest_cache = $this->parent->generateManifestCache();
+		$this->extension->folder = '';
+		$this->extension->enabled = 1;
+		$this->extension->protected = 0;
+		$this->extension->access = 0;
+		$this->extension->client_id = 1;
+		$this->extension->params = $this->parent->getParams();
+		$this->extension->manifest_cache = $this->parent->generateManifestCache();
 
-		if (!$row->store())
+		if (!$this->extension->store())
 		{
 			// Install failed, roll back changes
 			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_COMP_INSTALL_ROLLBACK', $db->stderr(true)));
 		}
 
-		$eid = $row->extension_id;
+		$eid = $this->extension->extension_id;
 
 		// Clobber any possible pending updates
 		$update = JTable::getInstance('update');
@@ -357,7 +356,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		}
 
 		// Time to build the admin menus
-		if (!$this->_buildAdminMenus($row->extension_id))
+		if (!$this->_buildAdminMenus($this->extension->extension_id))
 		{
 			JLog::add(JText::_('JLIB_INSTALLER_ABORT_COMP_BUILDADMINMENUS_FAILED'), JLog::WARNING, 'jerror');
 		}
@@ -370,10 +369,10 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 
 		// Register the component container just under root in the assets table.
 		$asset = JTable::getInstance('Asset');
-		$asset->name = $row->element;
+		$asset->name = $this->extension->element;
 		$asset->parent_id = 1;
 		$asset->rules = '{}';
-		$asset->title = $row->name;
+		$asset->title = $this->extension->name;
 		$asset->setLocation(1, 'last-child');
 
 		if (!$asset->store())
@@ -385,7 +384,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		// And now we run the postflight
 		$this->triggerManifestScript('postflight');
 
-		return $row->extension_id;
+		return $this->extension->extension_id;
 	}
 
 	/**
@@ -585,8 +584,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		 */
 
 		// Let's run the update queries for the component
-		$row = JTable::getInstance('extension');
-		$eid = $row->find(array('element' => strtolower($this->element), 'type' => 'component'));
+		$eid = $this->extension->find(array('element' => strtolower($this->element), 'type' => 'component'));
 
 		if ($this->manifest->update)
 		{
@@ -631,26 +629,26 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		// Update an entry to the extension table
 		if ($eid)
 		{
-			$row->load($eid);
+			$this->extension->load($eid);
 		}
 		else
 		{
 			// Set the defaults
 			// There is no folder for components
-			$row->folder = '';
-			$row->enabled = 1;
-			$row->protected = 0;
-			$row->access = 1;
-			$row->client_id = 1;
-			$row->params = $this->parent->getParams();
+			$this->extension->folder = '';
+			$this->extension->enabled = 1;
+			$this->extension->protected = 0;
+			$this->extension->access = 1;
+			$this->extension->client_id = 1;
+			$this->extension->params = $this->parent->getParams();
 		}
 
-		$row->name = $this->name;
-		$row->type = 'component';
-		$row->element = $this->element;
-		$row->manifest_cache = $this->parent->generateManifestCache();
+		$this->extension->name = $this->name;
+		$this->extension->type = 'component';
+		$this->extension->element = $this->element;
+		$this->extension->manifest_cache = $this->parent->generateManifestCache();
 
-		if (!$row->store())
+		if (!$this->extension->store())
 		{
 			// Install failed, roll back changes
 			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_COMP_UPDATE_ROLLBACK', $db->stderr(true)));
@@ -666,7 +664,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		// And now we run the postflight
 		$this->triggerManifestScript('postflight');
 
-		return $row->extension_id;
+		return $this->extension->extension_id;
 	}
 
 	/**

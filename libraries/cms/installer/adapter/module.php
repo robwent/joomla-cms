@@ -165,7 +165,7 @@ class JInstallerAdapterModule extends JInstallerAdapter
 		 */
 		try
 		{
-			$id = JTable::getInstance('extension')->find(array('element' => $this->element, 'type' => 'module', 'client_id'=>$clientId));
+			$id = $this->extension->find(array('element' => $this->element, 'type' => 'module', 'client_id' => $clientId));
 		}
 		catch (RuntimeException $e)
 		{
@@ -288,21 +288,19 @@ class JInstallerAdapterModule extends JInstallerAdapter
 		 * ---------------------------------------------------------------------------------------------
 		 */
 
-		$row = JTable::getInstance('extension');
-
 		// Was there a module already installed with the same name?
 		if ($id)
 		{
 			// Load the entry and update the manifest_cache
-			$row->load($id);
+			$this->extension->load($id);
 
 			// Update name
-			$row->name = $this->name;
+			$this->extension->name = $this->name;
 
 			// Update manifest
-			$row->manifest_cache = $this->parent->generateManifestCache();
+			$this->extension->manifest_cache = $this->parent->generateManifestCache();
 
-			if (!$row->store())
+			if (!$this->extension->store())
 			{
 				// Install failed, roll back changes
 				throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_MOD_ROLLBACK', JText::_('JLIB_INSTALLER_' . $this->route), $db->stderr(true)));
@@ -310,23 +308,23 @@ class JInstallerAdapterModule extends JInstallerAdapter
 		}
 		else
 		{
-			$row->name = $this->name;
-			$row->type = 'module';
-			$row->element = $this->element;
+			$this->extension->name = $this->name;
+			$this->extension->type = 'module';
+			$this->extension->element = $this->element;
 
 			// There is no folder for modules
-			$row->folder = '';
-			$row->enabled = 1;
-			$row->protected = 0;
-			$row->access = $clientId == 1 ? 2 : 0;
-			$row->client_id = $clientId;
-			$row->params = $this->parent->getParams();
+			$this->extension->folder = '';
+			$this->extension->enabled = 1;
+			$this->extension->protected = 0;
+			$this->extension->access = $clientId == 1 ? 2 : 0;
+			$this->extension->client_id = $clientId;
+			$this->extension->params = $this->parent->getParams();
 
 			// Custom data
-			$row->custom_data = '';
-			$row->manifest_cache = $this->parent->generateManifestCache();
+			$this->extension->custom_data = '';
+			$this->extension->manifest_cache = $this->parent->generateManifestCache();
 
-			if (!$row->store())
+			if (!$this->extension->store())
 			{
 				// Install failed, roll back changes
 				throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_MOD_ROLLBACK', JText::_('JLIB_INSTALLER_' . $this->route), $db->stderr(true)));
@@ -334,7 +332,7 @@ class JInstallerAdapterModule extends JInstallerAdapter
 
 			// Since we have created a module item, we add it to the installation step stack
 			// so that if we have to rollback the changes we can undo it.
-			$this->parent->pushStep(array('type' => 'extension', 'extension_id' => $row->extension_id));
+			$this->parent->pushStep(array('type' => 'extension', 'extension_id' => $this->extension->extension_id));
 
 			// Create unpublished module in jos_modules
 			$name = preg_replace('#[\*?]#', '', JText::_($this->name));
@@ -364,14 +362,14 @@ class JInstallerAdapterModule extends JInstallerAdapter
 			// Set the schema version to be the latest update version
 			if ($this->manifest->update)
 			{
-				$this->parent->setSchemaVersion($this->manifest->update->schemas, $row->extension_id);
+				$this->parent->setSchemaVersion($this->manifest->update->schemas, $this->extension->extension_id);
 			}
 		}
 		elseif ($this->route == 'update')
 		{
 			if ($this->manifest->update)
 			{
-				$result = $this->parent->parseSchemaUpdates($this->manifest->update->schemas, $row->extension_id);
+				$result = $this->parent->parseSchemaUpdates($this->manifest->update->schemas, $this->extension->extension_id);
 
 				if ($result === false)
 				{
@@ -400,7 +398,7 @@ class JInstallerAdapterModule extends JInstallerAdapter
 		// And now we run the postflight
 		$this->triggerManifestScript('postflight');
 
-		return $row->extension_id;
+		return $this->extension->extension_id;
 	}
 
 	/**

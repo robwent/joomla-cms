@@ -178,7 +178,7 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 		// Check to see if a plugin by the same name is already installed.
 		try
 		{
-			$id = JTable::getInstance('extension')->find(array('type' => 'plugin', 'element' => $this->element, 'folder'=>$this->group));
+			$id = $this->extension->find(array('type' => 'plugin', 'element' => $this->element, 'folder' => $this->group));
 		}
 		catch (RuntimeException $e)
 		{
@@ -309,8 +309,6 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 		 * ---------------------------------------------------------------------------------------------
 		 */
 
-		$row = JTable::getInstance('extension');
-
 		// Was there a plugin with the same name already installed?
 		if ($id)
 		{
@@ -324,41 +322,41 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 					)
 				);
 			}
-			$row->load($id);
-			$row->name = $this->name;
-			$row->manifest_cache = $this->parent->generateManifestCache();
+			$this->extension->load($id);
+			$this->extension->name = $this->name;
+			$this->extension->manifest_cache = $this->parent->generateManifestCache();
 
 			// Update the manifest cache and name
-			$row->store();
+			$this->extension->store();
 		}
 		else
 		{
 			// Store in the extensions table (1.6)
-			$row->name = $this->name;
-			$row->type = 'plugin';
-			$row->ordering = 0;
-			$row->element = $this->element;
-			$row->folder = $this->group;
-			$row->enabled = 0;
-			$row->protected = 0;
-			$row->access = 1;
-			$row->client_id = 0;
-			$row->params = $this->parent->getParams();
+			$this->extension->name = $this->name;
+			$this->extension->type = 'plugin';
+			$this->extension->ordering = 0;
+			$this->extension->element = $this->element;
+			$this->extension->folder = $this->group;
+			$this->extension->enabled = 0;
+			$this->extension->protected = 0;
+			$this->extension->access = 1;
+			$this->extension->client_id = 0;
+			$this->extension->params = $this->parent->getParams();
 
 			// Custom data
-			$row->custom_data = '';
+			$this->extension->custom_data = '';
 
 			// System data
-			$row->system_data = '';
-			$row->manifest_cache = $this->parent->generateManifestCache();
+			$this->extension->system_data = '';
+			$this->extension->manifest_cache = $this->parent->generateManifestCache();
 
 			// Editor plugins are published by default
 			if ($this->group == 'editors')
 			{
-				$row->enabled = 1;
+				$this->extension->enabled = 1;
 			}
 
-			if (!$row->store())
+			if (!$this->extension->store())
 			{
 				// Install failed, roll back changes
 				throw new RuntimeException(
@@ -368,8 +366,8 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 
 			// Since we have created a plugin item, we add it to the installation step stack
 			// so that if we have to rollback the changes we can undo it.
-			$this->parent->pushStep(array('type' => 'extension', 'id' => $row->extension_id));
-			$id = $row->extension_id;
+			$this->parent->pushStep(array('type' => 'extension', 'id' => $this->extension->extension_id));
+			$id = $this->extension->extension_id;
 		}
 
 		// Let's run the queries for the plugin
@@ -383,14 +381,14 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 			// Set the schema version to be the latest update version
 			if ($this->manifest->update)
 			{
-				$this->parent->setSchemaVersion($this->manifest->update->schemas, $row->extension_id);
+				$this->parent->setSchemaVersion($this->manifest->update->schemas, $this->extension->extension_id);
 			}
 		}
 		elseif ($this->route == 'update')
 		{
 			if ($this->manifest->update)
 			{
-				$result = $this->parent->parseSchemaUpdates($this->manifest->update->schemas, $row->extension_id);
+				$result = $this->parent->parseSchemaUpdates($this->manifest->update->schemas, $this->extension->extension_id);
 
 				if ($result === false)
 				{

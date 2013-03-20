@@ -156,22 +156,20 @@ class JInstallerAdapterFile extends JInstallerAdapter
 		 * we can assume that it was (badly) uninstalled
 		 * If it isn't, add an entry to extensions
 		 */
-		$row = JTable::getInstance('extension');
-
-		$id = $row->find(array('type' => 'file', 'element' => $this->element));
+		$id = $this->extension->find(array('type' => 'file', 'element' => $this->element));
 
 		if ($id)
 		{
 			// Load the entry and update the manifest_cache
-			$row->load($id);
+			$this->extension->load($id);
 
 			// Update name
-			$row->name = $this->name;
+			$this->extension->name = $this->name;
 
 			// Update manifest
-			$row->manifest_cache = $this->parent->generateManifestCache();
+			$this->extension->manifest_cache = $this->parent->generateManifestCache();
 
-			if (!$row->store())
+			if (!$this->extension->store())
 			{
 				// Install failed, roll back changes
 				throw new RuntimeException(
@@ -182,21 +180,21 @@ class JInstallerAdapterFile extends JInstallerAdapter
 		else
 		{
 			// Add an entry to the extension table with a whole heap of defaults
-			$row->name = $this->name;
-			$row->type = 'file';
-			$row->element = $this->element;
+			$this->extension->name = $this->name;
+			$this->extension->type = 'file';
+			$this->extension->element = $this->element;
 
 			// There is no folder for files so leave it blank
-			$row->folder = '';
-			$row->enabled = 1;
-			$row->protected = 0;
-			$row->access = 0;
-			$row->client_id = 0;
-			$row->params = '';
-			$row->system_data = '';
-			$row->manifest_cache = $this->parent->generateManifestCache();
+			$this->extension->folder = '';
+			$this->extension->enabled = 1;
+			$this->extension->protected = 0;
+			$this->extension->access = 0;
+			$this->extension->client_id = 0;
+			$this->extension->params = '';
+			$this->extension->system_data = '';
+			$this->extension->manifest_cache = $this->parent->generateManifestCache();
 
-			if (!$row->store())
+			if (!$this->extension->store())
 			{
 				// Install failed, roll back changes
 				throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_FILE_INSTALL_ROLLBACK', $db->stderr(true)));
@@ -204,7 +202,7 @@ class JInstallerAdapterFile extends JInstallerAdapter
 
 			// Since we have created a module item, we add it to the installation step stack
 			// so that if we have to rollback the changes we can undo it.
-			$this->parent->pushStep(array('type' => 'extension', 'extension_id' => $row->extension_id));
+			$this->parent->pushStep(array('type' => 'extension', 'extension_id' => $this->extension->extension_id));
 		}
 
 		// Let's run the queries for the file
@@ -219,14 +217,14 @@ class JInstallerAdapterFile extends JInstallerAdapter
 			// Set the schema version to be the latest update version
 			if ($this->manifest->update)
 			{
-				$this->parent->setSchemaVersion($this->manifest->update->schemas, $row->extension_id);
+				$this->parent->setSchemaVersion($this->manifest->update->schemas, $this->extension->extension_id);
 			}
 		}
 		elseif ($this->route == 'update')
 		{
 			if ($this->manifest->update)
 			{
-				$result = $this->parent->parseSchemaUpdates($this->manifest->update->schemas, $row->extension_id);
+				$result = $this->parent->parseSchemaUpdates($this->manifest->update->schemas, $this->extension->extension_id);
 
 				if ($result === false)
 				{
@@ -285,7 +283,7 @@ class JInstallerAdapterFile extends JInstallerAdapter
 		// And now we run the postflight
 		$this->triggerManifestScript('postflight');
 
-		return $row->extension_id;
+		return $this->extension->extension_id;
 	}
 
 	/**

@@ -88,10 +88,11 @@ class JInstallerAdapterLibrary extends JInstallerAdapter
 		 * ---------------------------------------------------------------------------------------------
 		 */
 
-		$extension_id = JTable::getInstance('extension')->find(array('element' => $this->element, 'type' => 'library'));
+		$extension_id = $this->extension->find(array('element' => $this->element, 'type' => 'library'));
 		if ($extension_id)
 		{
 			// Already installed, can we upgrade?
+			// TODO: Why, just tell me why?
 			if ($this->parent->isOverwrite() || $this->parent->isUpgrade())
 			{
 				// We can upgrade, so uninstall the old one
@@ -158,27 +159,26 @@ class JInstallerAdapterLibrary extends JInstallerAdapter
 		$this->parent->parseMedia($this->manifest->media);
 
 		// Extension Registration
-		$row = JTable::getInstance('extension');
-		$row->name = $this->name;
-		$row->type = 'library';
-		$row->element = $this->element;
+		$this->extension->name = $this->name;
+		$this->extension->type = 'library';
+		$this->extension->element = $this->element;
 
 		// There is no folder for libraries
-		$row->folder = '';
-		$row->enabled = 1;
-		$row->protected = 0;
-		$row->access = 1;
-		$row->client_id = 0;
-		$row->params = $this->parent->getParams();
+		$this->extension->folder = '';
+		$this->extension->enabled = 1;
+		$this->extension->protected = 0;
+		$this->extension->access = 1;
+		$this->extension->client_id = 0;
+		$this->extension->params = $this->parent->getParams();
 
 		// Custom data
-		$row->custom_data = '';
-		$row->manifest_cache = $this->parent->generateManifestCache();
+		$this->extension->custom_data = '';
+		$this->extension->manifest_cache = $this->parent->generateManifestCache();
 
-		if (!$row->store())
+		if (!$this->extension->store())
 		{
 			// Install failed, roll back changes
-			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_LIB_INSTALL_ROLLBACK', $row->getError()));
+			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_LIB_INSTALL_ROLLBACK', $this->extension->getError()));
 		}
 
 		/**
@@ -197,7 +197,7 @@ class JInstallerAdapterLibrary extends JInstallerAdapter
 			// Install failed, rollback changes
 			throw new RuntimeException(JText::_('JLIB_INSTALLER_ABORT_LIB_INSTALL_COPY_SETUP'));
 		}
-		return $row->extension_id;
+		return $this->extension->extension_id;
 	}
 
 	/**

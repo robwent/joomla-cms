@@ -88,7 +88,6 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 		else
 		{
 			// No client attribute was found so we assume the site as the client
-			$cname = 'site';
 			$basePath = JPATH_SITE;
 			$clientId = 0;
 		}
@@ -96,7 +95,7 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 		// Check to see if a template by the same name is already installed.
 		try
 		{
-			$id = JTable::getInstance('extension')->find(array('type' => 'template', 'element' => $this->element, 'client_id'=>$clientId));
+			$id = $this->extension->find(array('type' => 'template', 'element' => $this->element, 'client_id' => $clientId));
 		}
 		catch (RuntimeException $e)
 		{
@@ -156,7 +155,9 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 		{
 			if (!$created = JFolder::create($this->parent->getPath('extension_root')))
 			{
-				throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_TPL_INSTALL_FAILED_CREATE_DIRECTORY', $this->parent->getPath('extension_root')));
+				throw new RuntimeException(
+					JText::sprintf('JLIB_INSTALLER_ABORT_TPL_INSTALL_FAILED_CREATE_DIRECTORY', $this->parent->getPath('extension_root'))
+				);
 			}
 		}
 
@@ -203,34 +204,32 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 		 * ---------------------------------------------------------------------------------------------
 		 */
 
-		$row = JTable::getInstance('extension');
-
 		if ($this->route == 'update' && $id)
 		{
-			$row->load($id);
+			$this->extension->load($id);
 		}
 		else
 		{
-			$row->type = 'template';
-			$row->element = $this->element;
+			$this->extension->type = 'template';
+			$this->extension->element = $this->element;
 
 			// There is no folder for templates
-			$row->folder = '';
-			$row->enabled = 1;
-			$row->protected = 0;
-			$row->access = 1;
-			$row->client_id = $clientId;
-			$row->params = $this->parent->getParams();
+			$this->extension->folder = '';
+			$this->extension->enabled = 1;
+			$this->extension->protected = 0;
+			$this->extension->access = 1;
+			$this->extension->client_id = $clientId;
+			$this->extension->params = $this->parent->getParams();
 
 			// Custom data
-			$row->custom_data = '';
+			$this->extension->custom_data = '';
 		}
 
 		// Name might change in an update
-		$row->name = $this->name;
-		$row->manifest_cache = $this->parent->generateManifestCache();
+		$this->extension->name = $this->name;
+		$this->extension->manifest_cache = $this->parent->generateManifestCache();
 
-		if (!$row->store())
+		if (!$this->extension->store())
 		{
 			// Install failed, roll back changes
 			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_TPL_INSTALL_ROLLBACK', $db->stderr(true)));
@@ -248,9 +247,9 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 			);
 
 			$values = array(
-				$db->Quote($row->element), $clientId, $db->Quote(0),
+				$db->Quote($this->extension->element), $clientId, $db->Quote(0),
 				$db->Quote(JText::sprintf('JLIB_INSTALLER_DEFAULT_STYLE', JText::_($this->name))),
-				$db->Quote($row->params) );
+				$db->Quote($this->extension->params) );
 
 			$lang->setDebug($debug);
 
@@ -266,7 +265,7 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 			$db->execute();
 		}
 
-		return $row->extension_id;
+		return $this->extension->extension_id;
 	}
 
 	/**

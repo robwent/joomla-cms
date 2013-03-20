@@ -200,37 +200,36 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 		 * ---------------------------------------------------------------------------------------------
 		 */
 
-		$row = JTable::getInstance('extension');
-		$eid = $row->find(array('element' => strtolower($this->element), 'type' => 'package'));
+		$eid = $this->extension->find(array('element' => strtolower($this->element), 'type' => 'package'));
 
 		if ($eid)
 		{
-			$row->load($eid);
+			$this->extension->load($eid);
 		}
 		else
 		{
-			$row->name = $this->name;
-			$row->type = 'package';
-			$row->element = $this->element;
+			$this->extension->name = $this->name;
+			$this->extension->type = 'package';
+			$this->extension->element = $this->element;
 
 			// There is no folder for modules
-			$row->folder = '';
-			$row->enabled = 1;
-			$row->protected = 0;
-			$row->access = 1;
-			$row->client_id = 0;
+			$this->extension->folder = '';
+			$this->extension->enabled = 1;
+			$this->extension->protected = 0;
+			$this->extension->access = 1;
+			$this->extension->client_id = 0;
 
 			// Custom data
-			$row->custom_data = '';
-			$row->params = $this->parent->getParams();
+			$this->extension->custom_data = '';
+			$this->extension->params = $this->parent->getParams();
 		}
 		// Update the manifest cache for the entry
-		$row->manifest_cache = $this->parent->generateManifestCache();
+		$this->extension->manifest_cache = $this->parent->generateManifestCache();
 
-		if (!$row->store())
+		if (!$this->extension->store())
 		{
 			// Install failed, roll back changes
-			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_PACK_INSTALL_ROLLBACK', $row->getError()));
+			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_PACK_INSTALL_ROLLBACK', $this->extension->getError()));
 		}
 
 		/*
@@ -280,7 +279,7 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 		// And now we run the postflight
 		$this->triggerManifestScript('postflight', $this->results);
 
-		return $row->extension_id;
+		return $this->extension->extension_id;
 	}
 
 	/**

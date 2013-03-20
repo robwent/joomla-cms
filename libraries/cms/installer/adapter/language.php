@@ -208,24 +208,23 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 		}
 
 		// Add an entry to the extension table with a whole heap of defaults
-		$row = JTable::getInstance('extension');
-		$row->name = $this->name;
-		$row->type = 'language';
-		$row->element = $this->tag;
+		$this->extension->name = $this->name;
+		$this->extension->type = 'language';
+		$this->extension->element = $this->tag;
 
 		// There is no folder for languages
-		$row->folder = '';
-		$row->enabled = 1;
-		$row->protected = 0;
-		$row->access = 0;
-		$row->client_id = $clientId;
-		$row->params = $this->parent->getParams();
-		$row->manifest_cache = $this->parent->generateManifestCache();
+		$this->extension->folder = '';
+		$this->extension->enabled = 1;
+		$this->extension->protected = 0;
+		$this->extension->access = 0;
+		$this->extension->client_id = $clientId;
+		$this->extension->params = $this->parent->getParams();
+		$this->extension->manifest_cache = $this->parent->generateManifestCache();
 
-		if (!$row->store())
+		if (!$this->extension->store())
 		{
 			// Install failed, roll back changes
-			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT', $row->getError()));
+			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT', $this->extension->getError()));
 		}
 
 		// Clobber any possible pending updates
@@ -237,7 +236,7 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 			$update->delete($uid);
 		}
 
-		return $row->extension_id;
+		return $this->extension->extension_id;
 	}
 
 	/**
@@ -319,36 +318,35 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 		}
 
 		// Update an entry to the extension table
-		$row = JTable::getInstance('extension');
-		$eid = $row->find(array('element' => strtolower($this->tag), 'type' => 'language', 'client_id' => $clientId));
+		$eid = $this->extension->find(array('element' => strtolower($this->tag), 'type' => 'language', 'client_id' => $clientId));
 
 		if ($eid)
 		{
-			$row->load($eid);
+			$this->extension->load($eid);
 		}
 		else
 		{
 			// Set the defaults
 			// There is no folder for language
-			$row->folder = '';
-			$row->enabled = 1;
-			$row->protected = 0;
-			$row->access = 0;
-			$row->client_id = $clientId;
-			$row->params = $this->parent->getParams();
+			$this->extension->folder = '';
+			$this->extension->enabled = 1;
+			$this->extension->protected = 0;
+			$this->extension->access = 0;
+			$this->extension->client_id = $clientId;
+			$this->extension->params = $this->parent->getParams();
 		}
-		$row->name = $this->name;
-		$row->type = 'language';
-		$row->element = $this->tag;
-		$row->manifest_cache = $this->parent->generateManifestCache();
+		$this->extension->name = $this->name;
+		$this->extension->type = 'language';
+		$this->extension->element = $this->tag;
+		$this->extension->manifest_cache = $this->parent->generateManifestCache();
 
-		if (!$row->store())
+		if (!$this->extension->store())
 		{
 			// Install failed, roll back changes
-			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT', $row->getError()));
+			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT', $this->extension->getError()));
 		}
 
-		return $row->extension_id;
+		return $this->extension->extension_id;
 	}
 
 	/**
