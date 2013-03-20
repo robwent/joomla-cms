@@ -692,6 +692,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 
 			// Copy the admin path as it's used as a common base
 			$this->parent->setPath('extension_root', $this->parent->getPath('extension_administrator'));
+			$this->parent->setPath('source', $this->parent->getPath('extension_administrator'));
 		}
 
 		return true;
@@ -716,9 +717,6 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		 * Manifest Document Setup Section
 		 * ---------------------------------------------------------------------------------------------
 		 */
-
-		// Find and load the XML install file for the component
-		$this->parent->setPath('source', $this->parent->getPath('extension_administrator'));
 
 		// Get the package manifest object
 		// We do findManifest to avoid problem when uninstalling a list of extension: getManifest cache its manifest file

@@ -309,7 +309,7 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 				$this->manifestData = new JInstallerManifestPackage($this->manifestFile);
 
 				// Set the package root path
-				$this->parent->setPath('extension_root', JPATH_MANIFESTS . '/packages/' . $manifest->packagename);
+				$this->parent->setPath('extension_root', JPATH_MANIFESTS . '/packages/' . $this->manifestData->packagename);
 
 				$xml = simplexml_load_file($this->manifestFile);
 
@@ -410,18 +410,18 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 	/**
 	 * Gets the extension id.
 	 *
-	 * @param   string   $type       The extension type.
-	 * @param   string   $element    The name of the extension (the element field).
-	 * @param   integer  $client_id  The application id (0: Joomla CMS site; 1: Joomla CMS administrator).
-	 * @param   string   $group      The extension group (mainly for plugins).
+	 * @param   string  $type       The extension type.
+	 * @param   string  $element    The name of the extension (the element field).
+	 * @param   string  $client_id  The application id (0: Joomla CMS site; 1: Joomla CMS administrator).
+	 * @param   string  $group      The extension group (mainly for plugins).
 	 *
 	 * @return  integer
 	 *
 	 * @since   3.1
 	 */
-	protected function _getExtensionID($type, $element, $client_id = 0, $group = null)
+	protected function _getExtensionID($type, $element, $client_id = null, $group = null)
 	{
-		$client_id = JApplicationHelper::getClientInfo((int) $client_id, true)->id;
+		$client_id = JApplicationHelper::getClientInfo($client_id, true)->id;
 
 		// Be default search by matching all the given fields.
 		$search = array('type' => (string) $type, 'element' => (string) $element, 'client_id' => $client_id);

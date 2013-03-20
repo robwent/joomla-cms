@@ -118,8 +118,11 @@ abstract class JInstallerAdapter extends JAdapterInstance
 		$this->name = $this->getName();
 		$this->element = $this->getElement();
 
-		// Get a generic JTableExtension instance for use
-		$this->extension = JTable::getInstance('extension');
+		// Get a generic JTableExtension instance for use if not already loaded
+		if (!($this->extension instanceof JTable))
+		{
+			$this->extension = JTable::getInstance('extension');
+		}
 	}
 
 	/**
