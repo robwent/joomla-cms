@@ -225,7 +225,8 @@ class JInstallerAdapterLibrary extends JInstallerAdapter
 			{
 				$manifest = new JInstallerManifestLibrary($this->manifestFile);
 
-				// Set the library root path
+				// Set the library root paths
+				$this->parent->setPath('manifest', $this->manifestFile);
 				$this->parent->setPath('extension_root', JPATH_PLATFORM . '/' . $manifest->libraryname);
 
 				$xml = simplexml_load_file($this->manifestFile);
