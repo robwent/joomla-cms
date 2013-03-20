@@ -670,6 +670,34 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 	}
 
 	/**
+	 * Method to prepare the uninstall script
+	 *
+	 * This method populates the $this->extension object, checks whether the extension is protected,
+	 * and sets the extension paths
+	 *
+	 * @param   integer  $id  The extension ID to load
+	 *
+	 * @return  boolean  True on success
+	 *
+	 * @since   3.1
+	 */
+	protected function setupUninstall($id)
+	{
+		// Run the common parent methods
+		if (parent::setupUninstall($id))
+		{
+			// Get the admin and site paths for the component
+			$this->parent->setPath('extension_administrator', JPath::clean(JPATH_ADMINISTRATOR . '/components/' . $this->element));
+			$this->parent->setPath('extension_site', JPath::clean(JPATH_SITE . '/components/' . $this->element));
+
+			// Copy the admin path as it's used as a common base
+			$this->parent->setPath('extension_root', $this->parent->getPath('extension_administrator'));
+		}
+
+		return true;
+	}
+
+	/**
 	 * Custom uninstall method for components
 	 *
 	 * @param   integer  $id  The unique extension id of the component to uninstall
@@ -682,36 +710,6 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 	{
 		$db = $this->parent->getDbo();
 		$retval = true;
-
-		// First order of business will be to load the component object table from the database.
-		// This should give us the necessary information to proceed.
-		$row = JTable::getInstance('extension');
-
-		if (!$row->load((int) $id))
-		{
-			JLog::add(JText::_('JLIB_INSTALLER_ERROR_COMP_UNINSTALL_ERRORUNKOWNEXTENSION'), JLog::WARNING, 'jerror');
-
-			return false;
-		}
-
-		// Is the component we are trying to uninstall a core one?
-		// Because that is not a good idea...
-		if ($row->protected)
-		{
-			JLog::add(JText::_('JLIB_INSTALLER_ERROR_COMP_UNINSTALL_WARNCORECOMPONENT'), JLog::WARNING, 'jerror');
-
-			return false;
-		}
-
-		// Make sure that element name is in correct format.
-		$this->element = $this->getElement($row->element);
-
-		// Get the admin and site paths for the component
-		$this->parent->setPath('extension_administrator', JPath::clean(JPATH_ADMINISTRATOR . '/components/' . $this->element));
-		$this->parent->setPath('extension_site', JPath::clean(JPATH_SITE . '/components/' . $this->element));
-
-		// Copy the admin path as it's used as a common base
-		$this->parent->setPath('extension_root', $this->parent->getPath('extension_administrator'));
 
 		/**
 		 * ---------------------------------------------------------------------------------------------
@@ -734,7 +732,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 			JFolder::delete($this->parent->getPath('extension_site'));
 
 			// Remove the menu
-			$this->_removeAdminMenus($row);
+			$this->_removeAdminMenus($this->extension);
 
 			// Raise a warning
 			JLog::add(JText::_('JLIB_INSTALLER_ERROR_COMP_UNINSTALL_ERRORREMOVEMANUALLY'), JLog::WARNING, 'jerror');
@@ -774,7 +772,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 			}
 		}
 
-		$this->_removeAdminMenus($row);
+		$this->_removeAdminMenus($this->extension);
 
 		/**
 		 * ---------------------------------------------------------------------------------------------
@@ -814,7 +812,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		$update = JTable::getInstance('update');
 		$uid = $update->find(
 			array(
-				'element' => $row->element,
+				'element' => $this->extension->element,
 				'type' => 'component',
 				'client_id' => 1,
 				'folder' => ''
@@ -850,8 +848,8 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 			}
 
 			// Now we will no longer need the extension object, so let's delete it and free up memory
-			$row->delete($row->extension_id);
-			unset($row);
+			$this->extension->delete($this->extension->extension_id);
+			unset($this->extension);
 
 			return $retval;
 		}

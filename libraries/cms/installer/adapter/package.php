@@ -19,6 +19,22 @@ defined('JPATH_PLATFORM') or die;
 class JInstallerAdapterPackage extends JInstallerAdapter
 {
 	/**
+	 * Instance of JInstallerManifestPackage
+	 *
+	 * @var    JInstallerManifestPackage
+	 * @since  3.1
+	 */
+	protected $manifestData;
+
+	/**
+	 * Path to the manifest file, used by the uninstall method
+	 *
+	 * @var    string
+	 * @since  3.1
+	 */
+	protected $manifestFile;
+
+	/**
 	 * The results of each installed extensions
 	 *
 	 * @var    array
@@ -268,6 +284,65 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 	}
 
 	/**
+	 * Method to prepare the uninstall script
+	 *
+	 * This method populates the $this->extension object, checks whether the extension is protected,
+	 * and sets the extension paths
+	 *
+	 * @param   integer  $id  The extension ID to load
+	 *
+	 * @return  boolean  True on success
+	 *
+	 * @note    Due to non-standard processing, the manifest is also set in this extended method
+	 * @since   3.1
+	 */
+	protected function setupUninstall($id)
+	{
+		// Run the common parent methods
+		if (parent::setupUninstall($id))
+		{
+			$this->manifestFile = JPATH_MANIFESTS . '/packages/' . $this->extension->element . '.xml';
+
+			// Because files may not have their own folders we cannot use the standard method of finding an installation manifest
+			if (file_exists($this->manifestFile))
+			{
+				$this->manifestData = new JInstallerManifestPackage($this->manifestFile);
+
+				// Set the package root path
+				$this->parent->setPath('extension_root', JPATH_MANIFESTS . '/packages/' . $manifest->packagename);
+
+				$xml = simplexml_load_file($this->manifestFile);
+
+				// If we cannot load the XML file return null
+				if (!$xml)
+				{
+					JLog::add(JText::_('JLIB_INSTALLER_ERROR_LIB_UNINSTALL_LOAD_MANIFEST'), JLog::WARNING, 'jerror');
+
+					return false;
+				}
+
+				// Check for a valid XML root tag.
+				if ($xml->getName() != 'extension')
+				{
+					JLog::add(JText::_('JLIB_INSTALLER_ERROR_LIB_UNINSTALL_INVALID_MANIFEST'), JLog::WARNING, 'jerror');
+
+					return false;
+				}
+
+				$this->manifest = $xml;
+			}
+			else
+			{
+				JLog::add(JText::_('JLIB_INSTALLER_ERROR_PACK_UNINSTALL_MISSINGMANIFEST'), JLog::WARNING, 'jerror');
+
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
 	 * Custom uninstall method
 	 *
 	 * @param   integer  $id  The id of the package to uninstall.
@@ -278,59 +353,17 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 	 */
 	public function uninstall($id)
 	{
-		$row = null;
 		$retval = true;
 
-		$row = JTable::getInstance('extension');
-		$row->load($id);
-
-		if ($row->protected)
-		{
-			JLog::add(JText::_('JLIB_INSTALLER_ERROR_PACK_UNINSTALL_WARNCOREPACK'), JLog::WARNING, 'jerror');
-
-			return false;
-		}
-
-		$manifestFile = JPATH_MANIFESTS . '/packages/' . $row->element . '.xml';
-		$manifest = new JInstallerManifestPackage($manifestFile);
-
-		// Set the package root path
-		$this->parent->setPath('extension_root', JPATH_MANIFESTS . '/packages/' . $manifest->packagename);
-
-		// Because packages may not have their own folders we cannot use the standard method of finding an installation manifest
-		if (!file_exists($manifestFile))
-		{
-			// TODO: Fail?
-			JLog::add(JText::_('JLIB_INSTALLER_ERROR_PACK_UNINSTALL_MISSINGMANIFEST'), JLog::WARNING, 'jerror');
-
-			return false;
-
-		}
-
-		$xml = simplexml_load_file($manifestFile);
-
-		// If we cannot load the XML file return false
-		if (!$xml)
-		{
-			JLog::add(JText::_('JLIB_INSTALLER_ERROR_PACK_UNINSTALL_LOAD_MANIFEST'), JLog::WARNING, 'jerror');
-
-			return false;
-		}
-
-		// Check for a valid XML root tag.
-		if ($xml->getName() != 'extension')
-		{
-			JLog::add(JText::_('JLIB_INSTALLER_ERROR_PACK_UNINSTALL_INVALID_MANIFEST'), JLog::WARNING, 'jerror');
-
-			return false;
-		}
+		// Prepare the uninstaller for action
+		$this->setupUninstall((int) $id);
 
 		$this->setupScriptfile();
 		$this->triggerManifestScript('uninstall');
 
 		$error = false;
 
-		foreach ($manifest->filelist as $extension)
+		foreach ($this->manifestData->filelist as $extension)
 		{
 			$tmpInstaller = new JInstaller;
 			$id = $this->_getExtensionID($extension->type, $extension->id, $extension->client, $extension->group);
@@ -351,19 +384,19 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 		}
 
 		// Remove any language files
-		$this->parent->removeFiles($xml->languages);
+		$this->parent->removeFiles($this->manifest->languages);
 
 		// Clean up manifest file after we're done if there were no errors
 		if (!$error)
 		{
-			JFile::delete($manifestFile);
+			JFile::delete($this->manifestFile);
 			$folder = $this->parent->getPath('extension_root');
 
 			if (JFolder::exists($folder))
 			{
 				JFolder::delete($folder);
 			}
-			$row->delete();
+			$this->extension->delete();
 		}
 		else
 		{

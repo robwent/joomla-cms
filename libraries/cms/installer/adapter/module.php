@@ -512,6 +512,40 @@ class JInstallerAdapterModule extends JInstallerAdapter
 	}
 
 	/**
+	 * Method to prepare the uninstall script
+	 *
+	 * This method populates the $this->extension object, checks whether the extension is protected,
+	 * and sets the extension paths
+	 *
+	 * @param   integer  $id  The extension ID to load
+	 *
+	 * @return  boolean  True on success
+	 *
+	 * @since   3.1
+	 */
+	protected function setupUninstall($id)
+	{
+		// Run the common parent methods
+		if (parent::setupUninstall($id))
+		{
+			$client = JApplicationHelper::getClientInfo($this->extension->client_id);
+
+			if ($client === false)
+			{
+				$this->parent->abort(JText::sprintf('JLIB_INSTALLER_ERROR_MOD_UNINSTALL_UNKNOWN_CLIENT', $this->extension->client_id));
+
+				return false;
+			}
+
+			$this->parent->setPath('extension_root', $client->path . '/modules/' . $this->element);
+
+			$this->parent->setPath('source', $this->parent->getPath('extension_root'));
+		}
+
+		return true;
+	}
+
+	/**
 	 * Custom uninstall method
 	 *
 	 * @param   integer  $id  The id of the module to uninstall
@@ -525,39 +559,8 @@ class JInstallerAdapterModule extends JInstallerAdapter
 		$retval = true;
 		$db = $this->parent->getDbo();
 
-		// First order of business will be to load the module object table from the database.
-		// This should give us the necessary information to proceed.
-		$row = JTable::getInstance('extension');
-
-		if (!$row->load((int) $id) || !strlen($row->element))
-		{
-			JLog::add(JText::_('JLIB_INSTALLER_ERROR_MOD_UNINSTALL_ERRORUNKOWNEXTENSION'), JLog::WARNING, 'jerror');
-
-			return false;
-		}
-
-		// Is the module we are trying to uninstall a core one?
-		// Because that is not a good idea...
-		if ($row->protected)
-		{
-			JLog::add(JText::sprintf('JLIB_INSTALLER_ERROR_MOD_UNINSTALL_WARNCOREMODULE', $row->name), JLog::WARNING, 'jerror');
-
-			return false;
-		}
-
-		// Get the extension root path
-		$this->element = $row->element;
-		$client = JApplicationHelper::getClientInfo($row->client_id);
-
-		if ($client === false)
-		{
-			$this->parent->abort(JText::sprintf('JLIB_INSTALLER_ERROR_MOD_UNINSTALL_UNKNOWN_CLIENT', $row->client_id));
-
-			return false;
-		}
-		$this->parent->setPath('extension_root', $client->path . '/modules/' . $this->element);
-
-		$this->parent->setPath('source', $this->parent->getPath('extension_root'));
+		// Prepare the uninstaller for action
+		$this->setupUninstall((int) $id);
 
 		// Get the module's manifest objecct
 		// We do findManifest to avoid problem when uninstalling a list of extensions: getManifest cache its manifest file.
@@ -565,7 +568,7 @@ class JInstallerAdapterModule extends JInstallerAdapter
 		$this->manifest = $this->parent->getManifest();
 
 		// Attempt to load the language file; might have uninstall strings
-		$this->loadLanguage(($row->client_id ? JPATH_ADMINISTRATOR : JPATH_SITE) . '/modules/' . $this->element);
+		$this->loadLanguage(($this->extension->client_id ? JPATH_ADMINISTRATOR : JPATH_SITE) . '/modules/' . $this->element);
 
 		$this->setupScriptfile();
 		$this->triggerManifestScript('uninstall');
@@ -591,19 +594,19 @@ class JInstallerAdapterModule extends JInstallerAdapter
 
 		// Remove the schema version
 		$query = $db->getQuery(true);
-		$query->delete('#__schemas')->where('extension_id = ' . $row->extension_id);
+		$query->delete('#__schemas')->where('extension_id = ' . $this->extension->extension_id);
 		$db->setQuery($query);
 		$db->execute();
 
 		// Remove other files
 		$this->parent->removeFiles($this->manifest->media);
-		$this->parent->removeFiles($this->manifest->languages, $row->client_id);
+		$this->parent->removeFiles($this->manifest->languages, $this->extension->client_id);
 
 		// Let's delete all the module copies for the type we are uninstalling
 		$query = $db->getQuery(true);
 		$query->select($query->qn('id'))->from($query->qn('#__modules'));
-		$query->where($query->qn('module') . ' = ' . $query->q($row->element));
-		$query->where($query->qn('client_id') . ' = ' . (int) $row->client_id);
+		$query->where($query->qn('module') . ' = ' . $query->q($this->extension->element));
+		$query->where($query->qn('client_id') . ' = ' . (int) $this->extension->client_id);
 		$db->setQuery($query);
 
 		try
@@ -656,11 +659,11 @@ class JInstallerAdapterModule extends JInstallerAdapter
 		}
 
 		// Now we will no longer need the module object, so let's delete it and free up memory
-		$row->delete($row->extension_id);
+		$this->extension->delete($this->extension->extension_id);
 		$query = $db->getQuery(true);
 		$query->delete($db->quoteName('#__modules'));
-		$query->where($db->quoteName('module') . ' = ' . $db->quote($row->element));
-		$query->where($db->quoteName('client_id') . ' = ' . $row->client_id);
+		$query->where($db->quoteName('module') . ' = ' . $db->quote($this->extension->element));
+		$query->where($db->quoteName('client_id') . ' = ' . $this->extension->client_id);
 		$db->setQuery($query);
 
 		try
@@ -673,7 +676,7 @@ class JInstallerAdapterModule extends JInstallerAdapter
 			// Ignore the error...
 		}
 
-		unset($row);
+		unset($this->extension);
 
 		// Remove the installation folder
 		if (!JFolder::delete($this->parent->getPath('extension_root')))

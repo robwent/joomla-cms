@@ -352,6 +352,56 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 	}
 
 	/**
+	 * Method to prepare the uninstall script
+	 *
+	 * This method populates the $this->extension object, checks whether the extension is protected,
+	 * and sets the extension paths
+	 *
+	 * @param   integer  $id  The extension ID to load
+	 *
+	 * @return  boolean  True on success
+	 *
+	 * @since   3.1
+	 */
+	protected function setupUninstall($id)
+	{
+		// Run the common parent methods
+		if (parent::setupUninstall($id))
+		{
+			// Grab a copy of the client details
+			$client = JApplicationHelper::getClientInfo($this->extension->client_id);
+
+			// Check the element isn't blank to prevent nuking the languages directory, just in case
+			$element = $this->extension->element;
+
+			if (empty($element))
+			{
+				JLog::add(JText::_('JLIB_INSTALLER_ERROR_LANG_UNINSTALL_ELEMENT_EMPTY'), JLog::WARNING, 'jerror');
+
+				return false;
+			}
+
+			// Verify that it's not the default language for that client
+			$params = JComponentHelper::getParams('com_languages');
+
+			if ($params->get($client->name) == $element)
+			{
+				JLog::add(JText::_('JLIB_INSTALLER_ERROR_LANG_UNINSTALL_DEFAULT'), JLog::WARNING, 'jerror');
+
+				return false;
+			}
+
+			// Construct the path from the client, the language and the extension element name
+			$path = $client->path . '/language/' . $element;
+
+			// Get the package manifest object and remove media
+			$this->parent->setPath('source', $path);
+		}
+
+		return true;
+	}
+
+	/**
 	 * Custom uninstall method
 	 *
 	 * @param   string  $eid  The tag of the language to uninstall
@@ -362,48 +412,11 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 	 */
 	public function uninstall($eid)
 	{
-		// Load up the extension details
-		$extension = JTable::getInstance('extension');
-		$extension->load($eid);
+		// Prepare the uninstaller for action
+		$this->setupUninstall((int) $eid);
 
-		// Grab a copy of the client details
-		$client = JApplicationHelper::getClientInfo($extension->client_id);
-
-		// Check the element isn't blank to prevent nuking the languages directory...just in case
-		$element = $extension->element;
-
-		if (empty($element))
-		{
-			JLog::add(JText::_('JLIB_INSTALLER_ERROR_LANG_UNINSTALL_ELEMENT_EMPTY'), JLog::WARNING, 'jerror');
-
-			return false;
-		}
-
-		// Check that the language is not protected, Normally en-GB.
-		$protected = $extension->protected;
-
-		if ($protected == 1)
-		{
-			JLog::add(JText::_('JLIB_INSTALLER_ERROR_LANG_UNINSTALL_PROTECTED'), JLog::WARNING, 'jerror');
-
-			return false;
-		}
-
-		// Verify that it's not the default language for that client
-		$params = JComponentHelper::getParams('com_languages');
-
-		if ($params->get($client->name) == $element)
-		{
-			JLog::add(JText::_('JLIB_INSTALLER_ERROR_LANG_UNINSTALL_DEFAULT'), JLog::WARNING, 'jerror');
-
-			return false;
-		}
-
-		// Construct the path from the client, the language and the extension element name
-		$path = $client->path . '/language/' . $element;
-
-		// Get the package manifest object and remove media
-		$this->parent->setPath('source', $path);
+		// Get the source path as set in the setup method
+		$path = $this->parent->getPath('source');
 
 		// We do findManifest to avoid problem when uninstalling a list of extension: getManifest cache its manifest file
 		$this->parent->findManifest();
@@ -414,7 +427,7 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 		if (!JFolder::exists($path))
 		{
 			// If the folder doesn't exist lets just nuke the row as well and presume the user killed it for us
-			$extension->delete();
+			$this->extension->delete();
 			JLog::add(JText::_('JLIB_INSTALLER_ERROR_LANG_UNINSTALL_PATH_EMPTY'), JLog::WARNING, 'jerror');
 
 			return false;
@@ -429,7 +442,7 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 		}
 
 		// Remove the extension table entry
-		$extension->delete();
+		$this->extension->delete();
 
 		// Setting the language of users which have this language as the default language
 		$db = JFactory::getDbo();
@@ -438,6 +451,9 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 		$query->select('*');
 		$db->setQuery($query);
 		$users = $db->loadObjectList();
+
+		// Grab a copy of the client details
+		$client = JApplicationHelper::getClientInfo($this->extension->client_id);
 
 		if ($client->name == 'administrator')
 		{

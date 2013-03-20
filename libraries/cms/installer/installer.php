@@ -710,7 +710,7 @@ class JInstaller extends JAdapter
 		$adapter = null;
 		if (!isset($this->_adapters[$type]) || !is_object($this->_adapters[$type]))
 		{
-			$params = array('extension' => $this->extension, 'route' => 'uninstall');
+			$params = array('extension' => $this->extension, 'route' => 'uninstall', 'id' => $eid);
 			if (!$this->setAdapter($type, $adapter, $params))
 			{
 				// We failed to get the right adapter

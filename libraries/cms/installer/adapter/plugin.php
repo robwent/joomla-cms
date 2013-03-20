@@ -423,6 +423,42 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 	}
 
 	/**
+	 * Method to prepare the uninstall script
+	 *
+	 * This method populates the $this->extension object, checks whether the extension is protected,
+	 * and sets the extension paths
+	 *
+	 * @param   integer  $id  The extension ID to load
+	 *
+	 * @return  boolean  True on success
+	 *
+	 * @since   3.1
+	 */
+	protected function setupUninstall($id)
+	{
+		// Run the common parent methods
+		if (parent::setupUninstall($id))
+		{
+			// Get the plugin folder so we can properly build the plugin path
+			if (trim($this->extension->folder) == '')
+			{
+				JLog::add(JText::_('JLIB_INSTALLER_ERROR_PLG_UNINSTALL_FOLDER_FIELD_EMPTY'), JLog::WARNING, 'jerror');
+
+				return false;
+			}
+
+			$this->group = $this->extension->folder;
+
+			// Set the plugin root path
+			$this->parent->setPath('extension_root', JPATH_PLUGINS . '/' . $this->extension->folder . '/' . $this->extension->element);
+
+			$this->parent->setPath('source', $this->parent->getPath('extension_root'));
+		}
+
+		return true;
+	}
+
+	/**
 	 * Custom uninstall method
 	 *
 	 * @param   integer  $id  The id of the plugin to uninstall
@@ -435,48 +471,14 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 	{
 		$db = $this->parent->getDbo();
 
-		// First order of business will be to load the plugin object table from the database.
-		// This should give us the necessary information to proceed.
-		$row = JTable::getInstance('extension');
-
-		if (!$row->load((int) $id))
-		{
-			JLog::add(JText::_('JLIB_INSTALLER_ERROR_PLG_UNINSTALL_ERRORUNKOWNEXTENSION'), JLog::WARNING, 'jerror');
-
-			return false;
-		}
-
-		// Is the plugin we are trying to uninstall a core one?
-		// Because that is not a good idea...
-		if ($row->protected)
-		{
-			JLog::add(JText::sprintf('JLIB_INSTALLER_ERROR_PLG_UNINSTALL_WARNCOREPLUGIN', $row->name), JLog::WARNING, 'jerror');
-
-			return false;
-		}
-
-		// Get the plugin folder so we can properly build the plugin path
-		if (trim($row->folder) == '')
-		{
-			JLog::add(JText::_('JLIB_INSTALLER_ERROR_PLG_UNINSTALL_FOLDER_FIELD_EMPTY'), JLog::WARNING, 'jerror');
-
-			return false;
-		}
-
-		$this->element = $row->element;
-		$this->group = $row->folder;
-
-		// Set the plugin root path
-		$this->parent->setPath('extension_root', JPATH_PLUGINS . '/' . $row->folder . '/' . $row->element);
-
-		$this->parent->setPath('source', $this->parent->getPath('extension_root'));
+		// Prepare the uninstaller for action
+		$this->setupUninstall((int) $id);
 
 		$this->parent->findManifest();
 		$this->manifest = $this->parent->getManifest();
 
 		// Attempt to load the language file; might have uninstall strings
-		$this->parent->setPath('source', JPATH_PLUGINS . '/' . $row->folder . '/' . $row->element);
-		$this->loadLanguage(JPATH_PLUGINS . '/' . $row->folder . '/' . $row->element);
+		$this->loadLanguage($this->parent->getPath('extension_root'));
 
 		/**
 		 * ---------------------------------------------------------------------------------------------
@@ -512,13 +514,13 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 
 		// Remove the schema version
 		$query = $db->getQuery(true);
-		$query->delete()->from('#__schemas')->where('extension_id = ' . $row->extension_id);
+		$query->delete()->from('#__schemas')->where('extension_id = ' . $this->extension->extension_id);
 		$db->setQuery($query);
 		$db->execute();
 
 		// Now we will no longer need the plugin object, so let's delete it
-		$row->delete($row->extension_id);
-		unset($row);
+		$this->extension->delete($this->extension->extension_id);
+		unset($this->extension);
 
 		// Remove the plugin's folder
 		JFolder::delete($this->parent->getPath('extension_root'));

@@ -289,6 +289,66 @@ class JInstallerAdapterFile extends JInstallerAdapter
 	}
 
 	/**
+	 * Method to prepare the uninstall script
+	 *
+	 * This method populates the $this->extension object, checks whether the extension is protected,
+	 * and sets the extension paths
+	 *
+	 * @param   integer  $id  The extension ID to load
+	 *
+	 * @return  boolean  True on success
+	 *
+	 * @note    Due to non-standard processing, the manifest is also set in this extended method
+	 * @since   3.1
+	 */
+	protected function setupUninstall($id)
+	{
+		// Run the common parent methods
+		if (parent::setupUninstall($id))
+		{
+			$manifestFile = JPATH_MANIFESTS . '/files/' . $this->element . '.xml';
+
+			// Because files may not have their own folders we cannot use the standard method of finding an installation manifest
+			if (file_exists($manifestFile))
+			{
+				// Set the files root path
+				$this->parent->setPath('extension_root', JPATH_MANIFESTS . '/files/' . $this->element);
+
+				$xml = simplexml_load_file($manifestFile);
+
+				// If we cannot load the XML file return null
+				if (!$xml)
+				{
+					JLog::add(JText::_('JLIB_INSTALLER_ERROR_FILE_UNINSTALL_LOAD_MANIFEST'), JLog::WARNING, 'jerror');
+
+					return false;
+				}
+
+				// Check for a valid XML root tag.
+				if ($xml->getName() != 'extension')
+				{
+					JLog::add(JText::_('JLIB_INSTALLER_ERROR_FILE_UNINSTALL_INVALID_MANIFEST'), JLog::WARNING, 'jerror');
+
+					return false;
+				}
+
+				$this->manifest = $xml;
+			}
+			else
+			{
+				// Remove this row entry since its invalid
+				$this->extension->delete($this->extension->extension_id);
+				unset($this->extension);
+				JLog::add(JText::_('JLIB_INSTALLER_ERROR_LIB_UNINSTALL_INVALID_NOTFOUND_MANIFEST'), JLog::WARNING, 'jerror');
+
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
 	 * Custom uninstall method
 	 *
 	 * @param   string  $id  The id of the file to uninstall
@@ -299,148 +359,92 @@ class JInstallerAdapterFile extends JInstallerAdapter
 	 */
 	public function uninstall($id)
 	{
-		$row = JTable::getInstance('extension');
-
-		if (!$row->load($id))
-		{
-			JLog::add(JText::_('JLIB_INSTALLER_ERROR_FILE_UNINSTALL_LOAD_ENTRY'), JLog::WARNING, 'jerror');
-
-			return false;
-		}
-
-		if ($row->protected)
-		{
-			JLog::add(JText::_('JLIB_INSTALLER_ERROR_FILE_UNINSTALL_WARNCOREFILE'), JLog::WARNING, 'jerror');
-
-			return false;
-		}
-
-		// Set element to match the database.
-		$this->element = $row->element;
-
 		$retval = true;
-		$manifestFile = JPATH_MANIFESTS . '/files/' . $this->element . '.xml';
 
-		// Because files may not have their own folders we cannot use the standard method of finding an installation manifest
-		if (file_exists($manifestFile))
+		$this->setupScriptfile();
+		$this->triggerManifestScript('uninstall');
+
+		$db = JFactory::getDbo();
+
+		// Let's run the uninstall queries for the extension
+		$result = $this->doDatabaseTransactions('uninstall');
+
+		if ($result === false)
 		{
-			// Set the files root path
-			$this->parent->setPath('extension_root', JPATH_MANIFESTS . '/files/' . $this->element);
+			// Install failed, rollback changes
+			JLog::add(JText::sprintf('JLIB_INSTALLER_ERROR_FILE_UNINSTALL_SQL_ERROR', $db->stderr(true)), JLog::WARNING, 'jerror');
+			$retval = false;
+		}
 
-			$xml = simplexml_load_file($manifestFile);
+		// Remove the schema version
+		$query = $db->getQuery(true);
+		$query->delete()
+			->from('#__schemas')
+			->where('extension_id = ' . $this->extension->extension_id);
+		$db->setQuery($query);
+		$db->execute();
 
-			// If we cannot load the XML file return null
-			if (!$xml)
+		// Loop through all elements and get list of files and folders
+		foreach ($this->manifest->fileset->files as $eFiles)
+		{
+			$target = (string) $eFiles->attributes()->target;
+
+			// Create folder path
+			if (empty($target))
 			{
-				JLog::add(JText::_('JLIB_INSTALLER_ERROR_FILE_UNINSTALL_LOAD_MANIFEST'), JLog::WARNING, 'jerror');
-
-				return false;
+				$targetFolder = JPATH_ROOT;
+			}
+			else
+			{
+				$targetFolder = JPATH_ROOT . '/' . $target;
 			}
 
-			// Check for a valid XML root tag.
-			if ($xml->getName() != 'extension')
+			$folderList = array();
+
+			// Check if all children exists
+			if (count($eFiles->children()) > 0)
 			{
-				JLog::add(JText::_('JLIB_INSTALLER_ERROR_FILE_UNINSTALL_INVALID_MANIFEST'), JLog::WARNING, 'jerror');
-
-				return false;
-			}
-
-			$this->manifest = $xml;
-
-			$this->setupScriptfile();
-			$this->triggerManifestScript('uninstall');
-
-			$db = JFactory::getDbo();
-
-			// Let's run the uninstall queries for the extension
-			$result = $this->doDatabaseTransactions('uninstall');
-
-			if ($result === false)
-			{
-				// Install failed, rollback changes
-				JLog::add(JText::sprintf('JLIB_INSTALLER_ERROR_FILE_UNINSTALL_SQL_ERROR', $db->stderr(true)), JLog::WARNING, 'jerror');
-				$retval = false;
-			}
-
-			// Remove the schema version
-			$query = $db->getQuery(true);
-			$query->delete()
-				->from('#__schemas')
-				->where('extension_id = ' . $row->extension_id);
-			$db->setQuery($query);
-			$db->execute();
-
-			// Loop through all elements and get list of files and folders
-			foreach ($xml->fileset->files as $eFiles)
-			{
-				$target = (string) $eFiles->attributes()->target;
-
-				// Create folder path
-				if (empty($target))
+				// Loop through all filenames elements
+				foreach ($eFiles->children() as $eFileName)
 				{
-					$targetFolder = JPATH_ROOT;
-				}
-				else
-				{
-					$targetFolder = JPATH_ROOT . '/' . $target;
-				}
-
-				$folderList = array();
-
-				// Check if all children exists
-				if (count($eFiles->children()) > 0)
-				{
-					// Loop through all filenames elements
-					foreach ($eFiles->children() as $eFileName)
+					if ($eFileName->getName() == 'folder')
 					{
-						if ($eFileName->getName() == 'folder')
-						{
-							$folderList[] = $targetFolder . '/' . $eFileName;
+						$folderList[] = $targetFolder . '/' . $eFileName;
 
-						}
-						else
-						{
-							$fileName = $targetFolder . '/' . $eFileName;
-							JFile::delete($fileName);
-						}
 					}
-				}
-
-				// Delete any folders that don't have any content in them.
-				foreach ($folderList as $folder)
-				{
-					$files = JFolder::files($folder);
-
-					if (!count($files))
+					else
 					{
-						JFolder::delete($folder);
+						$fileName = $targetFolder . '/' . $eFileName;
+						JFile::delete($fileName);
 					}
 				}
 			}
 
-			JFile::delete($manifestFile);
-
-			// Lastly, remove the extension_root
-			$folder = $this->parent->getPath('extension_root');
-
-			if (JFolder::exists($folder))
+			// Delete any folders that don't have any content in them.
+			foreach ($folderList as $folder)
 			{
-				JFolder::delete($folder);
+				$files = JFolder::files($folder);
+
+				if (!count($files))
+				{
+					JFolder::delete($folder);
+				}
 			}
 		}
-		else
+
+		JFile::delete($manifestFile);
+
+		// Lastly, remove the extension_root
+		$folder = $this->parent->getPath('extension_root');
+
+		if (JFolder::exists($folder))
 		{
-			JLog::add(JText::_('JLIB_INSTALLER_ERROR_FILE_UNINSTALL_INVALID_NOTFOUND_MANIFEST'), JLog::WARNING, 'jerror');
-
-			// Delete the row because its broken
-			$row->delete();
-
-			return false;
+			JFolder::delete($folder);
 		}
 
-		$this->parent->removeFiles($xml->languages);
+		$this->parent->removeFiles($this->manifest->languages);
 
-		$row->delete();
+		$this->extension->delete();
 
 		return $retval;
 	}

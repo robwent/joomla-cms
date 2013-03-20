@@ -105,12 +105,21 @@ abstract class JInstallerAdapter extends JAdapterInstance
 			$this->setRoute($options['route']);
 		}
 
+		// If we're on the uninstall route, we need to prepare the adapter before loading the manifest
+		if ($this->route == 'uninstall' && isset($options['id']))
+		{
+			$this->setupUninstall((int) $options['id']);
+		}
+
 		// Set the manifest object
 		$this->manifest = $this->getManifest();
 
 		// Set name and element
 		$this->name = $this->getName();
 		$this->element = $this->getElement();
+
+		// Get a generic JTableExtension instance for use
+		$this->extension = JTable::getInstance('extension');
 	}
 
 	/**
@@ -401,6 +410,45 @@ abstract class JInstallerAdapter extends JAdapterInstance
 				$this->manifest_script = $this->scriptElement;
 			}
 		}
+	}
+
+	/**
+	 * Method to prepare the uninstall script
+	 *
+	 * This method populates the $this->extension object, checks whether the extension is protected,
+	 * and sets the extension paths
+	 *
+	 * @param   integer  $id  The extension ID to load
+	 *
+	 * @return  boolean  True on success
+	 *
+	 * @since   3.1
+	 * @todo    Cleanup the JText strings
+	 */
+	protected function setupUninstall($id)
+	{
+		// First order of business will be to load the component object table from the database.
+		// This should give us the necessary information to proceed.
+		if (!$this->extension->load((int) $id))
+		{
+			JLog::add(JText::_('JLIB_INSTALLER_ERROR_COMP_UNINSTALL_ERRORUNKOWNEXTENSION'), JLog::WARNING, 'jerror');
+
+			return false;
+		}
+
+		// Is the component we are trying to uninstall a core one?
+		// Because that is not a good idea...
+		if ($this->extension->protected)
+		{
+			JLog::add(JText::_('JLIB_INSTALLER_ERROR_COMP_UNINSTALL_WARNCORECOMPONENT'), JLog::WARNING, 'jerror');
+
+			return false;
+		}
+
+		// Make sure that element name is in correct format.
+		$this->element = $this->getElement($this->extension->element);
+
+		return true;
 	}
 
 	/**

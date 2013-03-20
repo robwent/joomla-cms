@@ -270,6 +270,64 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 	}
 
 	/**
+	 * Method to prepare the uninstall script
+	 *
+	 * This method populates the $this->extension object, checks whether the extension is protected,
+	 * and sets the extension paths
+	 *
+	 * @param   integer  $id  The extension ID to load
+	 *
+	 * @return  boolean  True on success
+	 *
+	 * @since   3.1
+	 */
+	protected function setupUninstall($id)
+	{
+		// Run the common parent methods
+		if (parent::setupUninstall($id))
+		{
+			// For a template the id will be the template name which represents the subfolder of the templates folder that the template resides in.
+			if (!$this->element)
+			{
+				JLog::add(JText::_('JLIB_INSTALLER_ERROR_TPL_UNINSTALL_TEMPLATE_ID_EMPTY'), JLog::WARNING, 'jerror');
+
+				return false;
+			}
+
+			// Deny remove default template
+			$db = $this->parent->getDbo();
+			$query = $db->getQuery(true);
+			$query->select('COUNT(*)')
+				->from($db->quoteName('#__template_styles'))
+				->where($db->quoteName('home') . ' = ' . $db->quote('1'))
+				->where($db->quoteName('template') . ' = ' . $db->quote($this->element));
+			$db->setQuery($query);
+
+			if ($db->loadResult() != 0)
+			{
+				JLog::add(JText::_('JLIB_INSTALLER_ERROR_TPL_UNINSTALL_TEMPLATE_DEFAULT'), JLog::WARNING, 'jerror');
+
+				return false;
+			}
+
+			// Get the template root path
+			$client = JApplicationHelper::getClientInfo($this->extension->client_id);
+
+			if (!$client)
+			{
+				JLog::add(JText::_('JLIB_INSTALLER_ERROR_TPL_UNINSTALL_INVALID_CLIENT'), JLog::WARNING, 'jerror');
+
+				return false;
+			}
+
+			$this->parent->setPath('extension_root', $client->path . '/templates/' . strtolower($this->element));
+			$this->parent->setPath('source', $this->parent->getPath('extension_root'));
+		}
+
+		return true;
+	}
+
+	/**
 	 * Custom uninstall method
 	 *
 	 * @param   integer  $id  The extension ID
@@ -280,67 +338,8 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 	 */
 	public function uninstall($id)
 	{
-		$retval = true;
-
-		// First order of business will be to load the template object table from the database.
-		// This should give us the necessary information to proceed.
-		$row = JTable::getInstance('extension');
-
-		if (!$row->load((int) $id) || !strlen($row->element))
-		{
-			JLog::add(JText::_('JLIB_INSTALLER_ERROR_TPL_UNINSTALL_ERRORUNKOWNEXTENSION'), JLog::WARNING, 'jerror');
-
-			return false;
-		}
-
-		// Is the template we are trying to uninstall a core one?
-		// Because that is not a good idea...
-		if ($row->protected)
-		{
-			JLog::add(JText::sprintf('JLIB_INSTALLER_ERROR_TPL_UNINSTALL_WARNCORETEMPLATE', $row->name), JLog::WARNING, 'jerror');
-
-			return false;
-		}
-
-		$this->element = $row->element;
-		$clientId = $row->client_id;
-
-		// For a template the id will be the template name which represents the subfolder of the templates folder that the template resides in.
-		if (!$this->element)
-		{
-			JLog::add(JText::_('JLIB_INSTALLER_ERROR_TPL_UNINSTALL_TEMPLATE_ID_EMPTY'), JLog::WARNING, 'jerror');
-
-			return false;
-		}
-
-		// Deny remove default template
-		$db = $this->parent->getDbo();
-		$query = $db->getQuery(true);
-		$query->select('COUNT(*)')
-			->from($db->quoteName('#__template_styles'))
-			->where($db->quoteName('home') . ' = ' . $db->quote('1'))
-			->where($db->quoteName('template') . ' = ' . $db->quote($this->element));
-		$db->setQuery($query);
-
-		if ($db->loadResult() != 0)
-		{
-			JLog::add(JText::_('JLIB_INSTALLER_ERROR_TPL_UNINSTALL_TEMPLATE_DEFAULT'), JLog::WARNING, 'jerror');
-
-			return false;
-		}
-
-		// Get the template root path
-		$client = JApplicationHelper::getClientInfo($clientId);
-
-		if (!$client)
-		{
-			JLog::add(JText::_('JLIB_INSTALLER_ERROR_TPL_UNINSTALL_INVALID_CLIENT'), JLog::WARNING, 'jerror');
-
-			return false;
-		}
-
-		$this->parent->setPath('extension_root', $client->path . '/templates/' . strtolower($this->element));
-		$this->parent->setPath('source', $this->parent->getPath('extension_root'));
+		// Prepare the uninstaller for action
+		$this->setupUninstall((int) $id);
 
 		// We do findManifest to avoid problem when uninstalling a list of extensions: getManifest cache its manifest file
 		$this->parent->findManifest();
@@ -349,8 +348,8 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 		if (!($manifest instanceof SimpleXMLElement))
 		{
 			// Kill the extension entry
-			$row->delete($row->extension_id);
-			unset($row);
+			$this->extension->delete($this->extension->extension_id);
+			unset($this->extension);
 
 			// Make sure we delete the folders
 			JFolder::delete($this->parent->getPath('extension_root'));
@@ -361,7 +360,7 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 
 		// Remove files
 		$this->parent->removeFiles($manifest->media);
-		$this->parent->removeFiles($manifest->languages, $clientId);
+		$this->parent->removeFiles($manifest->languages, $this->extension->client_id);
 
 		// Delete the template directory
 		if (JFolder::exists($this->parent->getPath('extension_root')))
@@ -379,21 +378,21 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 			. ' SET template_style_id = 0'
 			. ' WHERE template_style_id in ('
 			. '	SELECT s.id FROM #__template_styles s'
-			. ' WHERE s.template = ' . $db->Quote(strtolower($this->element)) . ' AND s.client_id = ' . $clientId . ')';
+			. ' WHERE s.template = ' . $db->Quote(strtolower($this->element)) . ' AND s.client_id = ' . $this->extension->client_id . ')';
 
 		$db->setQuery($query);
 		$db->execute();
 
 		$query = $db->getQuery(true);
 		$query->delete($db->quoteName('#__template_styles'))
-			->where($db->quoteName('client_id') . ' = ' . $clientId)
+			->where($db->quoteName('client_id') . ' = ' . $this->extension->client_id)
 			->where($db->quoteName('template') . ' = ' . $db->quote($this->element));
 
 		$db->setQuery($query);
 		$db->execute();
 
-		$row->delete($row->extension_id);
-		unset($row);
+		$this->extension->delete($this->extension->extension_id);
+		unset($this->extension);
 
 		return $retval;
 	}
