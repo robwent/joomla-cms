@@ -147,9 +147,6 @@ class JInstallerAdapterFile extends JInstallerAdapter
 		 * ---------------------------------------------------------------------------------------------
 		 */
 
-		// Get a database connector object
-		$db = $this->parent->getDbo();
-
 		/*
 		 * Check to see if a file extension by the same name is already installed
 		 * If it is, then update the table because if the files aren't there
@@ -173,7 +170,7 @@ class JInstallerAdapterFile extends JInstallerAdapter
 			{
 				// Install failed, roll back changes
 				throw new RuntimeException(
-					JText::sprintf('JLIB_INSTALLER_ABORT_FILE_ROLLBACK', JText::_('JLIB_INSTALLER_' . $this->route), $db->stderr(true))
+					JText::sprintf('JLIB_INSTALLER_ABORT_FILE_ROLLBACK', JText::_('JLIB_INSTALLER_' . $this->route), $this->db->stderr(true))
 				);
 			}
 		}
@@ -197,7 +194,7 @@ class JInstallerAdapterFile extends JInstallerAdapter
 			if (!$this->extension->store())
 			{
 				// Install failed, roll back changes
-				throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_FILE_INSTALL_ROLLBACK', $db->stderr(true)));
+				throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_FILE_INSTALL_ROLLBACK', $this->db->stderr(true)));
 			}
 
 			// Since we have created a module item, we add it to the installation step stack
@@ -229,7 +226,7 @@ class JInstallerAdapterFile extends JInstallerAdapter
 				if ($result === false)
 				{
 					// Install failed, rollback changes
-					throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_FILE_UPDATE_SQL_ERROR', $db->stderr(true)));
+					throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_FILE_UPDATE_SQL_ERROR', $this->db->stderr(true)));
 				}
 			}
 		}
@@ -304,15 +301,15 @@ class JInstallerAdapterFile extends JInstallerAdapter
 		// Run the common parent methods
 		if (parent::setupUninstall($id))
 		{
-			$manifestFile = JPATH_MANIFESTS . '/files/' . $this->element . '.xml';
+			$this->manifestFile = JPATH_MANIFESTS . '/files/' . $this->element . '.xml';
 
 			// Because files may not have their own folders we cannot use the standard method of finding an installation manifest
-			if (file_exists($manifestFile))
+			if (file_exists($this->manifestFile))
 			{
 				// Set the files root path
 				$this->parent->setPath('extension_root', JPATH_MANIFESTS . '/files/' . $this->element);
 
-				$xml = simplexml_load_file($manifestFile);
+				$xml = simplexml_load_file($this->manifestFile);
 
 				// If we cannot load the XML file return null
 				if (!$xml)
@@ -334,9 +331,8 @@ class JInstallerAdapterFile extends JInstallerAdapter
 			}
 			else
 			{
-				// Remove this row entry since its invalid
+				// Delete extension.
 				$this->extension->delete($this->extension->extension_id);
-				unset($this->extension);
 				JLog::add(JText::_('JLIB_INSTALLER_ERROR_LIB_UNINSTALL_INVALID_NOTFOUND_MANIFEST'), JLog::WARNING, 'jerror');
 
 				return false;
@@ -362,25 +358,23 @@ class JInstallerAdapterFile extends JInstallerAdapter
 		$this->setupScriptfile();
 		$this->triggerManifestScript('uninstall');
 
-		$db = JFactory::getDbo();
-
 		// Let's run the uninstall queries for the extension
 		$result = $this->doDatabaseTransactions('uninstall');
 
 		if ($result === false)
 		{
 			// Install failed, rollback changes
-			JLog::add(JText::sprintf('JLIB_INSTALLER_ERROR_FILE_UNINSTALL_SQL_ERROR', $db->stderr(true)), JLog::WARNING, 'jerror');
+			JLog::add(JText::sprintf('JLIB_INSTALLER_ERROR_FILE_UNINSTALL_SQL_ERROR', $this->db->stderr(true)), JLog::WARNING, 'jerror');
 			$retval = false;
 		}
 
 		// Remove the schema version
-		$query = $db->getQuery(true);
+		$query = $this->db->getQuery(true);
 		$query->delete()
 			->from('#__schemas')
 			->where('extension_id = ' . $this->extension->extension_id);
-		$db->setQuery($query);
-		$db->execute();
+		$this->db->setQuery($query);
+		$this->db->execute();
 
 		// Loop through all elements and get list of files and folders
 		foreach ($this->manifest->fileset->files as $eFiles)
@@ -430,7 +424,7 @@ class JInstallerAdapterFile extends JInstallerAdapter
 			}
 		}
 
-		JFile::delete($manifestFile);
+		JFile::delete($this->manifestFile);
 
 		// Lastly, remove the extension_root
 		$folder = $this->parent->getPath('extension_root');
