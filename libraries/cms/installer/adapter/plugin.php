@@ -155,9 +155,6 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 	{
 		parent::install();
 
-		// Get a database connector object
-		$db = $this->parent->getDbo();
-
 		/*
 		 * ---------------------------------------------------------------------------------------------
 		 * Manifest Document Setup Section
@@ -183,7 +180,7 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 		catch (RuntimeException $e)
 		{
 			// Install failed, roll back changes
-			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_PLG_INSTALL_ROLLBACK', JText::_('JLIB_INSTALLER_' . $this->route), $db->stderr(true)));
+			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_PLG_INSTALL_ROLLBACK', JText::_('JLIB_INSTALLER_' . $this->route), $this->db->stderr(true)));
 		}
 
 		// If it's on the fs...
@@ -360,7 +357,7 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 			{
 				// Install failed, roll back changes
 				throw new RuntimeException(
-					JText::sprintf('JLIB_INSTALLER_ABORT_PLG_INSTALL_ROLLBACK', JText::_('JLIB_INSTALLER_' . $this->route), $db->stderr(true))
+					JText::sprintf('JLIB_INSTALLER_ABORT_PLG_INSTALL_ROLLBACK', JText::_('JLIB_INSTALLER_' . $this->route), $this->db->stderr(true))
 				);
 			}
 
@@ -393,7 +390,7 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 				if ($result === false)
 				{
 					// Install failed, rollback changes
-					throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_PLG_UPDATE_SQL_ERROR', $db->stderr(true)));
+					throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_PLG_UPDATE_SQL_ERROR', $this->db->stderr(true)));
 				}
 			}
 		}
@@ -467,8 +464,6 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 	 */
 	public function uninstall($id)
 	{
-		$db = $this->parent->getDbo();
-
 		// Prepare the uninstaller for action
 		$this->setupUninstall((int) $id);
 
@@ -495,7 +490,7 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 		if ($result === false)
 		{
 			// Install failed, rollback changes
-			$this->parent->abort(JText::sprintf('JLIB_INSTALLER_ABORT_PLG_UNINSTALL_SQL_ERROR', $db->stderr(true)));
+			$this->parent->abort(JText::sprintf('JLIB_INSTALLER_ABORT_PLG_UNINSTALL_SQL_ERROR', $this->db->stderr(true)));
 
 			return false;
 		}
@@ -511,14 +506,13 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 		$this->parent->removeFiles($this->manifest->languages, 1);
 
 		// Remove the schema version
-		$query = $db->getQuery(true);
+		$query = $this->db->getQuery(true);
 		$query->delete()->from('#__schemas')->where('extension_id = ' . $this->extension->extension_id);
-		$db->setQuery($query);
-		$db->execute();
+		$this->db->setQuery($query);
+		$this->db->execute();
 
-		// Now we will no longer need the plugin object, so let's delete it
+		// Delete extension.
 		$this->extension->delete($this->extension->extension_id);
-		unset($this->extension);
 
 		// Remove the plugin's folder
 		JFolder::delete($this->parent->getPath('extension_root'));

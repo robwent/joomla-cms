@@ -301,7 +301,6 @@ class JInstallerAdapterLibrary extends JInstallerAdapter
 		$this->parent->removeFiles($this->manifest->languages);
 
 		$this->extension->delete($this->extension->extension_id);
-		unset($this->extension);
 
 		return $retval;
 	}

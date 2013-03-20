@@ -120,9 +120,6 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		// Initialise the install method
 		parent::install();
 
-		// Get a database connector object
-		$db = $this->parent->getDbo();
-
 		/*
 		 * ---------------------------------------------------------------------------------------------
 		 * Manifest Document Setup Section
@@ -327,7 +324,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		if (!$this->extension->store())
 		{
 			// Install failed, roll back changes
-			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_COMP_INSTALL_ROLLBACK', $db->stderr(true)));
+			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_COMP_INSTALL_ROLLBACK', $this->db->stderr(true)));
 		}
 
 		$eid = $this->extension->extension_id;
@@ -378,7 +375,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		if (!$asset->store())
 		{
 			// Install failed, roll back changes
-			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_COMP_INSTALL_ROLLBACK', $db->stderr(true)));
+			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_COMP_INSTALL_ROLLBACK', $this->db->stderr(true)));
 		}
 
 		// And now we run the postflight
@@ -396,9 +393,6 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 	 */
 	public function update()
 	{
-		// Get a database connector object
-		$db = $this->parent->getDbo();
-
 		// Set the overwrite setting
 		$this->parent->setOverwrite(true);
 
@@ -593,7 +587,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 			if ($result === false)
 			{
 				// Install failed, rollback changes
-				throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_COMP_UPDATE_SQL_ERROR', $db->stderr(true)));
+				throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_COMP_UPDATE_SQL_ERROR', $this->db->stderr(true)));
 			}
 		}
 
@@ -651,7 +645,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		if (!$this->extension->store())
 		{
 			// Install failed, roll back changes
-			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_COMP_UPDATE_ROLLBACK', $db->stderr(true)));
+			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_COMP_UPDATE_ROLLBACK', $this->db->stderr(true)));
 		}
 
 		// We will copy the manifest file to its appropriate place.
@@ -707,7 +701,6 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 	 */
 	public function uninstall($id)
 	{
-		$db = $this->parent->getDbo();
 		$retval = true;
 
 		/**
@@ -763,7 +756,7 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 			if ($result === false)
 			{
 				// Install failed, rollback changes
-				JLog::add(JText::sprintf('JLIB_INSTALLER_ERROR_COMP_UNINSTALL_SQL_ERROR', $db->stderr(true)), JLog::WARNING, 'jerror');
+				JLog::add(JText::sprintf('JLIB_INSTALLER_ERROR_COMP_UNINSTALL_SQL_ERROR', $this->db->stderr(true)), JLog::WARNING, 'jerror');
 				$retval = false;
 			}
 		}
@@ -783,10 +776,10 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		$this->parent->removeFiles($this->manifest->administration->languages, 1);
 
 		// Remove the schema version
-		$query = $db->getQuery(true);
+		$query = $this->db->getQuery(true);
 		$query->delete()->from('#__schemas')->where('extension_id = ' . $id);
-		$db->setQuery($query);
-		$db->execute();
+		$this->db->setQuery($query);
+		$this->db->execute();
 
 		// Remove the component container in the assets table.
 		$asset = JTable::getInstance('Asset');
@@ -797,12 +790,12 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		}
 
 		// Remove categories for this component
-		$query = $db->getQuery(true);
-		$query->delete($db->quoteName('#__categories'))
-			->where($db->quoteName('extension') . ' = ' . $db->quote($this->element), 'OR')
-			->where($db->quoteName('extension') . ' LIKE ' . $db->quote($this->element . '.%'));
-		$db->setQuery($query);
-		$db->execute();
+		$query = $this->db->getQuery(true);
+		$query->delete($this->db->quoteName('#__categories'))
+			->where($this->db->quoteName('extension') . ' = ' . $this->db->quote($this->element), 'OR')
+			->where($this->db->quoteName('extension') . ' LIKE ' . $this->db->quote($this->element . '.%'));
+		$this->db->setQuery($query);
+		$this->db->execute();
 
 		// Clobber any possible pending updates
 		$update = JTable::getInstance('update');
@@ -843,9 +836,8 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 				}
 			}
 
-			// Now we will no longer need the extension object, so let's delete it and free up memory
+			// Delete extension.
 			$this->extension->delete($this->extension->extension_id);
-			unset($this->extension);
 
 			return $retval;
 		}
@@ -867,22 +859,21 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 	 */
 	protected function _buildAdminMenus()
 	{
-		$db = $this->parent->getDbo();
 		$table = JTable::getInstance('menu');
 		$option = $this->element;
 
 		// If a component exists with this option in the table then we don't need to add menus
-		$query = $db->getQuery(true);
+		$query = $this->db->getQuery(true);
 		$query->select('m.id, e.extension_id');
 		$query->from('#__menu AS m');
 		$query->leftJoin('#__extensions AS e ON m.component_id = e.extension_id');
 		$query->where('m.parent_id = 1');
 		$query->where('m.client_id = 1');
-		$query->where('e.element = ' . $db->quote($option));
+		$query->where('e.element = ' . $this->db->quote($option));
 
-		$db->setQuery($query);
+		$this->db->setQuery($query);
 
-		$componentrow = $db->loadObject();
+		$componentrow = $this->db->loadObject();
 
 		// Check if menu items exist
 		if ($componentrow)
@@ -908,12 +899,12 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 			$query->clear();
 			$query->select('e.extension_id');
 			$query->from('#__extensions AS e');
-			$query->where('e.element = ' . $db->quote($option));
+			$query->where('e.element = ' . $this->db->quote($option));
 
-			$db->setQuery($query);
+			$this->db->setQuery($query);
 
 			// TODO Find Some better way to discover the component_id
-			$component_id = $db->loadResult();
+			$component_id = $this->db->loadResult();
 		}
 
 		// Ok, now its time to handle the menus.  Start with the component root menu, then handle submenus.
@@ -948,18 +939,18 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 			if (!$table->bind($data) || !$table->check() || !$table->store())
 			{
 				// The menu item already exists. Delete it and retry instead of throwing an error.
-				$query = $db->getQuery(true);
+				$query = $this->db->getQuery(true);
 				$query->select('id');
 				$query->from('#__menu');
-				$query->where('menutype = ' . $db->quote('main'));
+				$query->where('menutype = ' . $this->db->quote('main'));
 				$query->where('client_id = 1');
-				$query->where('link = ' . $db->quote('index.php?option=' . $option));
-				$query->where('type = ' . $db->quote('component'));
+				$query->where('link = ' . $this->db->quote('index.php?option=' . $option));
+				$query->where('type = ' . $this->db->quote('component'));
 				$query->where('parent_id = 1');
 				$query->where('home = 0');
 
-				$db->setQuery($query);
-				$menu_id = $db->loadResult();
+				$this->db->setQuery($query);
+				$menu_id = $this->db->loadResult();
 
 				if (!$menu_id)
 				{
@@ -971,12 +962,12 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 				else
 				{
 					// Remove the old menu item
-					$query = $db->getQuery(true);
+					$query = $this->db->getQuery(true);
 					$query->delete('#__menu');
 					$query->where('id = ' . (int) $menu_id);
 
-					$db->setQuery($query);
-					$db->query();
+					$this->db->setQuery($query);
+					$this->db->query();
 
 					// Retry creating the menu item
 					$table->setLocation(1, 'last-child');
@@ -1145,20 +1136,19 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 	 */
 	protected function _removeAdminMenus(&$row)
 	{
-		$db = $this->parent->getDbo();
 		$table = JTable::getInstance('menu');
 		$id = $row->extension_id;
 
 		// Get the ids of the menu items
-		$query = $db->getQuery(true);
+		$query = $this->db->getQuery(true);
 		$query->select('id');
 		$query->from('#__menu');
 		$query->where($query->qn('client_id') . ' = 1');
 		$query->where($query->qn('component_id') . ' = ' . (int) $id);
 
-		$db->setQuery($query);
+		$this->db->setQuery($query);
 
-		$ids = $db->loadColumn();
+		$ids = $this->db->loadColumn();
 
 		// Check for error
 		if (!empty($ids))
