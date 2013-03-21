@@ -66,9 +66,6 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 	{
 		parent::install();
 
-		// Get a database connector object
-		$db = $this->parent->getDbo();
-
 		$lang = JFactory::getLanguage();
 
 		// Get the client application target
@@ -232,37 +229,37 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 		if (!$this->extension->store())
 		{
 			// Install failed, roll back changes
-			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_TPL_INSTALL_ROLLBACK', $db->stderr(true)));
+			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_TPL_INSTALL_ROLLBACK', $this->db->stderr(true)));
 		}
 
 		if ($this->route == 'install')
 		{
 			$debug = $lang->setDebug(false);
 
-			$columns = array($db->quoteName('template'),
-				$db->quoteName('client_id'),
-				$db->quoteName('home'),
-				$db->quoteName('title'),
-				$db->quoteName('params')
+			$columns = array($this->db->quoteName('template'),
+				$this->db->quoteName('client_id'),
+				$this->db->quoteName('home'),
+				$this->db->quoteName('title'),
+				$this->db->quoteName('params')
 			);
 
 			$values = array(
-				$db->Quote($this->extension->element), $clientId, $db->Quote(0),
-				$db->Quote(JText::sprintf('JLIB_INSTALLER_DEFAULT_STYLE', JText::_($this->name))),
-				$db->Quote($this->extension->params) );
+				$this->db->Quote($this->extension->element), $clientId, $this->db->Quote(0),
+				$this->db->Quote(JText::sprintf('JLIB_INSTALLER_DEFAULT_STYLE', JText::_($this->name))),
+				$this->db->Quote($this->extension->params) );
 
 			$lang->setDebug($debug);
 
 			// Insert record in #__template_styles
-			$query = $db->getQuery(true);
-			$query->insert($db->quoteName('#__template_styles'))
+			$query = $this->db->getQuery(true);
+			$query->insert($this->db->quoteName('#__template_styles'))
 				->columns($columns)
 				->values(implode(',', $values));
 
-			$db->setQuery($query);
+			$this->db->setQuery($query);
 
 			// There is a chance this could fail but we don't care...
-			$db->execute();
+			$this->db->execute();
 		}
 
 		return $this->extension->extension_id;
@@ -294,15 +291,15 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 			}
 
 			// Deny remove default template
-			$db = $this->parent->getDbo();
-			$query = $db->getQuery(true);
+			$this->db = $this->parent->getDbo();
+			$query = $this->db->getQuery(true);
 			$query->select('COUNT(*)')
-				->from($db->quoteName('#__template_styles'))
-				->where($db->quoteName('home') . ' = ' . $db->quote('1'))
-				->where($db->quoteName('template') . ' = ' . $db->quote($this->element));
-			$db->setQuery($query);
+				->from($this->db->quoteName('#__template_styles'))
+				->where($this->db->quoteName('home') . ' = ' . $this->db->quote('1'))
+				->where($this->db->quoteName('template') . ' = ' . $this->db->quote($this->element));
+			$this->db->setQuery($query);
 
-			if ($db->loadResult() != 0)
+			if ($this->db->loadResult() != 0)
 			{
 				JLog::add(JText::_('JLIB_INSTALLER_ERROR_TPL_UNINSTALL_TEMPLATE_DEFAULT'), JLog::WARNING, 'jerror');
 
@@ -348,7 +345,6 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 		{
 			// Kill the extension entry
 			$this->extension->delete($this->extension->extension_id);
-			unset($this->extension);
 
 			// Make sure we delete the folders
 			JFolder::delete($this->parent->getPath('extension_root'));
@@ -377,21 +373,20 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 			. ' SET template_style_id = 0'
 			. ' WHERE template_style_id in ('
 			. '	SELECT s.id FROM #__template_styles s'
-			. ' WHERE s.template = ' . $db->Quote(strtolower($this->element)) . ' AND s.client_id = ' . $this->extension->client_id . ')';
+			. ' WHERE s.template = ' . $this->db->Quote(strtolower($this->element)) . ' AND s.client_id = ' . $this->extension->client_id . ')';
 
-		$db->setQuery($query);
-		$db->execute();
+		$this->db->setQuery($query);
+		$this->db->execute();
 
-		$query = $db->getQuery(true);
-		$query->delete($db->quoteName('#__template_styles'))
-			->where($db->quoteName('client_id') . ' = ' . $this->extension->client_id)
-			->where($db->quoteName('template') . ' = ' . $db->quote($this->element));
+		$query = $this->db->getQuery(true);
+		$query->delete($this->db->quoteName('#__template_styles'))
+			->where($this->db->quoteName('client_id') . ' = ' . $this->extension->client_id)
+			->where($this->db->quoteName('template') . ' = ' . $this->db->quote($this->element));
 
-		$db->setQuery($query);
-		$db->execute();
+		$this->db->setQuery($query);
+		$this->db->execute();
 
 		$this->extension->delete($this->extension->extension_id);
-		unset($this->extension);
 
 		return $retval;
 	}
@@ -489,28 +484,28 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 		if ($this->parent->extension->store())
 		{
 			// Insert record in #__template_styles
-			$db = $this->parent->getDbo();
-			$query = $db->getQuery(true);
-			$query->insert($db->quoteName('#__template_styles'));
+			$this->db = $this->parent->getDbo();
+			$query = $this->db->getQuery(true);
+			$query->insert($this->db->quoteName('#__template_styles'));
 			$lang = JFactory::getLanguage();
 			$debug = $lang->setDebug(false);
-			$columns = array($db->quoteName('template'),
-				$db->quoteName('client_id'),
-				$db->quoteName('home'),
-				$db->quoteName('title'),
-				$db->quoteName('params')
+			$columns = array($this->db->quoteName('template'),
+				$this->db->quoteName('client_id'),
+				$this->db->quoteName('home'),
+				$this->db->quoteName('title'),
+				$this->db->quoteName('params')
 			);
 			$query->columns($columns);
 			$query->values(
-				$db->Quote($this->element)
-				. ',' . $db->Quote($this->parent->extension->client_id)
-				. ',' . $db->Quote(0)
-				. ',' . $db->Quote(JText::sprintf('JLIB_INSTALLER_DEFAULT_STYLE', $this->parent->extension->name))
-				. ',' . $db->Quote($this->parent->extension->params)
+				$this->db->Quote($this->element)
+				. ',' . $this->db->Quote($this->parent->extension->client_id)
+				. ',' . $this->db->Quote(0)
+				. ',' . $this->db->Quote(JText::sprintf('JLIB_INSTALLER_DEFAULT_STYLE', $this->parent->extension->name))
+				. ',' . $this->db->Quote($this->parent->extension->params)
 			);
 			$lang->setDebug($debug);
-			$db->setQuery($query);
-			$db->execute();
+			$this->db->setQuery($query);
+			$this->db->execute();
 
 			return $this->parent->extension->extension_id;
 		}

@@ -443,12 +443,11 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 		$this->extension->delete();
 
 		// Setting the language of users which have this language as the default language
-		$db = $this->parent->getDbo();
-		$query = $db->getQuery(true);
+		$query = $this->db->getQuery(true);
 		$query->from('#__users');
 		$query->select('*');
-		$db->setQuery($query);
-		$users = $db->loadObjectList();
+		$this->db->setQuery($query);
+		$users = $this->db->loadObjectList();
 
 		// Grab a copy of the client details
 		$client = JApplicationHelper::getClientInfo($this->extension->client_id);
@@ -469,15 +468,15 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 			$registry = new JRegistry;
 			$registry->loadString($user->params);
 
-			if ($registry->get($param_name) == $element)
+			if ($registry->get($param_name) == $this->element)
 			{
 				$registry->set($param_name, '');
-				$query = $db->getQuery(true);
+				$query = $this->db->getQuery(true);
 				$query->update('#__users');
-				$query->set('params=' . $db->quote($registry));
+				$query->set('params=' . $this->db->quote($registry));
 				$query->where('id=' . (int) $user->id);
-				$db->setQuery($query);
-				$db->execute();
+				$this->db->setQuery($query);
+				$this->db->execute();
 				$count++;
 			}
 		}
