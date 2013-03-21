@@ -23,6 +23,8 @@ class JInstallerAdapterFile extends JInstallerAdapter
 	/**
 	 * Get the filtered extension element from the manifest
 	 *
+	 * @param   string  $element  Optional element name to be converted
+	 *
 	 * @return  string  The filtered element
 	 *
 	 * @since   3.1
@@ -31,8 +33,11 @@ class JInstallerAdapterFile extends JInstallerAdapter
 	{
 		if (!$element)
 		{
-			$manifestPath = JPath::clean($this->parent->getPath('manifest'));
-			$element = preg_replace('/\.xml/', '', basename($manifestPath));
+			// Ensure the element is a string
+			$element = (string) $this->manifest->name;
+
+			// Filter the name for illegal characters
+			$element = str_replace('files_', '', JFilterInput::getInstance()->clean($element, 'cmd'));
 		}
 
 		return $element;
@@ -333,7 +338,7 @@ class JInstallerAdapterFile extends JInstallerAdapter
 			{
 				// Delete extension.
 				$this->extension->delete($this->extension->extension_id);
-				JLog::add(JText::_('JLIB_INSTALLER_ERROR_LIB_UNINSTALL_INVALID_NOTFOUND_MANIFEST'), JLog::WARNING, 'jerror');
+				JLog::add(JText::_('JLIB_INSTALLER_ERROR_FILE_UNINSTALL_INVALID_NOTFOUND_MANIFEST'), JLog::WARNING, 'jerror');
 
 				return false;
 			}
@@ -402,7 +407,6 @@ class JInstallerAdapterFile extends JInstallerAdapter
 					if ($eFileName->getName() == 'folder')
 					{
 						$folderList[] = $targetFolder . '/' . $eFileName;
-
 					}
 					else
 					{
