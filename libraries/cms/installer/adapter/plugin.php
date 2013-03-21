@@ -51,7 +51,127 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 	}
 
 	/**
+	 * Method to check if the extension is already present in the database
+	 *
+	 * @return  void
+	 *
+	 * @since   3.1
+	 * @throws  RuntimeException
+	 */
+	protected function checkExistingExtension()
+	{
+		try
+		{
+			$this->currentExtensionId = $this->extension->find(array('type' => 'plugin', 'element' => $this->element, 'folder' => $this->group));
+		}
+		catch (RuntimeException $e)
+		{
+			// Install failed, roll back changes
+			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_PLG_INSTALL_ROLLBACK', JText::_('JLIB_INSTALLER_' . $this->route), $e->getMessage()));
+		}
+	}
+
+	/**
+	 * Method to copy the extension's base files from the <files> tag(s) and the manifest file
+	 *
+	 * @return  void
+	 *
+	 * @since   3.1
+	 * @throws  RuntimeException
+	 */
+	protected function copyBaseFiles()
+	{
+		// Copy all necessary files
+		if ($this->parent->parseFiles($this->manifest->files, -1, $this->oldFiles) === false)
+		{
+			// TODO: throw exception
+			return false;
+		}
+
+		// If there is a manifest script, let's copy it.
+		if ($this->manifest_script)
+		{
+			$path['src'] = $this->parent->getPath('source') . '/' . $this->manifest_script;
+			$path['dest'] = $this->parent->getPath('extension_root') . '/' . $this->manifest_script;
+
+			if (!file_exists($path['dest']) || $this->parent->isOverwrite())
+			{
+				if (!$this->parent->copyFiles(array($path)))
+				{
+					// Install failed, rollback changes
+					throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_PLG_INSTALL_MANIFEST', JText::_('JLIB_INSTALLER_' . $this->route)));
+				}
+			}
+		}
+	}
+
+	/**
+	 * Method to create the extension root path if necessary
+	 *
+	 * @return  void
+	 *
+	 * @since   3.1
+	 * @throws  RuntimeException
+	 */
+	protected function createExtensionRoot()
+	{
+		// Run the common create code first
+		parent::createExtensionRoot();
+
+		// If we're updating at this point when there is always going to be an extension_root find the old XML files
+		if ($this->route == 'update')
+		{
+			// Create a new installer because findManifest sets stuff; side effects!
+			$tmpInstaller = new JInstaller;
+
+			// Look in the extension root
+			$tmpInstaller->setPath('source', $this->parent->getPath('extension_root'));
+
+			if ($tmpInstaller->findManifest())
+			{
+				$old_manifest = $tmpInstaller->getManifest();
+				$this->oldFiles = $old_manifest->files;
+			}
+		}
+	}
+
+	/**
+	 * Method to finalise the installation processing
+	 *
+	 * @return  void
+	 *
+	 * @since   3.1
+	 * @throws  RuntimeException
+	 */
+	protected function finaliseInstall()
+	{
+		// Clobber any possible pending updates
+		$update = JTable::getInstance('update');
+		$uid = $update->find(
+			array(
+				'element' => $this->element,
+				'type' => 'plugin',
+				'folder' => $this->group
+			)
+		);
+
+		if ($uid)
+		{
+			$update->delete($uid);
+		}
+
+		// Lastly, we will copy the manifest file to its appropriate place.
+		if (!$this->parent->copyManifest(-1))
+		{
+			// Install failed, rollback changes
+			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_PLG_INSTALL_COPY_SETUP', JText::_('JLIB_INSTALLER_' . $this->route)));
+		}
+	}
+
+	/**
 	 * Get the filtered extension element from the manifest
+	 *
+	 * @param   string  $element  Optional element name to be converted
 	 *
 	 * @return  string  The filtered element
 	 *
@@ -142,279 +262,6 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 	protected function getScriptClassName()
 	{
 		return 'plg' . str_replace('-', '', $this->group) . $this->element . 'InstallerScript';
-	}
-
-	/**
-	 * Custom install method
-	 *
-	 * @return  boolean  True on success
-	 *
-	 * @since   3.1
-	 */
-	public function install()
-	{
-		parent::install();
-
-		/*
-		 * ---------------------------------------------------------------------------------------------
-		 * Manifest Document Setup Section
-		 * ---------------------------------------------------------------------------------------------
-		 */
-
-		if (!empty($this->element) && !empty($this->group))
-		{
-			$this->parent->setPath('extension_root', JPATH_PLUGINS . '/' . $this->group . '/' . $this->element);
-		}
-		else
-		{
-			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_PLG_INSTALL_NO_FILE', JText::_('JLIB_INSTALLER_' . $this->route)));
-		}
-
-		// Check if we should enable overwrite settings
-
-		// Check to see if a plugin by the same name is already installed.
-		try
-		{
-			$id = $this->extension->find(array('type' => 'plugin', 'element' => $this->element, 'folder' => $this->group));
-		}
-		catch (RuntimeException $e)
-		{
-			// Install failed, roll back changes
-			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_PLG_INSTALL_ROLLBACK', JText::_('JLIB_INSTALLER_' . $this->route), $this->db->stderr(true)));
-		}
-
-		// If it's on the fs...
-		if (file_exists($this->parent->getPath('extension_root')) && (!$this->parent->isOverwrite() || $this->parent->isUpgrade()))
-		{
-			$updateElement = $this->manifest->update;
-
-			// Upgrade manually set or update function available or update tag detected
-			if ($this->parent->isUpgrade() || ($this->parent->manifestClass && method_exists($this->parent->manifestClass, 'update'))
-				|| $updateElement)
-			{
-				// Force this one
-				$this->parent->setOverwrite(true);
-				$this->parent->setUpgrade(true);
-
-				if ($id)
-				{
-					// If there is a matching extension mark this as an update; semantics really
-					$this->setRoute('update');
-				}
-			}
-			elseif (!$this->parent->isOverwrite())
-			{
-				// Overwrite is set
-				// We didn't have overwrite set, find an update function or find an update tag so lets call it safe
-				throw new RuntimeException(
-					JText::sprintf(
-						'JLIB_INSTALLER_ABORT_PLG_INSTALL_DIRECTORY', JText::_('JLIB_INSTALLER_' . $this->route),
-						$this->parent->getPath('extension_root')
-					)
-				);
-			}
-		}
-
-		/*
-		 * ---------------------------------------------------------------------------------------------
-		 * Installer Trigger Loading
-		 * ---------------------------------------------------------------------------------------------
-		 */
-
-		$this->setupScriptfile();
-		$this->triggerManifestScript('preflight');
-
-		/*
-		 * ---------------------------------------------------------------------------------------------
-		 * Filesystem Processing Section
-		 * ---------------------------------------------------------------------------------------------
-		 */
-
-		// If the plugin directory does not exist, lets create it
-		$created = false;
-
-		if (!file_exists($this->parent->getPath('extension_root')))
-		{
-			if (!$created = JFolder::create($this->parent->getPath('extension_root')))
-			{
-				throw new RuntimeException(
-					JText::sprintf(
-						'JLIB_INSTALLER_ABORT_PLG_INSTALL_CREATE_DIRECTORY', JText::_('JLIB_INSTALLER_' . $this->route),
-						$this->parent->getPath('extension_root')
-					)
-				);
-			}
-		}
-
-		// If we're updating at this point when there is always going to be an extension_root find the old XML files
-		if ($this->route == 'update')
-		{
-			// Create a new installer because findManifest sets stuff; side effects!
-			$tmpInstaller = new JInstaller;
-
-			// Look in the extension root
-			$tmpInstaller->setPath('source', $this->parent->getPath('extension_root'));
-
-			if ($tmpInstaller->findManifest())
-			{
-				$old_manifest = $tmpInstaller->getManifest();
-				$this->oldFiles = $old_manifest->files;
-			}
-		}
-
-		/*
-		 * If we created the plugin directory and will want to remove it if we
-		 * have to roll back the installation, let's add it to the installation
-		 * step stack
-		 */
-
-		if ($created)
-		{
-			$this->parent->pushStep(array('type' => 'folder', 'path' => $this->parent->getPath('extension_root')));
-		}
-
-		// Copy all necessary files
-		if ($this->parent->parseFiles($this->manifest->files, -1, $this->oldFiles) === false)
-		{
-			// TODO: throw exception
-			return false;
-		}
-
-		// Parse optional tags -- media and language files for plugins go in admin app
-		$this->parent->parseMedia($this->manifest->media, 1);
-		$this->parent->parseLanguages($this->manifest->languages, 1);
-
-		// If there is a manifest script, lets copy it.
-		if ($this->manifest_script)
-		{
-			$path['src'] = $this->parent->getPath('source') . '/' . $this->manifest_script;
-			$path['dest'] = $this->parent->getPath('extension_root') . '/' . $this->manifest_script;
-
-			if (!file_exists($path['dest']))
-			{
-				if (!$this->parent->copyFiles(array($path)))
-				{
-					// Install failed, rollback changes
-					throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_PLG_INSTALL_MANIFEST', JText::_('JLIB_INSTALLER_' . $this->route)));
-				}
-			}
-		}
-
-		/*
-		 * ---------------------------------------------------------------------------------------------
-		 * Database Processing Section
-		 * ---------------------------------------------------------------------------------------------
-		 */
-
-		// Was there a plugin with the same name already installed?
-		if ($id)
-		{
-			if (!$this->parent->isOverwrite())
-			{
-				// Install failed, roll back changes
-				throw new RuntimeException(
-					JText::sprintf(
-						'JLIB_INSTALLER_ABORT_PLG_INSTALL_ALLREADY_EXISTS', JText::_('JLIB_INSTALLER_' . $this->route),
-						$this->name
-					)
-				);
-			}
-			$this->extension->load($id);
-			$this->extension->name = $this->name;
-			$this->extension->manifest_cache = $this->parent->generateManifestCache();
-
-			// Update the manifest cache and name
-			$this->extension->store();
-		}
-		else
-		{
-			// Store in the extensions table (1.6)
-			$this->extension->name = $this->name;
-			$this->extension->type = 'plugin';
-			$this->extension->ordering = 0;
-			$this->extension->element = $this->element;
-			$this->extension->folder = $this->group;
-			$this->extension->enabled = 0;
-			$this->extension->protected = 0;
-			$this->extension->access = 1;
-			$this->extension->client_id = 0;
-			$this->extension->params = $this->parent->getParams();
-
-			// Custom data
-			$this->extension->custom_data = '';
-
-			// System data
-			$this->extension->system_data = '';
-			$this->extension->manifest_cache = $this->parent->generateManifestCache();
-
-			// Editor plugins are published by default
-			if ($this->group == 'editors')
-			{
-				$this->extension->enabled = 1;
-			}
-
-			if (!$this->extension->store())
-			{
-				// Install failed, roll back changes
-				throw new RuntimeException(
-					JText::sprintf('JLIB_INSTALLER_ABORT_PLG_INSTALL_ROLLBACK', JText::_('JLIB_INSTALLER_' . $this->route), $this->db->stderr(true))
-				);
-			}
-
-			// Since we have created a plugin item, we add it to the installation step stack
-			// so that if we have to rollback the changes we can undo it.
-			$this->parent->pushStep(array('type' => 'extension', 'id' => $this->extension->extension_id));
-			$id = $this->extension->extension_id;
-		}
-
-		// Let's run the queries for the plugin
-		if ($this->route == 'install')
-		{
-			if (!$this->doDatabaseTransactions('install'))
-			{
-				return false;
-			}
-
-			// Set the schema version to be the latest update version
-			if ($this->manifest->update)
-			{
-				$this->parent->setSchemaVersion($this->manifest->update->schemas, $this->extension->extension_id);
-			}
-		}
-		elseif ($this->route == 'update')
-		{
-			if ($this->manifest->update)
-			{
-				$result = $this->parent->parseSchemaUpdates($this->manifest->update->schemas, $this->extension->extension_id);
-
-				if ($result === false)
-				{
-					// Install failed, rollback changes
-					throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_PLG_UPDATE_SQL_ERROR', $this->db->stderr(true)));
-				}
-			}
-		}
-
-		// Run the custom method based on the route
-		$this->triggerManifestScript($this->route);
-
-		/**
-		 * ---------------------------------------------------------------------------------------------
-		 * Finalization and Cleanup Section
-		 * ---------------------------------------------------------------------------------------------
-		 */
-
-		// Lastly, we will copy the manifest file to its appropriate place.
-		if (!$this->parent->copyManifest(-1))
-		{
-			// Install failed, rollback changes
-			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_PLG_INSTALL_COPY_SETUP', JText::_('JLIB_INSTALLER_' . $this->route)));
-		}
-
-		// And now we run the postflight
-		$this->triggerManifestScript('postflight');
-
-		return $id;
 	}
 
 	/**
@@ -656,6 +503,112 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 			. $this->parent->extension->element . '.xml';
 
 		return $this->doRefreshManifestCache($manifestPath);
+	}
+
+	/**
+	 * Method to parse optional tags in the manifest
+	 *
+	 * @return  void
+	 *
+	 * @since   3.1
+	 */
+	protected function parseOptionalTags()
+	{
+		// Parse optional tags -- media and language files for plugins go in admin app
+		$this->parent->parseMedia($this->manifest->media, 1);
+		$this->parent->parseLanguages($this->manifest->languages, 1);
+	}
+
+	/**
+	 * Method to do any prechecks and setup the install paths for the extension
+	 *
+	 * @return  void
+	 *
+	 * @since   3.1
+	 * @throws  RuntimeException
+	 */
+	protected function setupInstallPaths()
+	{
+		if (!empty($this->element) && !empty($this->group))
+		{
+			$this->parent->setPath('extension_root', JPATH_PLUGINS . '/' . $this->group . '/' . $this->element);
+		}
+		else
+		{
+			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_PLG_INSTALL_NO_FILE', JText::_('JLIB_INSTALLER_' . $this->route)));
+		}
+	}
+
+	/**
+	 * Method to store the extension to the database
+	 *
+	 * @return  void
+	 *
+	 * @since   3.1
+	 * @throws  RuntimeException
+	 */
+	protected function storeExtension()
+	{
+		// Was there a plugin with the same name already installed?
+		if ($this->currentExtensionId)
+		{
+			if (!$this->parent->isOverwrite())
+			{
+				// Install failed, roll back changes
+				throw new RuntimeException(
+					JText::sprintf(
+						'JLIB_INSTALLER_ABORT_PLG_INSTALL_ALLREADY_EXISTS',
+						JText::_('JLIB_INSTALLER_' . $this->route),
+						$this->name
+					)
+				);
+			}
+			$this->extension->load($this->currentExtensionId);
+			$this->extension->name = $this->name;
+			$this->extension->manifest_cache = $this->parent->generateManifestCache();
+
+			// Update the manifest cache and name
+			$this->extension->store();
+		}
+		else
+		{
+			// Store in the extensions table (1.6)
+			$this->extension->name = $this->name;
+			$this->extension->type = 'plugin';
+			$this->extension->ordering = 0;
+			$this->extension->element = $this->element;
+			$this->extension->folder = $this->group;
+			$this->extension->enabled = 0;
+			$this->extension->protected = 0;
+			$this->extension->access = 1;
+			$this->extension->client_id = 0;
+			$this->extension->params = $this->parent->getParams();
+
+			// Custom data
+			$this->extension->custom_data = '';
+
+			// System data
+			$this->extension->system_data = '';
+			$this->extension->manifest_cache = $this->parent->generateManifestCache();
+
+			// Editor plugins are published by default
+			if ($this->group == 'editors')
+			{
+				$this->extension->enabled = 1;
+			}
+
+			if (!$this->extension->store())
+			{
+				// Install failed, roll back changes
+				throw new RuntimeException(
+					JText::sprintf('JLIB_INSTALLER_ABORT_PLG_INSTALL_ROLLBACK', JText::_('JLIB_INSTALLER_' . $this->route), $this->db->stderr(true))
+				);
+			}
+
+			// Since we have created a plugin item, we add it to the installation step stack
+			// so that if we have to rollback the changes we can undo it.
+			$this->parent->pushStep(array('type' => 'extension', 'id' => $this->extension->extension_id));
+		}
 	}
 }
 

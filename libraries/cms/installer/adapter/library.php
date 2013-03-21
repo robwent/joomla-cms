@@ -80,7 +80,16 @@ class JInstallerAdapterLibrary extends JInstallerAdapter
 	 */
 	public function install()
 	{
-		parent::install();
+		// Get the extension description
+		$description = (string) $this->manifest->description;
+		if ($description)
+		{
+			$this->parent->message = JText::_($description);
+		}
+		else
+		{
+			$this->parent->message = '';
+		}
 
 		/*
 		 * ---------------------------------------------------------------------------------------------
