@@ -137,9 +137,9 @@ class InstallerModelDiscover extends InstallerModel
 				}
 			}
 			$this->setState('action', 'remove');
-			$this->setState('name', $installer->get('name'));
+			$this->setState('name', $installer->name);
 			$app->setUserState('com_installer.message', $installer->message);
-			$app->setUserState('com_installer.extension_message', $installer->get('extension_message'));
+			$app->setUserState('com_installer.extension_message', $installer->extension_message);
 			if (!$failed)
 			{
 				$app->enqueueMessage(JText::_('COM_INSTALLER_MSG_DISCOVER_INSTALLSUCCESSFUL'));

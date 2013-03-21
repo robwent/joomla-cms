@@ -362,7 +362,7 @@ class JInstallerAdapterFile extends JInstallerAdapter
 		$this->setupScriptfile();
 		$this->triggerManifestScript('uninstall');
 
-		$db = JFactory::getDbo();
+		$db = $this->parent->getDbo();
 
 		// Let's run the uninstall queries for the extension
 		$result = $this->doDatabaseTransactions('uninstall');

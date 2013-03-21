@@ -259,9 +259,9 @@ class InstallerModelManage extends InstallerModel
 			$app = JFactory::getApplication();
 			$app->enqueueMessage($msg);
 			$this->setState('action', 'remove');
-			$this->setState('name', $installer->get('name'));
+			$this->setState('name', $installer->name);
 			$app->setUserState('com_installer.message', $installer->message);
-			$app->setUserState('com_installer.extension_message', $installer->get('extension_message'));
+			$app->setUserState('com_installer.extension_message', $installer->extension_message);
 			return $result;
 		}
 		else

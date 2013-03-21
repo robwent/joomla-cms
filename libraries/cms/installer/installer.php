@@ -12,7 +12,6 @@ defined('JPATH_PLATFORM') or die;
 jimport('joomla.filesystem.file');
 jimport('joomla.filesystem.folder');
 jimport('joomla.filesystem.path');
-jimport('joomla.base.adapter');
 
 /**
  * Joomla base installer class
@@ -21,7 +20,7 @@ jimport('joomla.base.adapter');
  * @subpackage  Installer
  * @since       3.1
  */
-class JInstaller extends JAdapter
+class JInstaller
 {
 	/**
 	 * Array of paths needed by the installer
@@ -104,7 +103,23 @@ class JInstaller extends JAdapter
 	 * @var    string
 	 * @since  3.1
 	 */
-	protected $redirect_url = null;
+	public $redirect_url = null;
+
+	/**
+	 * Database Connector Object
+	 *
+	 * @var    JDatabaseDriver
+	 * @since  3.1
+	 */
+	protected $db;
+
+	/**
+	 * The currently active adapter instance
+	 *
+	 * @var    JInstallerAdapter
+	 * @since  3.1
+	 */
+	protected $adapter;
 
 	/**
 	 * @var    JInstaller  JInstaller instance container.
@@ -115,14 +130,47 @@ class JInstaller extends JAdapter
 	/**
 	 * Constructor
 	 *
+	 * @param   JDatabaseDriver  $db  Database driver instance
+	 *
 	 * @since   3.1
 	 */
-	public function __construct()
+	public function __construct(JDatabaseDriver $db = null)
 	{
-		parent::__construct(__DIR__, 'JInstallerAdapter', __DIR__ . '/adapter');
+		// Set the database instance
+		$this->setDbo($db);
+	}
 
-		// Override the default adapter folder
-		$this->_adapterfolder = 'adapter';
+	/**
+	 * Get the database connector object
+	 *
+	 * @return  JDatabaseDriver  Database connector object
+	 *
+	 * @since   11.1
+	 */
+	public function getDbo()
+	{
+		return $this->db;
+	}
+
+	/**
+	 * Set the database connector object
+	 *
+	 * @param   JDatabaseDriver  $db  Database driver instance
+	 *
+	 * @return  void
+	 *
+	 * @since   3.1
+	 */
+	public function setDbo($db)
+	{
+		if ($db instanceof JDatabaseDriver)
+		{
+			$this->db = $db;
+		}
+		else
+		{
+			$this->db = JFactory::getDbo();
+		}
 	}
 
 	/**
@@ -333,7 +381,7 @@ class JInstaller extends JAdapter
 
 				case 'extension':
 					// Get database connector object
-					$db = $this->getDBO();
+					$db = $this->getDbo();
 					$query = $db->getQuery(true);
 
 					// Remove the entry from the #__extensions table
@@ -345,15 +393,15 @@ class JInstaller extends JAdapter
 					break;
 
 				default:
-					if ($type && is_object($this->_adapters[$type]))
+					if ($type && ($this->adapter instanceof JInstallerAdapter))
 					{
 						// Build the name of the custom rollback method for the type
 						$method = '_rollback_' . $step['type'];
 
 						// Custom rollback method handler
-						if (method_exists($this->_adapters[$type], $method))
+						if (method_exists($this->adapter, $method))
 						{
-							$stepval = $this->_adapters[$type]->$method($step);
+							$stepval = $this->adapter->$method($step);
 						}
 					}
 					else
@@ -418,57 +466,63 @@ class JInstaller extends JAdapter
 
 		$type = (string) $this->manifest->attributes()->type;
 
-		if (is_object($this->_adapters[$type]))
+		try
 		{
-			// Add the languages from the package itself
-			if (method_exists($this->_adapters[$type], 'loadLanguage'))
-			{
-				$this->_adapters[$type]->loadLanguage($path);
-			}
-
-			// Fire the onExtensionBeforeInstall event.
-			JPluginHelper::importPlugin('extension');
-			$dispatcher = JEventDispatcher::getInstance();
-			$dispatcher->trigger(
-				'onExtensionBeforeInstall',
-				array(
-					'method' => 'install',
-					'type' => $type,
-					'manifest' => $this->manifest,
-					'extension' => 0
-				)
-			);
-
-			// Run the install.
-			$errorMsg = '';
-			try
-			{
-				$eid = (int) $this->_adapters[$type]->install();
-			}
-			catch (Exception $e)
-			{
-				$errorMsg = $e->getMessage();
-			}
-			if (!$eid)
-			{
-				$eid = false;
-				$this->abort($errorMsg, $type);
-			}
-
-			// Fire the onExtensionAfterInstall
-			$dispatcher->trigger(
-				'onExtensionAfterInstall',
-				array(
-					'installer' => clone $this,
-					'eid' => $eid
-				)
-			);
-
-			// Return true if extension id > 0.
-			return $eid > 0;
+			$this->loadAdapter($type);
+		}
+		catch (InvalidArgumentException $e)
+		{
+			return false;
 		}
 
-		return false;
+		// Add the languages from the package itself
+		if (method_exists($this->adapter, 'loadLanguage'))
+		{
+			$this->adapter->loadLanguage($path);
+		}
+
+		// Fire the onExtensionBeforeInstall event.
+		JPluginHelper::importPlugin('extension');
+		$dispatcher = JEventDispatcher::getInstance();
+		$dispatcher->trigger(
+			'onExtensionBeforeInstall',
+			array(
+				'method' => 'install',
+				'type' => $type,
+				'manifest' => $this->manifest,
+				'extension' => 0
+			)
+		);
+
+		// Run the install.
+		$errorMsg = '';
+
+		try
+		{
+			$eid = (int) $this->adapter->install();
+		}
+		catch (Exception $e)
+		{
+			$errorMsg = $e->getMessage();
+		}
+
+		if (!$eid)
+		{
+			$eid = false;
+			$this->abort($errorMsg, $type);
+		}
+
+		// Fire the onExtensionAfterInstall
+		$dispatcher->trigger(
+			'onExtensionAfterInstall',
+			array(
+				'installer' => clone $this,
+				'eid' => $eid
+			)
+		);
+
+		// Return true if extension id > 0.
+		return $eid > 0;
 	}
 
 	/**
@@ -500,79 +554,82 @@ class JInstaller extends JAdapter
 				return false;
 			}
 
-			// Lazy load the adapter
-			$adapter = null;
-			if (!isset($this->_adapters[$this->extension->type]) || !is_object($this->_adapters[$this->extension->type]))
+			$type = $this->extension->type;
+
+			// Load the adapter
+			$class = 'JInstallerAdapter' . ucfirst($type);
+
+			if (!($this->adapter instanceof $class))
 			{
-				$params = array('extension' => $this->extension, 'route' => 'discover_install');
-				if (!$this->setAdapter($this->extension->type, $adapter, $params))
+				try
+				{
+					$params = array('extension' => $this->extension, 'route' => 'discover_install');
+					$this->loadAdapter($type, $params);
+				}
+				catch (InvalidArgumentException $e)
 				{
 					return false;
 				}
+
 			}
 
-			if (is_object($this->_adapters[$this->extension->type]))
+			if (method_exists($this->adapter, 'discover_install'))
 			{
-				if (method_exists($this->_adapters[$this->extension->type], 'discover_install'))
+				// Add the languages from the package itself
+				if (method_exists($this->adapter, 'loadLanguage'))
 				{
-					// Add the languages from the package itself
-					if (method_exists($this->_adapters[$this->extension->type], 'loadLanguage'))
-					{
-						$this->_adapters[$this->extension->type]->loadLanguage();
-					}
-
-					// Fire the onExtensionBeforeInstall event.
-					JPluginHelper::importPlugin('extension');
-					$dispatcher = JEventDispatcher::getInstance();
-					$dispatcher->trigger(
-						'onExtensionBeforeInstall',
-						array(
-							'method' => 'discover_install',
-							'type' => $this->extension->get('type'),
-							'manifest' => null,
-							'extension' => $this->extension->get('extension_id')
-						)
-					);
-
-					$type = $this->extension->type;
-
-					// Run the discover install.
-					$errorMsg = '';
-					try
-					{
-						$eid = (int) $this->_adapters[$type]->discover_install();
-					}
-					catch (Exception $e)
-					{
-						$errorMsg = $e->getMessage();
-					}
-					if (!$eid)
-					{
-						$eid = false;
-						$this->abort($errorMsg, $type);
-					}
-
-					// Fire the onExtensionAfterInstall
-					$dispatcher->trigger(
-						'onExtensionAfterInstall',
-						array(
-							'installer' => clone $this,
-							'eid' => $eid
-						)
-					);
-
-					// Return true if extension id > 0.
-					return $eid > 0;
+					$this->adapter->loadLanguage();
 				}
-				else
+
+				// Fire the onExtensionBeforeInstall event.
+				JPluginHelper::importPlugin('extension');
+				$dispatcher = JEventDispatcher::getInstance();
+				$dispatcher->trigger(
+					'onExtensionBeforeInstall',
+					array(
+						'method' => 'discover_install',
+						'type' => $type,
+						'manifest' => null,
+						'extension' => $this->extension->extension_id
+					)
+				);
+
+				// Run the discover install.
+				$errorMsg = '';
+
+				try
 				{
-					$this->abort(JText::_('JLIB_INSTALLER_ABORT_METHODNOTSUPPORTED'));
-
-					return false;
+					$eid = (int) $this->adapter->discover_install();
 				}
+				catch (Exception $e)
+				{
+					$errorMsg = $e->getMessage();
+				}
+
+				if (!$eid)
+				{
+					$eid = false;
+					$this->abort($errorMsg, $type);
+				}
+
+				// Fire the onExtensionAfterInstall
+				$dispatcher->trigger(
+					'onExtensionAfterInstall',
+					array(
+						'installer' => clone $this,
+						'eid' => $eid
+					)
+				);
+
+				// Return true if extension id > 0.
+				return $eid > 0;
 			}
+			else
+			{
+				$this->abort(JText::_('JLIB_INSTALLER_ABORT_METHODNOTSUPPORTED'));
 
-			return false;
+				return false;
+			}
 		}
 		else
 		{
@@ -592,15 +649,17 @@ class JInstaller extends JAdapter
 	 */
 	public function discover()
 	{
-		$this->loadAllAdapters();
+		$adapters = $this->getAdapters();
 		$results = array();
 
-		foreach ($this->_adapters as $adapter)
+		foreach ($adapters as $adapter)
 		{
+			$instance = $this->loadAdapter($adapter);
+
 			// Joomla! 1.5 installation adapter legacy support
-			if (method_exists($adapter, 'discover'))
+			if (method_exists($instance, 'discover'))
 			{
-				$tmp = $adapter->discover();
+				$tmp = $instance->discover();
 
 				// If its an array and has entries
 				if (is_array($tmp) && count($tmp))
@@ -641,55 +700,59 @@ class JInstaller extends JAdapter
 
 		$type = (string) $this->manifest->attributes()->type;
 
-		if (is_object($this->_adapters[$type]))
+		try
 		{
-			// Add the languages from the package itself
-			if (method_exists($this->_adapters[$type], 'loadLanguage'))
-			{
-				$this->_adapters[$type]->loadLanguage($path);
-			}
-
-			// Fire the onExtensionBeforeUpdate event.
-			JPluginHelper::importPlugin('extension');
-			$dispatcher = JEventDispatcher::getInstance();
-			$dispatcher->trigger(
-				'onExtensionBeforeUpdate',
-				array(
-					'type' => $type,
-					'manifest' => $this->manifest
-				)
-			);
-
-			// Run the update.
-			$errorMsg = '';
-			try
-			{
-				$eid = (int) $this->_adapters[$type]->update();
-			}
-			catch (Exception $e)
-			{
-				$errorMsg = $e->getMessage();
-			}
-			if (!$eid)
-			{
-				$eid = false;
-				$this->abort($errorMsg, $type);
-			}
-
-			// Fire the onExtensionAfterUpdate
-			$dispatcher->trigger(
-				'onExtensionAfterUpdate',
-				array(
-					'installer' => clone $this,
-					'eid' => $eid
-				)
-			);
-
-			// Return true if extension id > 0.
-			return $eid > 0;
+			$this->loadAdapter($type);
+		}
+		catch (InvalidArgumentException $e)
+		{
+			return false;
 		}
 
-		return false;
+		// Add the languages from the package itself
+		if (method_exists($this->adapter, 'loadLanguage'))
+		{
+			$this->adapter->loadLanguage($path);
+		}
+
+		// Fire the onExtensionBeforeUpdate event.
+		JPluginHelper::importPlugin('extension');
+		$dispatcher = JEventDispatcher::getInstance();
+		$dispatcher->trigger(
+			'onExtensionBeforeUpdate',
+			array(
+				'type' => $type,
+				'manifest' => $this->manifest
+			)
+		);
+
+		// Run the update.
+		$errorMsg = '';
+		try
+		{
+			$eid = (int) $this->adapter->update();
+		}
+		catch (Exception $e)
+		{
+			$errorMsg = $e->getMessage();
+		}
+		if (!$eid)
+		{
+			$eid = false;
+			$this->abort($errorMsg, $type);
+		}
+
+		// Fire the onExtensionAfterUpdate
+		$dispatcher->trigger(
+			'onExtensionAfterUpdate',
+			array(
+				'installer' => clone $this,
+				'eid' => $eid
+			)
+		);
+
+		// Return true if extension id > 0.
+		return $eid > 0;
 	}
 
 	/**
@@ -707,54 +770,55 @@ class JInstaller extends JAdapter
 		$this->extension = JTable::getInstance('extension');
 		$this->extension->load(array('type'=>$type, 'extension_id'=>$eid));
 
-		$adapter = null;
-		if (!isset($this->_adapters[$type]) || !is_object($this->_adapters[$type]))
-		{
-			$params = array('extension' => $this->extension, 'route' => 'uninstall', 'id' => $eid);
-			if (!$this->setAdapter($type, $adapter, $params))
-			{
-				// We failed to get the right adapter
-				return false;
-			}
-		}
+		// Load the adapter
+		$class = 'JInstallerAdapter' . ucfirst($type);
 
-		if (is_object($this->_adapters[$type]))
+		if (!($this->adapter instanceof $class))
 		{
-			// We don't load languages here, we get the extension adapter to work it out
-			// Fire the onExtensionBeforeUninstall event.
-			JPluginHelper::importPlugin('extension');
-			$dispatcher = JEventDispatcher::getInstance();
-			$dispatcher->trigger('onExtensionBeforeUninstall', array('eid' => $eid));
-
-			// Run the uninstall.
-			$errorMsg = '';
 			try
 			{
-				$result = (bool) $this->_adapters[$type]->uninstall($eid);
+				$params = array('extension' => $this->extension, 'route' => 'uninstall', 'id' => $eid);
+				$this->loadAdapter($type, $params);
 			}
-			catch (Exception $e)
+			catch (InvalidArgumentException $e)
 			{
-				$errorMsg = $e->getMessage();
-			}
-			if (!$result)
-			{
-				$this->abort($errorMsg, $type);
+				return false;
 			}
 
-			// Fire the onExtensionAfterInstall
-			$dispatcher->trigger(
-				'onExtensionAfterUninstall',
-				array(
-					'installer' => clone $this,
-					'eid' => $eid,
-					'result' => $result
-				)
-			);
-
-			return $result;
 		}
 
-		return false;
+		// We don't load languages here, we get the extension adapter to work it out
+		// Fire the onExtensionBeforeUninstall event.
+		JPluginHelper::importPlugin('extension');
+		$dispatcher = JEventDispatcher::getInstance();
+		$dispatcher->trigger('onExtensionBeforeUninstall', array('eid' => $eid));
+
+		// Run the uninstall.
+		$errorMsg = '';
+		try
+		{
+			$result = (bool) $this->adapter->uninstall($eid);
+		}
+		catch (Exception $e)
+		{
+			$errorMsg = $e->getMessage();
+		}
+		if (!$result)
+		{
+			$this->abort($errorMsg, $type);
+		}
+
+		// Fire the onExtensionAfterInstall
+		$dispatcher->trigger(
+			'onExtensionAfterUninstall',
+			array(
+				'installer' => clone $this,
+				'eid' => $eid,
+				'result' => $result
+			)
+		);
+
+		return $result;
 	}
 
 	/**
@@ -786,41 +850,45 @@ class JInstaller extends JAdapter
 				return false;
 			}
 
-			// Lazy load the adapter
-			$adapter = null;
-			if (!isset($this->_adapters[$this->extension->type]) || !is_object($this->_adapters[$this->extension->type]))
+			// Set the adapter type
+			$type = $this->extension->type;
+
+			// Load the adapter
+			$class = 'JInstallerAdapter' . ucfirst($type);
+
+			if (!($this->adapter instanceof $class))
 			{
-				$params = array('extension' => $this->extension);
-				if (!$this->setAdapter($this->extension->type, $adapter, $params))
+				try
+				{
+					$params = array('extension' => $this->extension);
+					$this->loadAdapter($type, $params);
+				}
+				catch (InvalidArgumentException $e)
 				{
 					return false;
 				}
+
 			}
 
-			if (is_object($this->_adapters[$this->extension->type]))
+			if (method_exists($this->adapter, 'refreshManifestCache'))
 			{
-				if (method_exists($this->_adapters[$this->extension->type], 'refreshManifestCache'))
-				{
-					$result = $this->_adapters[$this->extension->type]->refreshManifestCache();
+				$result = $this->adapter->refreshManifestCache();
 
-					if ($result !== false)
-					{
-						return true;
-					}
-					else
-					{
-						return false;
-					}
+				if ($result !== false)
+				{
+					return true;
 				}
 				else
 				{
-					$this->abort(JText::sprintf('JLIB_INSTALLER_ABORT_METHODNOTSUPPORTED_TYPE', $this->extension->type));
-
 					return false;
 				}
 			}
+			else
+			{
+				$this->abort(JText::sprintf('JLIB_INSTALLER_ABORT_METHODNOTSUPPORTED_TYPE', $type));
 
-			return false;
+				return false;
+			}
 		}
 		else
 		{
@@ -853,15 +921,21 @@ class JInstaller extends JAdapter
 		// Load the adapter(s) for the install manifest
 		$type = (string) $this->manifest->attributes()->type;
 
-		// Lazy load the adapter
-		$adapter = null;
-		if (!isset($this->_adapters[$type]) || !is_object($this->_adapters[$type]))
+		// Load the adapter
+		$class = 'JInstallerAdapter' . ucfirst($type);
+
+		if (!($this->adapter instanceof $class))
 		{
-			$params = array('manifest' => $this->manifest, 'route' => $route);
-			if (!$this->setAdapter($type, $adapter, $params))
+			try
+			{
+				$params = array('manifest' => $this->manifest, 'route' => $route);
+				$this->loadAdapter($type, $params);
+			}
+			catch (InvalidArgumentException $e)
 			{
 				return false;
 			}
+
 		}
 
 		return true;
@@ -880,7 +954,7 @@ class JInstaller extends JAdapter
 	public function parseQueries(SimpleXMLElement $element)
 	{
 		// Get the database connector object
-		$db = & $this->_db;
+		$db = $this->getDbo();
 
 		if (!$element || !count($element->children()))
 		{
@@ -931,12 +1005,16 @@ class JInstaller extends JAdapter
 		}
 
 		$queries = array();
-		$db = & $this->_db;
+		$db = $this->getDbo();
 		$dbDriver = strtolower($db->name);
 
 		if ($dbDriver == 'mysqli')
 		{
 			$dbDriver = 'mysql';
+		}
+		elseif ($dbDriver == 'sqlazure')
+		{
+			$dbDriver = 'sqlsrv';
 		}
 
 		// Get the name of the sql file to process
@@ -948,6 +1026,10 @@ class JInstaller extends JAdapter
 			if ($fDriver == 'mysqli')
 			{
 				$fDriver = 'mysql';
+			}
+			elseif ($fDriver == 'sqlazure')
+			{
+				$fDriver = 'sqlsrv';
 			}
 
 			if ($fCharset == 'utf8' && $fDriver == $dbDriver)
@@ -1018,7 +1100,7 @@ class JInstaller extends JAdapter
 	{
 		if ($eid && $schema)
 		{
-			$db = JFactory::getDBO();
+			$db = $this->getDbo();
 			$schemapaths = $schema->children();
 
 			if (!$schemapaths)
@@ -1033,6 +1115,10 @@ class JInstaller extends JAdapter
 				if ($dbDriver == 'mysqli')
 				{
 					$dbDriver = 'mysql';
+				}
+				elseif ($dbDriver == 'sqlazure')
+				{
+					$dbDriver = 'sqlsrv';
 				}
 
 				$schemapath = '';
@@ -1091,7 +1177,7 @@ class JInstaller extends JAdapter
 		// Ensure we have an XML element and a valid extension id
 		if ($eid && $schema)
 		{
-			$db = $this->getDBO();
+			$db = $this->getDbo();
 			$schemapaths = $schema->children();
 
 			if (count($schemapaths))
@@ -1101,6 +1187,10 @@ class JInstaller extends JAdapter
 				if ($dbDriver == 'mysqli')
 				{
 					$dbDriver = 'mysql';
+				}
+				elseif ($dbDriver == 'sqlazure')
+				{
+					$dbDriver = 'sqlsrv';
 				}
 
 				$schemapath = '';
@@ -1235,13 +1325,13 @@ class JInstaller extends JAdapter
 		if ($client)
 		{
 			$pathname = 'extension_' . $client->name;
-			$destination = $this->getPath($pathname);
 		}
 		else
 		{
 			$pathname = 'extension_root';
-			$destination = $this->getPath($pathname);
 		}
+
+		$destination = $this->getPath($pathname);
 
 		/*
 		 * Here we set the folder we are going to copy the files from.
@@ -1449,7 +1539,7 @@ class JInstaller extends JAdapter
 	 *
 	 * @param   SimpleXMLElement  $element  The XML node to process
 	 *
-	 * @return  boolean     True on success
+	 * @return  boolean  True on success
 	 *
 	 * @since   3.1
 	 */
@@ -1761,13 +1851,13 @@ class JInstaller extends JAdapter
 				if ($client)
 				{
 					$pathname = 'extension_' . $client->name;
-					$source = $this->getPath($pathname);
 				}
 				else
 				{
 					$pathname = 'extension_root';
-					$source = $this->getPath($pathname);
 				}
+
+				$source = $this->getPath($pathname);
 
 				break;
 		}
@@ -1848,13 +1938,13 @@ class JInstaller extends JAdapter
 		if ($client)
 		{
 			$pathname = 'extension_' . $client->name;
-			$path['dest'] = $this->getPath($pathname) . '/' . basename($this->getPath('manifest'));
 		}
 		else
 		{
 			$pathname = 'extension_root';
-			$path['dest'] = $this->getPath($pathname) . '/' . basename($this->getPath('manifest'));
 		}
+
+		$path['dest'] = $this->getPath($pathname) . '/' . basename($this->getPath('manifest'));
 
 		return $this->copyFiles(array($path), true);
 	}
@@ -1979,7 +2069,7 @@ class JInstaller extends JAdapter
 	 */
 	public function cleanDiscoveredExtension($type, $element, $folder = '', $client = 0)
 	{
-		$dbo = $this->getDBO();
+		$dbo = $this->getDbo();
 		$query = $dbo->getQuery(true);
 		$query->delete($dbo->quoteName('#__extensions'));
 		$query->where('type = ' . $dbo->Quote($type));
@@ -2181,5 +2271,103 @@ class JInstaller extends JAdapter
 		$data['group'] = (string) $xml->group;
 
 		return $data;
+	}
+
+	/**
+	 * Return the currently active adapter
+	 *
+	 * @return  JInstallerAdapter  Currently active adapter instance
+	 *
+	 * @since   3.1
+	 */
+	public function getAdapter()
+	{
+		return $this->adapter;
+	}
+
+	/**
+	 * Gets a list of available install adapters.
+	 *
+	 * @param   array  $custom  Array of custom install adapters
+	 *
+	 * @return  array  An array of available install adapters.
+	 *
+	 * @since   3.1
+	 */
+	public function getAdapters(array $custom = array())
+	{
+		$adapters = array();
+
+		$files = new DirectoryIterator(__DIR__ . '/adapter');
+
+		// Process the core adapters
+		foreach ($files as $file)
+		{
+			$fileName = $file->getFilename();
+
+			// Only load for php files.
+			// Note: DirectoryIterator::getExtension only available PHP >= 5.3.6
+			if (!$file->isFile() || substr($fileName, strrpos($fileName, '.') + 1) != 'php')
+			{
+				continue;
+			}
+
+			// Derive the class name from the file name.
+			$class = str_ireplace('.php', '', 'JInstallerAdapter' . ucfirst(trim($fileName)));
+
+			// If the class doesn't exist we have nothing left to do but look at the next type. We did our best.
+			if (!class_exists($class))
+			{
+				continue;
+			}
+
+			// Adapter names should not have file extensions.
+			$adapters[] = str_ireplace('.php', '', $fileName);
+		}
+
+		// Add any custom adapters if specified
+		if (count($custom) >= 1)
+		{
+			foreach ($custom as $adapter)
+			{
+				// Setup the class name
+				$class = 'JInstallerAdapter' . ucfirst(trim($adapter));
+
+				// If the class doesn't exist we have nothing left to do but look at the next type. We did our best.
+				if (!class_exists($class))
+				{
+					continue;
+				}
+
+				// Add the custom adapter to the array
+				$adapters[] = $adapter;
+			}
+		}
+
+		return $adapters;
+	}
+
+	/**
+	 * Method to load an adapter instance
+	 *
+	 * @param   string  $adapter  Adapter name
+	 * @param   array   $options  Adapter options
+	 *
+	 * @return  void
+	 *
+	 * @since   3.1
+	 * @throws  InvalidArgumentException
+	 */
+	public function loadAdapter($adapter, $options = array())
+	{
+		$class = 'JInstallerAdapter' . ucfirst($adapter);
+
+		// Verify the class exists
+		if (!class_exists($class))
+		{
+			throw new InvalidArgumentException(sprintf('The %s install adapter does not exist.', $adapter));
+		}
+
+		$this->adapter = new $class($this, $this->db, $options);
 	}
 }

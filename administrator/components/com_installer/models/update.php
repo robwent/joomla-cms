@@ -311,10 +311,10 @@ class InstallerModelUpdate extends JModelList
 		$app->enqueueMessage($msg);
 
 		// TODO: Reconfigure this code when you have more battery life left
-		$this->setState('name', $installer->get('name'));
+		$this->setState('name', $installer->name);
 		$this->setState('result', $result);
 		$app->setUserState('com_installer.message', $installer->message);
-		$app->setUserState('com_installer.extension_message', $installer->get('extension_message'));
+		$app->setUserState('com_installer.extension_message', $installer->extension_message);
 
 		// Cleanup the install files
 		if (!is_file($package['packagefile']))

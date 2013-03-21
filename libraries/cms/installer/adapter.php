@@ -224,7 +224,7 @@ abstract class JInstallerAdapter extends JAdapterInstance
 	protected function extensionExists($extension, $type, $clientId = null)
 	{
 		// Get a database connector object
-		$db = $this->parent->getDBO();
+		$db = $this->parent->getDbo();
 
 		$query = $db->getQuery(true);
 		$query->select($query->qn('extension_id'))
