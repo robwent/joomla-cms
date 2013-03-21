@@ -9,8 +9,6 @@
 
 defined('JPATH_PLATFORM') or die;
 
-jimport('joomla.base.adapterinstance');
-
 /**
  * Abstract adapter for the installer.
  *
@@ -18,8 +16,16 @@ jimport('joomla.base.adapterinstance');
  * @subpackage  Installer
  * @since       3.1
  */
-abstract class JInstallerAdapter extends JAdapterInstance
+abstract class JInstallerAdapter
 {
+	/**
+	 * Database driver
+	 *
+	 * @var    JDatabaseDriver
+	 * @since  3.1
+	 */
+	protected $db = null;
+
 	/**
 	 * The unique identifier for the extension (e.g. mod_login)
 	 *
@@ -72,6 +78,14 @@ abstract class JInstallerAdapter extends JAdapterInstance
 	protected $name = null;
 
 	/**
+	 * JInstaller instance accessible from the adapters
+	 *
+	 * @var    JInstaller
+	 * @since  3.1
+	 */
+	protected $parent = null;
+
+	/**
 	 * Install function routing
 	 *
 	 * @var    string
@@ -88,7 +102,7 @@ abstract class JInstallerAdapter extends JAdapterInstance
 	/**
 	 * Constructor
 	 *
-	 * @param   JAdapter         $parent   Parent object
+	 * @param   JInstaller       $parent   Parent object
 	 * @param   JDatabaseDriver  $db       Database object
 	 * @param   array            $options  Configuration Options
 	 *
@@ -96,13 +110,19 @@ abstract class JInstallerAdapter extends JAdapterInstance
 	 */
 	public function __construct($parent, $db, $options = array())
 	{
-		// Run the parent constructor
-		parent::__construct($parent, $db, $options);
+		// Set the parent
+		$this->parent = $parent;
 
-		// Set the install route from the options if set
-		if (isset($options['route']))
+		// Set the database object
+		$this->db = $db;
+
+		// Set any options if present
+		if (count($options) >= 1)
 		{
-			$this->setRoute($options['route']);
+			foreach ($options as $key => $value)
+			{
+				$this->$key = $value;
+			}
 		}
 
 		// If we're on the uninstall route, we need to prepare the adapter before loading the manifest
@@ -131,9 +151,9 @@ abstract class JInstallerAdapter extends JAdapterInstance
 	 * @param   string  $route  The action being performed on the database
 	 *
 	 * @return  boolean  True on success
-	 * @throws  RuntimeException
 	 *
 	 * @since   3.1
+	 * @throws  RuntimeException
 	 */
 	protected function doDatabaseTransactions($route)
 	{
@@ -186,9 +206,9 @@ abstract class JInstallerAdapter extends JAdapterInstance
 	 * @param   string  $manifestPath  Path to the manifest file
 	 *
 	 * @return  boolean  Result of operation, true if updated, false on failure
-	 * @throws  RuntimeException
 	 *
 	 * @since   3.1
+	 * @throws  RuntimeException
 	 */
 	protected function doRefreshManifestCache($manifestPath)
 	{
@@ -217,9 +237,9 @@ abstract class JInstallerAdapter extends JAdapterInstance
 	 * @param   string  $clientId   The ID of the application
 	 *
 	 * @return  boolean  True if extension exists
-	 * @throws  RuntimeException
 	 *
 	 * @since   3.1
+	 * @throws  RuntimeException
 	 */
 	protected function extensionExists($extension, $type, $clientId = null)
 	{
@@ -250,6 +270,33 @@ abstract class JInstallerAdapter extends JAdapterInstance
 
 		// Return true if extension id > 0.
 		return $id > 0;
+	}
+
+	/**
+	 * Get the filtered extension element from the manifest
+	 *
+	 * @param   string  $element  Optional element name to be converted
+	 *
+	 * @return  string  The filtered element
+	 *
+	 * @since   3.1
+	 */
+	public function getElement($element = null)
+	{
+		if (!$element)
+		{
+			// Ensure the element is a string
+			$element = (string) $this->manifest->element;
+		}
+		if (!$element)
+		{
+			$element = $this->getName();
+		}
+
+		// Filter the name for illegal characters
+		$element = JFilterInput::getInstance()->clean($element, 'cmd');
+
+		return $element;
 	}
 
 	/**
@@ -290,30 +337,15 @@ abstract class JInstallerAdapter extends JAdapterInstance
 	}
 
 	/**
-	 * Get the filtered extension element from the manifest
+	 * Retrieves the parent object
 	 *
-	 * @param   string  $element  Optional element name to be converted
-	 *
-	 * @return  string  The filtered element
+	 * @return  object parent
 	 *
 	 * @since   3.1
 	 */
-	public function getElement($element = null)
+	public function getParent()
 	{
-		if (!$element)
-		{
-			// Ensure the element is a string
-			$element = (string) $this->manifest->element;
-		}
-		if (!$element)
-		{
-			$element = $this->getName();
-		}
-
-		// Filter the name for illegal characters
-		$element = JFilterInput::getInstance()->clean($element, 'cmd');
-
-		return $element;
+		return $this->parent;
 	}
 
 	/**
@@ -460,9 +492,9 @@ abstract class JInstallerAdapter extends JAdapterInstance
 	 * @param   string  $method  The install method to execute
 	 *
 	 * @return  boolean  True on success
-	 * @throws  RuntimeException
 	 *
 	 * @since   3.1
+	 * @throws  RuntimeException
 	 */
 	protected function triggerManifestScript($method)
 	{
