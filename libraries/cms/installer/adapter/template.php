@@ -21,6 +21,120 @@ jimport('joomla.filesystem.folder');
 class JInstallerAdapterTemplate extends JInstallerAdapter
 {
 	/**
+	 * The install client ID
+	 *
+	 * @var    integer
+	 * @since  3.1
+	 */
+	protected $clientId;
+
+	/**
+	 * Method to check if the extension is already present in the database
+	 *
+	 * @return  void
+	 *
+	 * @since   3.1
+	 * @throws  RuntimeException
+	 */
+	protected function checkExistingExtension()
+	{
+		try
+		{
+			$this->currentExtensionId = $this->extension->find(array('element' => $this->element, 'type' => $this->type, 'client_id' => $this->clientId));
+		}
+		catch (RuntimeException $e)
+		{
+			// Install failed, roll back changes
+			throw new RuntimeException(
+				JText::sprintf(
+					'JLIB_INSTALLER_ABORT_TPL_INSTALL_ROLLBACK',
+					JText::_('JLIB_INSTALLER_' . $this->route),
+					$e->getMessage()
+				)
+			);
+		}
+	}
+
+	/**
+	 * Method to copy the extension's base files from the <files> tag(s) and the manifest file
+	 *
+	 * @return  void
+	 *
+	 * @since   3.1
+	 * @throws  RuntimeException
+	 */
+	protected function copyBaseFiles()
+	{
+		// Copy all the necessary files
+		if ($this->parent->parseFiles($this->manifest->files, -1) === false)
+		{
+			// TODO: throw exception
+			return false;
+		}
+
+		if ($this->parent->parseFiles($this->manifest->images, -1) === false)
+		{
+			// TODO: throw exception
+			return false;
+		}
+
+		if ($this->parent->parseFiles($this->manifest->css, -1) === false)
+		{
+			// TODO: throw exception
+			return false;
+		}
+
+		// If there is a manifest script, let's copy it.
+		if ($this->manifest_script)
+		{
+			$path['src'] = $this->parent->getPath('source') . '/' . $this->manifest_script;
+			$path['dest'] = $this->parent->getPath('extension_root') . '/' . $this->manifest_script;
+
+			if (!file_exists($path['dest']) || $this->parent->isOverwrite())
+			{
+				if (!$this->parent->copyFiles(array($path)))
+				{
+					// Install failed, rollback changes
+					throw new RuntimeException(JText::_('JLIB_INSTALLER_ABORT_MOD_INSTALL_MANIFEST'));
+				}
+			}
+		}
+	}
+
+	/**
+	 * Method to finalise the installation processing
+	 *
+	 * @return  void
+	 *
+	 * @since   3.1
+	 * @throws  RuntimeException
+	 */
+	protected function finaliseInstall()
+	{
+		// Clobber any possible pending updates
+		$update = JTable::getInstance('update');
+		$uid = $update->find(
+			array(
+				'element' => $this->element,
+				'type' => $this->type,
+				'client_id' => $this->clientId
+			)
+		);
+
+		if ($uid)
+		{
+			$update->delete($uid);
+		}
+
+		// Lastly, we will copy the manifest file to its appropriate place.
+		if (!$this->parent->copyManifest(-1))
+		{
+			// Install failed, rollback changes
+			throw new RuntimeException(JText::_('JLIB_INSTALLER_ABORT_TPL_INSTALL_COPY_SETUP'));
+		}
+	}
+
+	/**
 	 * Load language from a path
 	 *
 	 * @param   string  $path  The path of the language.
@@ -53,225 +167,6 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 		$extension = 'tpl_' . strtolower($this->name);
 		$source = $path ? $path : ($this->parent->extension->client_id ? JPATH_ADMINISTRATOR : JPATH_SITE) . '/templates/' . $this->element;
 		$this->doLoadLanguage($extension, $source, constant('JPATH_' . strtoupper($client)));
-	}
-
-	/**
-	 * Custom install method
-	 *
-	 * @return  boolean  True on success
-	 *
-	 * @since   3.1
-	 */
-	public function install()
-	{
-		// Get the extension description
-		$description = (string) $this->manifest->description;
-		if ($description)
-		{
-			$this->parent->message = JText::_($description);
-		}
-		else
-		{
-			$this->parent->message = '';
-		}
-
-		$lang = JFactory::getLanguage();
-
-		// Get the client application target
-		$cname = (string) $this->manifest->attributes()->client;
-		if ($cname)
-		{
-			// Attempt to map the client to a base path
-			$client = JApplicationHelper::getClientInfo($cname, true);
-
-			if ($client === false)
-			{
-				throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_TPL_INSTALL_UNKNOWN_CLIENT', $cname));
-			}
-			$basePath = $client->path;
-			$clientId = $client->id;
-		}
-		else
-		{
-			// No client attribute was found so we assume the site as the client
-			$basePath = JPATH_SITE;
-			$clientId = 0;
-		}
-
-		// Check to see if a template by the same name is already installed.
-		try
-		{
-			$id = $this->extension->find(array('type' => 'template', 'element' => $this->element, 'client_id' => $clientId));
-		}
-		catch (RuntimeException $e)
-		{
-			// Install failed, roll back changes
-			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_TPL_INSTALL_ROLLBACK'), $e->getMessage());
-		}
-
-		// Set the template root path
-		$this->parent->setPath('extension_root', $basePath . '/templates/' . $this->element);
-
-		// If it's on the fs...
-		if (file_exists($this->parent->getPath('extension_root')) && (!$this->parent->isOverwrite() || $this->parent->isUpgrade()))
-		{
-			$updateElement = $this->manifest->update;
-
-			// Upgrade manually set or update tag detected
-			if ($this->parent->isUpgrade() || $updateElement)
-			{
-				// Force this one
-				$this->parent->setOverwrite(true);
-				$this->parent->setUpgrade(true);
-
-				if ($id)
-				{
-					// If there is a matching extension mark this as an update; semantics really
-					$this->setRoute('update');
-				}
-			}
-			elseif (!$this->parent->isOverwrite())
-			{
-				// Overwrite is not set
-				// If we didn't have overwrite set, find an update function or find an update tag so let's call it safe
-				throw new RuntimeException(
-					JText::sprintf(
-						'JLIB_INSTALLER_ABORT_TPL_INSTALL_ANOTHER_TEMPLATE_USING_DIRECTORY', JText::_('JLIB_INSTALLER_' . $this->route),
-						$this->parent->getPath('extension_root')
-					)
-				);
-			}
-		}
-
-		/*
-		 * If the template directory already exists, then we will assume that the template is already
-		 * installed or another template is using that directory.
-		 */
-		if (file_exists($this->parent->getPath('extension_root')) && !$this->parent->isOverwrite())
-		{
-			throw new RuntimeException(
-				JText::sprintf('JLIB_INSTALLER_ABORT_TPL_INSTALL_ANOTHER_TEMPLATE_USING_DIRECTORY', $this->parent->getPath('extension_root'))
-			);
-		}
-
-		// If the template directory does not exist, let's create it
-		$created = false;
-
-		if (!file_exists($this->parent->getPath('extension_root')))
-		{
-			if (!$created = JFolder::create($this->parent->getPath('extension_root')))
-			{
-				throw new RuntimeException(
-					JText::sprintf('JLIB_INSTALLER_ABORT_TPL_INSTALL_FAILED_CREATE_DIRECTORY', $this->parent->getPath('extension_root'))
-				);
-			}
-		}
-
-		// If we created the template directory and will want to remove it if we have to roll back
-		// the installation, let's add it to the installation step stack
-		if ($created)
-		{
-			$this->parent->pushStep(array('type' => 'folder', 'path' => $this->parent->getPath('extension_root')));
-		}
-
-		// Copy all the necessary files
-		if ($this->parent->parseFiles($this->manifest->files, -1) === false)
-		{
-			// TODO: throw exception
-			return false;
-		}
-
-		if ($this->parent->parseFiles($this->manifest->images, -1) === false)
-		{
-			// TODO: throw exception
-			return false;
-		}
-
-		if ($this->parent->parseFiles($this->manifest->css, -1) === false)
-		{
-			// TODO: throw exception
-			return false;
-		}
-
-		// Parse optional tags
-		$this->parent->parseMedia($this->manifest->media);
-		$this->parent->parseLanguages($this->manifest->languages, $clientId);
-
-		// Lastly, we will copy the manifest file to its appropriate place.
-		if (!$this->parent->copyManifest(-1))
-		{
-			// Install failed, rollback changes
-			throw new RuntimeException(JText::_('JLIB_INSTALLER_ABORT_TPL_INSTALL_COPY_SETUP'));
-		}
-
-		/**
-		 * ---------------------------------------------------------------------------------------------
-		 * Extension Registration
-		 * ---------------------------------------------------------------------------------------------
-		 */
-
-		if ($this->route == 'update' && $id)
-		{
-			$this->extension->load($id);
-		}
-		else
-		{
-			$this->extension->type = 'template';
-			$this->extension->element = $this->element;
-
-			// There is no folder for templates
-			$this->extension->folder = '';
-			$this->extension->enabled = 1;
-			$this->extension->protected = 0;
-			$this->extension->access = 1;
-			$this->extension->client_id = $clientId;
-			$this->extension->params = $this->parent->getParams();
-
-			// Custom data
-			$this->extension->custom_data = '';
-		}
-
-		// Name might change in an update
-		$this->extension->name = $this->name;
-		$this->extension->manifest_cache = $this->parent->generateManifestCache();
-
-		if (!$this->extension->store())
-		{
-			// Install failed, roll back changes
-			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_TPL_INSTALL_ROLLBACK', $this->db->stderr(true)));
-		}
-
-		if ($this->route == 'install')
-		{
-			$debug = $lang->setDebug(false);
-
-			$columns = array($this->db->quoteName('template'),
-				$this->db->quoteName('client_id'),
-				$this->db->quoteName('home'),
-				$this->db->quoteName('title'),
-				$this->db->quoteName('params')
-			);
-
-			$values = array(
-				$this->db->Quote($this->extension->element), $clientId, $this->db->Quote(0),
-				$this->db->Quote(JText::sprintf('JLIB_INSTALLER_DEFAULT_STYLE', JText::_($this->name))),
-				$this->db->Quote($this->extension->params) );
-
-			$lang->setDebug($debug);
-
-			// Insert record in #__template_styles
-			$query = $this->db->getQuery(true);
-			$query->insert($this->db->quoteName('#__template_styles'))
-				->columns($columns)
-				->values(implode(',', $values));
-
-			$this->db->setQuery($query);
-
-			// There is a chance this could fail but we don't care...
-			$this->db->execute();
-		}
-
-		return $this->extension->extension_id;
 	}
 
 	/**
@@ -527,6 +422,62 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 	}
 
 	/**
+	 * Method to parse optional tags in the manifest
+	 *
+	 * @return  void
+	 *
+	 * @since   3.1
+	 */
+	protected function parseOptionalTags()
+	{
+		// Parse optional tags
+		$this->parent->parseMedia($this->manifest->media);
+		$this->parent->parseLanguages($this->manifest->languages, $this->clientId);
+	}
+
+	/**
+	 * Overloaded method to parse queries for template installations
+	 *
+	 * @return  void
+	 *
+	 * @since   3.1
+	 * @throws  RuntimeException
+	 */
+	protected function parseQueries()
+	{
+		if ($this->route == 'install')
+		{
+			$lang  = JFactory::getLanguage();
+			$debug = $lang->setDebug(false);
+
+			$columns = array($this->db->quoteName('template'),
+				$this->db->quoteName('client_id'),
+				$this->db->quoteName('home'),
+				$this->db->quoteName('title'),
+				$this->db->quoteName('params')
+			);
+
+			$values = array(
+				$this->db->Quote($this->extension->element), $clientId, $this->db->Quote(0),
+				$this->db->Quote(JText::sprintf('JLIB_INSTALLER_DEFAULT_STYLE', JText::_($this->name))),
+				$this->db->Quote($this->extension->params) );
+
+			$lang->setDebug($debug);
+
+			// Insert record in #__template_styles
+			$query = $this->db->getQuery(true);
+			$query->insert($this->db->quoteName('#__template_styles'))
+				->columns($columns)
+				->values(implode(',', $values));
+
+			$this->db->setQuery($query);
+
+			// There is a chance this could fail but we don't care...
+			$this->db->execute();
+		}
+	}
+
+	/**
 	 * Refreshes the extension table cache
 	 *
 	 * @return  boolean  Result of operation, true if updated, false on failure
@@ -540,6 +491,114 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 		$manifestPath = $client->path . '/templates/' . $this->parent->extension->element . '/templateDetails.xml';
 
 		return $this->doRefreshManifestCache($manifestPath);
+	}
+
+	/**
+	 * Method to do any prechecks and setup the install paths for the extension
+	 *
+	 * @return  void
+	 *
+	 * @since   3.1
+	 * @throws  RuntimeException
+	 */
+	protected function setupInstallPaths()
+	{
+		// Get the client application target
+		$cname = (string) $this->manifest->attributes()->client;
+		if ($cname)
+		{
+			// Attempt to map the client to a base path
+			$client = JApplicationHelper::getClientInfo($cname, true);
+
+			if ($client === false)
+			{
+				throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_TPL_INSTALL_UNKNOWN_CLIENT', $cname));
+			}
+			$basePath = $client->path;
+			$this->clientId = $client->id;
+		}
+		else
+		{
+			// No client attribute was found so we assume the site as the client
+			$basePath = JPATH_SITE;
+			$this->clientId = 0;
+		}
+
+		// Set the template root path
+		if (!empty($this->element))
+		{
+			$this->parent->setPath('extension_root', $basePath . '/templates/' . $this->element);
+		}
+		else
+		{
+			throw new RuntimeException(
+				JText::sprintf(
+					'JLIB_INSTALLER_ABORT_MOD_INSTALL_NOFILE',
+					JText::_('JLIB_INSTALLER_' . $this->route)
+				)
+			);
+		}
+	}
+
+	/**
+	 * Method to store the extension to the database
+	 *
+	 * @return  void
+	 *
+	 * @since   3.1
+	 * @throws  RuntimeException
+	 */
+	protected function storeExtension()
+	{
+		// Was there a template already installed with the same name?
+		if ($this->currentExtensionId)
+		{
+			if (!$this->parent->isOverwrite())
+			{
+				// Install failed, roll back changes
+				throw new RuntimeException(
+					JText::sprintf(
+						'JLIB_INSTALLER_ABORT_PLG_INSTALL_ALLREADY_EXISTS',
+						JText::_('JLIB_INSTALLER_' . $this->route),
+						$this->name
+					)
+				);
+			}
+
+			// Load the entry and update the manifest_cache
+			$this->extension->load($this->currentExtensionId);
+		}
+		else
+		{
+			$this->extension->type = 'template';
+			$this->extension->element = $this->element;
+
+			// There is no folder for templates
+			$this->extension->folder = '';
+			$this->extension->enabled = 1;
+			$this->extension->protected = 0;
+			$this->extension->access = 1;
+			$this->extension->client_id = $this->clientId;
+			$this->extension->params = $this->parent->getParams();
+
+			// Custom data
+			$this->extension->custom_data = '';
+		}
+
+		// Name might change in an update
+		$this->extension->name = $this->name;
+		$this->extension->manifest_cache = $this->parent->generateManifestCache();
+
+		if (!$this->extension->store())
+		{
+			// Install failed, roll back changes
+			throw new RuntimeException(
+				JText::sprintf(
+					'JLIB_INSTALLER_ABORT_TPL_INSTALL_ROLLBACK',
+					$this->extension->getError()
+				)
+			);
+		}
 	}
 }
 
