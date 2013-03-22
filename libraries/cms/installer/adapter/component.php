@@ -43,7 +43,222 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 	protected $oldFiles = null;
 
 	/**
+	 * Method to check if the extension is present in the filesystem, flags the route as update if so
+	 *
+	 * @return  mixed
+	 *
+	 * @since   3.1
+	 * @throws  RuntimeException
+	 */
+	protected function checkExtensionInFilesystem()
+	{
+		/*
+		 * If the component site or admin directory already exists, then we will assume that the component is already
+		 * installed or another component is using that directory.
+		 */
+		if (file_exists($this->parent->getPath('extension_site')) || file_exists($this->parent->getPath('extension_administrator')))
+		{
+			// Look for an update function or update tag
+			$updateElement = $this->manifest->update;
+
+			// Upgrade manually set or update function available or update tag detected
+			if ($this->parent->isUpgrade() || ($this->parent->manifestClass && method_exists($this->parent->manifestClass, 'update'))
+				|| $updateElement)
+			{
+				// Transfer control to the update function
+				$this->setRoute('update');
+			}
+			elseif (!$this->parent->isOverwrite())
+			{
+				// We didn't have overwrite set, find an update function or find an update tag so lets call it safe
+				if (file_exists($this->parent->getPath('extension_site')))
+				{
+					// If the site exists say so.
+					throw new RuntimeException(
+						JText::sprintf('JLIB_INSTALLER_ERROR_COMP_INSTALL_DIR_SITE', $this->parent->getPath('extension_site'))
+					);
+				}
+				else
+				{
+					// If the admin exists say so
+					throw new RuntimeException(
+						JText::sprintf('JLIB_INSTALLER_ERROR_COMP_INSTALL_DIR_ADMIN', $this->parent->getPath('extension_administrator'))
+					);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Method to copy the extension's base files from the <files> tag(s) and the manifest file
+	 *
+	 * @return  void
+	 *
+	 * @since   3.1
+	 * @throws  RuntimeException
+	 */
+	protected function copyBaseFiles()
+	{
+		// Copy site files
+		if ($this->manifest->files)
+		{
+			if ($this->parent->parseFiles($this->manifest->files) === false)
+			{
+				// TODO: throw exception
+				return false;
+			}
+		}
+
+		// Copy admin files
+		if ($this->manifest->administration->files)
+		{
+			if ($this->parent->parseFiles($this->manifest->administration->files, 1) === false)
+			{
+				// TODO: throw exception
+				return false;
+			}
+		}
+
+		// If there is a manifest script, let's copy it.
+		if ($this->manifest_script)
+		{
+			$path['src'] = $this->parent->getPath('source') . '/' . $this->manifest_script;
+			$path['dest'] = $this->parent->getPath('extension_administrator') . '/' . $this->manifest_script;
+
+			if (!file_exists($path['dest']) || $this->parent->isOverwrite())
+			{
+				if (!$this->parent->copyFiles(array($path)))
+				{
+					// Install failed, rollback changes
+					throw new RuntimeException(JText::_('JLIB_INSTALLER_ABORT_COMP_INSTALL_MANIFEST'));
+				}
+			}
+		}
+	}
+
+	/**
+	 * Method to create the extension root path if necessary
+	 *
+	 * @return  void
+	 *
+	 * @since   3.1
+	 * @throws  RuntimeException
+	 */
+	protected function createExtensionRoot()
+	{
+		// If the component directory does not exist, let's create it
+		$created = false;
+
+		if (!file_exists($this->parent->getPath('extension_site')))
+		{
+			if (!$created = JFolder::create($this->parent->getPath('extension_site')))
+			{
+				throw new RuntimeException(
+					JText::sprintf(
+						'JLIB_INSTALLER_ERROR_COMP_INSTALL_FAILED_TO_CREATE_DIRECTORY_SITE',
+						$this->parent->getPath('extension_site')
+					)
+				);
+			}
+		}
+
+		/*
+		 * Since we created the component directory and we will want to remove it if we have to roll back
+		 * the installation, let's add it to the installation step stack
+		 */
+		if ($created)
+		{
+			$this->parent->pushStep(array('type' => 'folder', 'path' => $this->parent->getPath('extension_site')));
+		}
+
+		// If the component admin directory does not exist, let's create it
+		$created = false;
+
+		if (!file_exists($this->parent->getPath('extension_administrator')))
+		{
+			if (!$created = JFolder::create($this->parent->getPath('extension_administrator')))
+			{
+				throw new RuntimeException(
+					JText::sprintf(
+						'JLIB_INSTALLER_ERROR_COMP_INSTALL_FAILED_TO_CREATE_DIRECTORY_ADMIN',
+						$this->parent->getPath('extension_administrator')
+					)
+				);
+			}
+		}
+
+		/*
+		 * Since we created the component admin directory and we will want to remove it if we have to roll
+		 * back the installation, let's add it to the installation step stack
+		 */
+		if ($created)
+		{
+			$this->parent->pushStep(array('type' => 'folder', 'path' => $this->parent->getPath('extension_administrator')));
+		}
+	}
+
+	/**
+	 * Method to finalise the installation processing
+	 *
+	 * @return  void
+	 *
+	 * @since   3.1
+	 * @throws  RuntimeException
+	 */
+	protected function finaliseInstall()
+	{
+		// Clobber any possible pending updates
+		$update = JTable::getInstance('update');
+		$uid = $update->find(
+			array(
+				'element' => $this->element,
+				'type' => $this->type,
+				'client_id' => 1
+			)
+		);
+
+		if ($uid)
+		{
+			$update->delete($uid);
+		}
+
+		// We will copy the manifest file to its appropriate place.
+		if (!$this->parent->copyManifest())
+		{
+			// Install failed, roll back changes
+			throw new RuntimeException(JText::_('JLIB_INSTALLER_ABORT_COMP_INSTALL_COPY_SETUP'));
+		}
+
+		// Time to build the admin menus
+		if (!$this->_buildAdminMenus($this->extension->extension_id))
+		{
+			JLog::add(JText::_('JLIB_INSTALLER_ABORT_COMP_BUILDADMINMENUS_FAILED'), JLog::WARNING, 'jerror');
+		}
+
+		// Register the component container just under root in the assets table.
+		$asset = JTable::getInstance('Asset');
+		$asset->name = $this->extension->element;
+		$asset->parent_id = 1;
+		$asset->rules = '{}';
+		$asset->title = $this->extension->name;
+		$asset->setLocation(1, 'last-child');
+
+		if (!$asset->store())
+		{
+			// Install failed, roll back changes
+			throw new RuntimeException(
+				JText::sprintf(
+					'JLIB_INSTALLER_ABORT_COMP_INSTALL_ROLLBACK',
+					$this->extension->getError()
+				)
+			);
+		}
+	}
+
+	/**
 	 * Get the filtered extension element from the manifest
+	 *
+	 * @param   string  $element  Optional element name to be converted
 	 *
 	 * @return  string  The filtered element
 	 *
@@ -109,15 +324,16 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 	}
 
 	/**
-	 * Custom install method for components
+	 * Generic install method for extensions
 	 *
 	 * @return  boolean  True on success
 	 *
 	 * @since   3.1
+	 * @throws  Exception|RuntimeException
 	 */
 	public function install()
 	{
-		// Get the extension description
+		// Get the component description
 		$description = (string) $this->manifest->description;
 		if ($description)
 		{
@@ -130,69 +346,44 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 
 		/*
 		 * ---------------------------------------------------------------------------------------------
-		 * Manifest Document Setup Section
+		 * Extension Precheck and Setup Section
 		 * ---------------------------------------------------------------------------------------------
 		 */
 
-		// Set the installation target paths
-		$this->parent->setPath('extension_site', JPath::clean(JPATH_SITE . '/components/' . $this->element));
-		$this->parent->setPath('extension_administrator', JPath::clean(JPATH_ADMINISTRATOR . '/components/' . $this->element));
-
-		// Copy the admin path as it's used as a common base
-		$this->parent->setPath('extension_root', $this->parent->getPath('extension_administrator'));
-
-		/*
-		 * ---------------------------------------------------------------------------------------------
-		 * Basic Checks Section
-		 * ---------------------------------------------------------------------------------------------
-		 */
-
-		// Make sure that we have an admin element
-		if (!$this->manifest->administration)
+		// Setup the install paths and perform other prechecks as necessary
+		try
 		{
-			throw new RuntimeException(JText::_('JLIB_INSTALLER_ERROR_COMP_INSTALL_ADMIN_ELEMENT'));
+			$this->setupInstallPaths();
+		}
+		catch (RuntimeException $e)
+		{
+			throw $e;
 		}
 
-		/*
-		 * ---------------------------------------------------------------------------------------------
-		 * Filesystem Processing Section
-		 * ---------------------------------------------------------------------------------------------
-		 */
-
-		/*
-		 * If the component site or admin directory already exists, then we will assume that the component is already
-		 * installed or another component is using that directory.
-		 */
-		if (file_exists($this->parent->getPath('extension_site')) || file_exists($this->parent->getPath('extension_administrator')))
+		// Check to see if an extension by the same name is already installed.
+		try
 		{
-			// Look for an update function or update tag
-			$updateElement = $this->manifest->update;
+			$this->checkExistingExtension();
+		}
+		catch (RuntimeException $e)
+		{
+			throw $e;
+		}
 
-			// Upgrade manually set or update function available or update tag detected
-			if ($this->parent->isUpgrade() || ($this->parent->manifestClass && method_exists($this->parent->manifestClass, 'update'))
-				|| $updateElement)
+		// Check if the extension is present in the filesystem
+		try
+		{
+			$this->checkExtensionInFilesystem();
+
+			// If we're on the update route now, transfer control to the update method
+			if ($this->route == 'update')
 			{
-				// Transfer control to the update function
 				return $this->update();
 			}
-			elseif (!$this->parent->isOverwrite())
-			{
-				// We didn't have overwrite set, find an update function or find an update tag so lets call it safe
-				if (file_exists($this->parent->getPath('extension_site')))
-				{
-					// If the site exists say so.
-					throw new RuntimeException(
-						JText::sprintf('JLIB_INSTALLER_ERROR_COMP_INSTALL_DIR_SITE', $this->parent->getPath('extension_site'))
-					);
-				}
-				else
-				{
-					// If the admin exists say so
-					throw new RuntimeException(
-						JText::sprintf('JLIB_INSTALLER_ERROR_COMP_INSTALL_DIR_ADMIN', $this->parent->getPath('extension_administrator'))
-					);
-				}
-			}
+		}
+		catch (RuntimeException $e)
+		{
+			throw $e;
 		}
 
 		/*
@@ -204,89 +395,34 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		$this->setupScriptfile();
 		$this->triggerManifestScript('preflight');
 
-		// If the component directory does not exist, let's create it
-		$created = false;
-
-		if (!file_exists($this->parent->getPath('extension_site')))
-		{
-			if (!$created = JFolder::create($this->parent->getPath('extension_site')))
-			{
-				throw new RuntimeException(
-					JText::sprintf('JLIB_INSTALLER_ERROR_COMP_INSTALL_FAILED_TO_CREATE_DIRECTORY_SITE', $this->parent->getPath('extension_site'))
-				);
-			}
-		}
-
 		/*
-		 * Since we created the component directory and we will want to remove it if we have to roll back
-		 * the installation, let's add it to the installation step stack
+		 * ---------------------------------------------------------------------------------------------
+		 * Filesystem Processing Section
+		 * ---------------------------------------------------------------------------------------------
 		 */
-		if ($created)
+
+		// If the extension directory does not exist, lets create it
+		try
 		{
-			$this->parent->pushStep(array('type' => 'folder', 'path' => $this->parent->getPath('extension_site')));
+			$this->createExtensionRoot();
+		}
+		catch (RuntimeException $e)
+		{
+			throw $e;
 		}
 
-		// If the component admin directory does not exist, let's create it
-		$created = false;
-
-		if (!file_exists($this->parent->getPath('extension_administrator')))
+		// Copy all necessary files
+		try
 		{
-			if (!$created = JFolder::create($this->parent->getPath('extension_administrator')))
-			{
-				throw new RuntimeException(
-					JText::sprintf('JLIB_INSTALLER_ERROR_COMP_INSTALL_FAILED_TO_CREATE_DIRECTORY_ADMIN', $this->parent->getPath('extension_administrator'))
-				);
-			}
+			$this->copyBaseFiles();
 		}
-
-		/*
-		 * Since we created the component admin directory and we will want to remove it if we have to roll
-		 * back the installation, let's add it to the installation step stack
-		 */
-		if ($created)
+		catch (RuntimeException $e)
 		{
-			$this->parent->pushStep(array('type' => 'folder', 'path' => $this->parent->getPath('extension_administrator')));
-		}
-
-		// Copy site files
-		if ($this->manifest->files)
-		{
-			if ($this->parent->parseFiles($this->manifest->files) === false)
-			{
-				// TODO: throw exception
-				return false;
-			}
-		}
-
-		// Copy admin files
-		if ($this->manifest->administration->files)
-		{
-			if ($this->parent->parseFiles($this->manifest->administration->files, 1) === false)
-			{
-				// TODO: throw exception
-				return false;
-			}
+			throw $e;
 		}
 
 		// Parse optional tags
-		$this->parent->parseMedia($this->manifest->media);
-		$this->parent->parseLanguages($this->manifest->languages);
-		$this->parent->parseLanguages($this->manifest->administration->languages, 1);
-
-		// If there is a manifest script, let's copy it.
-		if ($this->manifest_script)
-		{
-			$path['src'] = $this->parent->getPath('source') . '/' . $this->manifest_script;
-			$path['dest'] = $this->parent->getPath('extension_administrator') . '/' . $this->manifest_script;
-
-			if (!file_exists($path['dest']) || $this->parent->isOverwrite())
-			{
-				if (!$this->parent->copyFiles(array($path)))
-				{
-					throw new RuntimeException(JText::_('JLIB_INSTALLER_ABORT_COMP_INSTALL_MANIFEST'));
-				}
-			}
-		}
+		$this->parseOptionalTags();
 
 		/*
 		 * ---------------------------------------------------------------------------------------------
@@ -294,96 +430,40 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		 * ---------------------------------------------------------------------------------------------
 		 */
 
-		// Run the install queries for the component
-		if (!$this->doDatabaseTransactions('install'))
+		try
 		{
-			// TODO: throw exception
-			return false;
+			$this->storeExtension();
+		}
+		catch (RuntimeException $e)
+		{
+			throw $e;
 		}
 
-		/**
-		 * ---------------------------------------------------------------------------------------------
-		 * Custom Installation Script Section
-		 * ---------------------------------------------------------------------------------------------
-		 */
+		try
+		{
+			$this->parseQueries();
+		}
+		catch (RuntimeException $e)
+		{
+			throw $e;
+		}
 
-		$this->triggerManifestScript('install');
+		// Run the custom method based on the route
+		$this->triggerManifestScript($this->route);
 
-		/**
+		/*
 		 * ---------------------------------------------------------------------------------------------
 		 * Finalization and Cleanup Section
 		 * ---------------------------------------------------------------------------------------------
 		 */
 
-		// Add an entry to the extension table with a whole heap of defaults
-		$this->extension->name = $this->name;
-		$this->extension->type = 'component';
-		$this->extension->element = $this->element;
-
-		// There is no folder for components
-		$this->extension->folder = '';
-		$this->extension->enabled = 1;
-		$this->extension->protected = 0;
-		$this->extension->access = 0;
-		$this->extension->client_id = 1;
-		$this->extension->params = $this->parent->getParams();
-		$this->extension->manifest_cache = $this->parent->generateManifestCache();
-
-		if (!$this->extension->store())
+		try
 		{
-			// Install failed, roll back changes
-			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_COMP_INSTALL_ROLLBACK', $this->db->stderr(true)));
+			$this->finaliseInstall();
 		}
-
-		$eid = $this->extension->extension_id;
-
-		// Clobber any possible pending updates
-		$update = JTable::getInstance('update');
-		$uid = $update->find(
-			array(
-				'element' => $this->element,
-				'type' => 'component',
-				'client_id' => 1,
-				'folder' => ''
-			)
-		);
-
-		if ($uid)
+		catch (RuntimeException $e)
 		{
-			$update->delete($uid);
-		}
-
-		// We will copy the manifest file to its appropriate place.
-		if (!$this->parent->copyManifest())
-		{
-			// Install failed, roll back changes
-			throw new RuntimeException(JText::_('JLIB_INSTALLER_ABORT_COMP_INSTALL_COPY_SETUP'));
-		}
-
-		// Time to build the admin menus
-		if (!$this->_buildAdminMenus($this->extension->extension_id))
-		{
-			JLog::add(JText::_('JLIB_INSTALLER_ABORT_COMP_BUILDADMINMENUS_FAILED'), JLog::WARNING, 'jerror');
-		}
-
-		// Set the schema version to be the latest update version
-		if ($this->manifest->update)
-		{
-			$this->parent->setSchemaVersion($this->manifest->update->schemas, $eid);
-		}
-
-		// Register the component container just under root in the assets table.
-		$asset = JTable::getInstance('Asset');
-		$asset->name = $this->extension->element;
-		$asset->parent_id = 1;
-		$asset->rules = '{}';
-		$asset->title = $this->extension->name;
-		$asset->setLocation(1, 'last-child');
-
-		if (!$asset->store())
-		{
-			// Install failed, roll back changes
-			throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_COMP_INSTALL_ROLLBACK', $this->db->stderr(true)));
+			throw $e;
 		}
 
 		// And now we run the postflight
@@ -1392,6 +1472,21 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 	}
 
 	/**
+	 * Method to parse optional tags in the manifest
+	 *
+	 * @return  void
+	 *
+	 * @since   3.1
+	 */
+	protected function parseOptionalTags()
+	{
+		// Parse optional tags
+		$this->parent->parseMedia($this->manifest->media);
+		$this->parent->parseLanguages($this->manifest->languages);
+		$this->parent->parseLanguages($this->manifest->administration->languages, 1);
+	}
+
+	/**
 	 * Refreshes the extension table cache
 	 *
 	 * @return  boolean  Result of operation, true if updated, false on failure
@@ -1406,6 +1501,66 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		$manifestPath = $client->path . '/components/' . $this->parent->extension->element . '/' . $short_element . '.xml';
 
 		return $this->doRefreshManifestCache($manifestPath);
+	}
+
+	/**
+	 * Method to do any prechecks and setup the install paths for the extension
+	 *
+	 * @return  void
+	 *
+	 * @since   3.1
+	 * @throws  RuntimeException
+	 */
+	protected function setupInstallPaths()
+	{
+		// Set the installation target paths
+		$this->parent->setPath('extension_site', JPath::clean(JPATH_SITE . '/components/' . $this->element));
+		$this->parent->setPath('extension_administrator', JPath::clean(JPATH_ADMINISTRATOR . '/components/' . $this->element));
+
+		// Copy the admin path as it's used as a common base
+		$this->parent->setPath('extension_root', $this->parent->getPath('extension_administrator'));
+
+		// Make sure that we have an admin element
+		if (!$this->manifest->administration)
+		{
+			throw new RuntimeException(JText::_('JLIB_INSTALLER_ERROR_COMP_INSTALL_ADMIN_ELEMENT'));
+		}
+	}
+
+	/**
+	 * Method to store the extension to the database
+	 *
+	 * @return  void
+	 *
+	 * @since   3.1
+	 * @throws  RuntimeException
+	 */
+	protected function storeExtension()
+	{
+		// Add an entry to the extension table with a whole heap of defaults
+		$this->extension->name = $this->name;
+		$this->extension->type = 'component';
+		$this->extension->element = $this->element;
+
+		// There is no folder for components
+		$this->extension->folder = '';
+		$this->extension->enabled = 1;
+		$this->extension->protected = 0;
+		$this->extension->access = 0;
+		$this->extension->client_id = 1;
+		$this->extension->params = $this->parent->getParams();
+		$this->extension->manifest_cache = $this->parent->generateManifestCache();
+
+		if (!$this->extension->store())
+		{
+			// Install failed, roll back changes
+			throw new RuntimeException(
+				JText::sprintf(
+					'JLIB_INSTALLER_ABORT_COMP_INSTALL_ROLLBACK',
+					$this->extension->getError()
+				)
+			);
+		}
 	}
 }
 
