@@ -480,6 +480,9 @@ abstract class JInstallerAdapter
 		// Support element names like 'en-GB'
 		$className = JFilterInput::getInstance()->clean($this->element, 'cmd') . 'InstallerScript';
 
+		// Cannot have - in class names
+		$className = str_replace('-', '', $className);
+
 		return $className;
 	}
 
