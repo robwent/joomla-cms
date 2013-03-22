@@ -40,7 +40,7 @@ class JInstallerAdapterModule extends JInstallerAdapter
 	{
 		try
 		{
-			$this->currentExtensionId = $this->extension->find(array('element' => $this->element, 'type' => 'module', 'client_id' => $this->clientId));
+			$this->currentExtensionId = $this->extension->find(array('element' => $this->element, 'type' => $this->type, 'client_id' => $this->clientId));
 		}
 		catch (RuntimeException $e)
 		{
@@ -98,9 +98,8 @@ class JInstallerAdapterModule extends JInstallerAdapter
 		$uid = $update->find(
 			array(
 				'element' => $this->element,
-				'type' => 'module',
-				'client_id' => $this->clientId,
-				'folder' => ''
+				'type' => $this->type,
+				'client_id' => $this->clientId
 			)
 		);
 
@@ -464,7 +463,13 @@ class JInstallerAdapterModule extends JInstallerAdapter
 			if (!$this->extension->store())
 			{
 				// Install failed, roll back changes
-				throw new RuntimeException(JText::sprintf('JLIB_INSTALLER_ABORT_MOD_ROLLBACK', JText::_('JLIB_INSTALLER_' . $this->route), $this->db->stderr(true)));
+				throw new RuntimeException(
+					JText::sprintf(
+						'JLIB_INSTALLER_ABORT_MOD_ROLLBACK',
+						JText::_('JLIB_INSTALLER_' . $this->route),
+						$this->extension->getError()
+					)
+				);
 			}
 
 			// Since we have created a module item, we add it to the installation step stack

@@ -62,7 +62,7 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 	{
 		try
 		{
-			$this->currentExtensionId = $this->extension->find(array('type' => 'plugin', 'element' => $this->element, 'folder' => $this->group));
+			$this->currentExtensionId = $this->extension->find(array('type' => $this->type, 'element' => $this->element, 'folder' => $this->group));
 		}
 		catch (RuntimeException $e)
 		{
@@ -150,7 +150,7 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 		$uid = $update->find(
 			array(
 				'element' => $this->element,
-				'type' => 'plugin',
+				'type' => $this->type,
 				'folder' => $this->group
 			)
 		);
@@ -601,7 +601,11 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 			{
 				// Install failed, roll back changes
 				throw new RuntimeException(
-					JText::sprintf('JLIB_INSTALLER_ABORT_PLG_INSTALL_ROLLBACK', JText::_('JLIB_INSTALLER_' . $this->route), $this->db->stderr(true))
+					JText::sprintf(
+						'JLIB_INSTALLER_ABORT_PLG_INSTALL_ROLLBACK',
+						JText::_('JLIB_INSTALLER_' . $this->route),
+						$this->extension->getError()
+					)
 				);
 			}
 

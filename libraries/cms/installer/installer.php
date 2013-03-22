@@ -2368,6 +2368,9 @@ class JInstaller
 			throw new InvalidArgumentException(sprintf('The %s install adapter does not exist.', $adapter));
 		}
 
+		// Add the adapter type to the options array
+		$options['type'] = $adapter;
+
 		$this->adapter = new $class($this, $this->db, $options);
 	}
 }

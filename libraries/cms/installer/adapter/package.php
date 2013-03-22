@@ -43,33 +43,6 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 	protected $results = array();
 
 	/**
-	 * Method to check if the extension is already present in the database
-	 *
-	 * @return  void
-	 *
-	 * @since   3.1
-	 * @throws  RuntimeException
-	 */
-	protected function checkExistingExtension()
-	{
-		try
-		{
-			$this->currentExtensionId = $this->extension->find(array('element' => $this->element, 'type' => 'package'));
-		}
-		catch (RuntimeException $e)
-		{
-			// Install failed, roll back changes
-			throw new RuntimeException(
-				JText::sprintf(
-					'JLIB_INSTALLER_ABORT_PLG_INSTALL_ROLLBACK',
-					JText::_('JLIB_INSTALLER_' . $this->route),
-					$e->getMessage()
-				)
-			);
-		}
-	}
-
-	/**
 	 * Method to check if the extension is present in the filesystem, flags the route as update if so
 	 *
 	 * @return  void
@@ -194,7 +167,7 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 		$uid = $update->find(
 			array(
 				'element' => $this->element,
-				'type' => 'package',
+				'type' => $this->type,
 			)
 		);
 
