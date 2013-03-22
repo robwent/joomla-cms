@@ -197,20 +197,15 @@ class JInstallerTest extends TestCase
 	 */
 	public function testAbortDefault()
 	{
-		$adapterMock = $this->getMock('test', array('_rollback_testtype'));
+		$adapterMock = $this->getMock('JInstallerAdapterTest', array('_rollback_testtype'));
 
-		$adapterMock->expects($this->once())
-			->method('_rollback_testtype')
-			->with($this->equalTo(array('type' => 'testtype')))
-			->will($this->returnValue(true));
+		TestReflection::setValue($this->object, 'adapter', $adapterMock);
 
-		$this->object->setAdapter('testadapter', $adapterMock);
-
-		$this->object->pushStep(array('type' => 'testtype'));
+		$this->object->pushStep(array('type' => 'test'));
 
 		$this->assertThat(
-			$this->object->abort(null, 'testadapter'),
-			$this->isTrue()
+			$this->object->abort(null, 'test'),
+			$this->isFalse()
 		);
 	}
 
