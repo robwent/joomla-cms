@@ -277,7 +277,7 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 			. ' SET template_style_id = 0'
 			. ' WHERE template_style_id in ('
 			. '	SELECT s.id FROM #__template_styles s'
-			. ' WHERE s.template = ' . $this->db->Quote(strtolower($this->element)) . ' AND s.client_id = ' . $this->extension->client_id . ')';
+			. ' WHERE s.template = ' . $this->db->quote(strtolower($this->element)) . ' AND s.client_id = ' . $this->extension->client_id . ')';
 
 		$this->db->setQuery($query);
 		$this->db->execute();
@@ -320,9 +320,11 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 			$extension->type = 'template';
 			$extension->client_id = $site_info->id;
 			$extension->element = $template;
+			$extension->folder = '';
 			$extension->name = $template;
 			$extension->state = -1;
 			$extension->manifest_cache = json_encode($manifest_details);
+			$extension->params = '{}';
 			$results[] = $extension;
 		}
 
@@ -339,9 +341,11 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 			$extension->type = 'template';
 			$extension->client_id = $admin_info->id;
 			$extension->element = $template;
+			$extension->folder = '';
 			$extension->name = $template;
 			$extension->state = -1;
 			$extension->manifest_cache = json_encode($manifest_details);
+			$extension->params = '{}';
 			$results[] = $extension;
 		}
 
@@ -399,13 +403,13 @@ class JInstallerAdapterTemplate extends JInstallerAdapter
 				$this->db->quoteName('title'),
 				$this->db->quoteName('params')
 			);
-			$query->columns($columns);
-			$query->values(
-				$this->db->Quote($this->element)
-				. ',' . $this->db->Quote($this->parent->extension->client_id)
-				. ',' . $this->db->Quote(0)
-				. ',' . $this->db->Quote(JText::sprintf('JLIB_INSTALLER_DEFAULT_STYLE', $this->parent->extension->name))
-				. ',' . $this->db->Quote($this->parent->extension->params)
+			$query->columns($columns)
+				->values(
+					$this->db->quote($this->element)
+					. ',' . $this->db->quote($this->parent->extension->client_id)
+					. ',' . $this->db->quote(0)
+					. ',' . $this->db->quote(JText::sprintf('JLIB_INSTALLER_DEFAULT_STYLE', $this->parent->extension->name))
+					. ',' . $this->db->quote($this->parent->extension->params)
 			);
 			$lang->setDebug($debug);
 			$this->db->setQuery($query);

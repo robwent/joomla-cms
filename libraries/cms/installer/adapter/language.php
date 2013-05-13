@@ -443,9 +443,9 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 		$this->extension->delete();
 
 		// Setting the language of users which have this language as the default language
-		$query = $this->db->getQuery(true);
-		$query->from('#__users');
-		$query->select('*');
+		$query = $this->db->getQuery(true)
+			->from('#__users')
+			->select('*');
 		$this->db->setQuery($query);
 		$users = $this->db->loadObjectList();
 
@@ -471,10 +471,10 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 			if ($registry->get($param_name) == $this->element)
 			{
 				$registry->set($param_name, '');
-				$query = $this->db->getQuery(true);
-				$query->update('#__users');
-				$query->set('params=' . $this->db->quote($registry));
-				$query->where('id=' . (int) $user->id);
+				$query = $this->db->getQuery(true)
+					->update('#__users')
+					->set('params=' . $this->db->quote($registry))
+					->where('id=' . (int) $user->id);
 				$this->db->setQuery($query);
 				$this->db->execute();
 				$count++;
@@ -512,9 +512,11 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 				$extension->type = 'language';
 				$extension->client_id = 0;
 				$extension->element = $language;
+				$extension->folder = '';
 				$extension->name = $language;
 				$extension->state = -1;
 				$extension->manifest_cache = json_encode($manifest_details);
+				$extension->params = '{}';
 				$results[] = $extension;
 			}
 		}
@@ -527,9 +529,11 @@ class JInstallerAdapterLanguage extends JInstallerAdapter
 				$extension->type = 'language';
 				$extension->client_id = 1;
 				$extension->element = $language;
+				$extension->folder = '';
 				$extension->name = $language;
 				$extension->state = -1;
 				$extension->manifest_cache = json_encode($manifest_details);
+				$extension->params = '{}';
 				$results[] = $extension;
 			}
 		}

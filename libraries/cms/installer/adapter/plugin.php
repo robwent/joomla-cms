@@ -353,8 +353,9 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 		$this->parent->removeFiles($this->manifest->languages, 1);
 
 		// Remove the schema version
-		$query = $this->db->getQuery(true);
-		$query->delete()->from('#__schemas')->where('extension_id = ' . $this->extension->extension_id);
+		$query = $this->db->getQuery(true)
+			->delete('#__schemas')
+			->where('extension_id = ' . $this->extension->extension_id);
 		$this->db->setQuery($query);
 		$this->db->execute();
 
@@ -396,6 +397,7 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 				$extension->name = $file;
 				$extension->state = -1;
 				$extension->manifest_cache = json_encode($manifest_details);
+				$extension->params = '{}';
 				$results[] = $extension;
 			}
 
@@ -420,6 +422,7 @@ class JInstallerAdapterPlugin extends JInstallerAdapter
 					$extension->name = $file;
 					$extension->state = -1;
 					$extension->manifest_cache = json_encode($manifest_details);
+					$extension->params = '{}';
 					$results[] = $extension;
 				}
 			}

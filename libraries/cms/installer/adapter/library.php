@@ -334,9 +334,11 @@ class JInstallerAdapterLibrary extends JInstallerAdapter
 			$extension->type = 'library';
 			$extension->client_id = 0;
 			$extension->element = $file;
+			$extension->folder = '';
 			$extension->name = $file;
 			$extension->state = -1;
 			$extension->manifest_cache = json_encode($manifest_details);
+			$extension->params = '{}';
 			$results[] = $extension;
 		}
 		return $results;
@@ -351,7 +353,8 @@ class JInstallerAdapterLibrary extends JInstallerAdapter
 	 */
 	public function discover_install()
 	{
-		/* Libraries are a strange beast; they are actually references to files
+		/*
+		 * Libraries are a strange beast; they are actually references to files
 		 * There are two parts to a library which are disjunct in their locations
 		 * 1) The manifest file (stored in /JPATH_MANIFESTS/libraries)
 		 * 2) The actual files (stored in /JPATH_PLATFORM/libraryname)

@@ -864,8 +864,9 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		$this->parent->removeFiles($this->manifest->administration->languages, 1);
 
 		// Remove the schema version
-		$query = $this->db->getQuery(true);
-		$query->delete()->from('#__schemas')->where('extension_id = ' . $id);
+		$query = $this->db->getQuery(true)
+			->delete('#__schemas')
+			->where('extension_id = ' . $id);
 		$this->db->setQuery($query);
 		$this->db->execute();
 
@@ -878,10 +879,10 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		}
 
 		// Remove categories for this component
-		$query = $this->db->getQuery(true);
-		$query->delete($this->db->quoteName('#__categories'))
-			->where($this->db->quoteName('extension') . ' = ' . $this->db->quote($this->element), 'OR')
-			->where($this->db->quoteName('extension') . ' LIKE ' . $this->db->quote($this->element . '.%'));
+		$query = $this->db->getQuery(true)
+			->delete('#__categories')
+			->where('extension=' . $this->db->quote($element), 'OR')
+			->where('extension LIKE ' . $this->db->quote($element . '.%'));
 		$this->db->setQuery($query);
 		$this->db->execute();
 
@@ -951,13 +952,13 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		$option = $this->element;
 
 		// If a component exists with this option in the table then we don't need to add menus
-		$query = $this->db->getQuery(true);
-		$query->select('m.id, e.extension_id');
-		$query->from('#__menu AS m');
-		$query->leftJoin('#__extensions AS e ON m.component_id = e.extension_id');
-		$query->where('m.parent_id = 1');
-		$query->where('m.client_id = 1');
-		$query->where('e.element = ' . $this->db->quote($option));
+		$query = $this->db->getQuery(true)
+			->select('m.id, e.extension_id')
+			->from('#__menu AS m')
+			->join('LEFT', '#__extensions AS e ON m.component_id = e.extension_id')
+			->where('m.parent_id = 1')
+			->where('m.client_id = 1')
+			->where('e.element = ' . $this->db->quote($option));
 
 		$this->db->setQuery($query);
 
@@ -984,10 +985,10 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		else
 		{
 			// Lets find the extension id
-			$query->clear();
-			$query->select('e.extension_id');
-			$query->from('#__extensions AS e');
-			$query->where('e.element = ' . $this->db->quote($option));
+			$query->clear()
+				->select('e.extension_id')
+				->from('#__extensions AS e')
+				->where('e.element = ' . $this->db->quote($option));
 
 			$this->db->setQuery($query);
 
@@ -1027,15 +1028,15 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 			if (!$table->bind($data) || !$table->check() || !$table->store())
 			{
 				// The menu item already exists. Delete it and retry instead of throwing an error.
-				$query = $this->db->getQuery(true);
-				$query->select('id');
-				$query->from('#__menu');
-				$query->where('menutype = ' . $this->db->quote('main'));
-				$query->where('client_id = 1');
-				$query->where('link = ' . $this->db->quote('index.php?option=' . $option));
-				$query->where('type = ' . $this->db->quote('component'));
-				$query->where('parent_id = 1');
-				$query->where('home = 0');
+				$query = $this->db->getQuery(true)
+					->select('id')
+					->from('#__menu')
+					->where('menutype = ' . $this->db->quote('main'))
+					->where('client_id = 1')
+					->where('link = ' . $this->db->quote('index.php?option=' . $option))
+					->where('type = ' . $this->db->quote('component'))
+					->where('parent_id = 1')
+					->where('home = 0');
 
 				$this->db->setQuery($query);
 				$menu_id = $this->db->loadResult();
@@ -1050,9 +1051,9 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 				else
 				{
 					// Remove the old menu item
-					$query = $this->db->getQuery(true);
-					$query->delete('#__menu');
-					$query->where('id = ' . (int) $menu_id);
+					$query = $this->db->getQuery(true)
+						->delete('#__menu')
+						->where('id = ' . (int) $menu_id);
 
 					$this->db->setQuery($query);
 					$this->db->query();
@@ -1228,11 +1229,11 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 		$id = $row->extension_id;
 
 		// Get the ids of the menu items
-		$query = $this->db->getQuery(true);
-		$query->select('id');
-		$query->from('#__menu');
-		$query->where($query->qn('client_id') . ' = 1');
-		$query->where($query->qn('component_id') . ' = ' . (int) $id);
+		$query = $this->db->getQuery(true)
+			->select('id')
+			->from('#__menu')
+			->where($this->db->quoteName('client_id') . ' = 1')
+			->where($this->db->quoteName('component_id') . ' = ' . (int) $id);
 
 		$this->db->setQuery($query);
 
@@ -1297,9 +1298,11 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 				$extension->type = 'component';
 				$extension->client_id = 0;
 				$extension->element = $component;
+				$extension->folder = '';
 				$extension->name = $component;
 				$extension->state = -1;
 				$extension->manifest_cache = json_encode($manifest_details);
+				$extension->params = '{}';
 				$results[] = $extension;
 			}
 		}
@@ -1315,9 +1318,11 @@ class JInstallerAdapterComponent extends JInstallerAdapter
 				$extension->type = 'component';
 				$extension->client_id = 1;
 				$extension->element = $component;
+				$extension->folder = '';
 				$extension->name = $component;
 				$extension->state = -1;
 				$extension->manifest_cache = json_encode($manifest_details);
+				$extension->params = '{}';
 				$results[] = $extension;
 			}
 		}

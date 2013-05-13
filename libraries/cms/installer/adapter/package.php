@@ -391,7 +391,11 @@ class JInstallerAdapterPackage extends JInstallerAdapter
 
 		// Be default search by matching all the given fields.
 		$search = array('type' => (string) $type, 'element' => (string) $element, 'client_id' => $client_id);
-		if ((string) $group) $search['folder'] = (string) $group;
+
+		if ((string) $group)
+		{
+			$search['folder'] = (string) $group;
+		}
 
 		switch ((string) $type)
 		{

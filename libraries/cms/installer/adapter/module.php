@@ -224,9 +224,11 @@ class JInstallerAdapterModule extends JInstallerAdapter
 			$extension->type = 'module';
 			$extension->client_id = $site_info->id;
 			$extension->element = $module;
+			$extension->folder = '';
 			$extension->name = $module;
 			$extension->state = -1;
 			$extension->manifest_cache = json_encode($manifest_details);
+			$extension->params = '{}';
 			$results[] = clone $extension;
 		}
 
@@ -237,9 +239,11 @@ class JInstallerAdapterModule extends JInstallerAdapter
 			$extension->type = 'module';
 			$extension->client_id = $admin_info->id;
 			$extension->element = $module;
+			$extension->folder = '';
 			$extension->name = $module;
 			$extension->state = -1;
 			$extension->manifest_cache = json_encode($manifest_details);
+			$extension->params = '{}';
 			$results[] = clone $extension;
 		}
 
@@ -540,8 +544,9 @@ class JInstallerAdapterModule extends JInstallerAdapter
 		}
 
 		// Remove the schema version
-		$query = $this->db->getQuery(true);
-		$query->delete('#__schemas')->where('extension_id = ' . $this->extension->extension_id);
+		$query = $this->db->getQuery(true)
+			->delete('#__schemas')
+			->where('extension_id = ' . $this->extension->extension_id);
 		$this->db->setQuery($query);
 		$this->db->execute();
 
@@ -550,10 +555,11 @@ class JInstallerAdapterModule extends JInstallerAdapter
 		$this->parent->removeFiles($this->manifest->languages, $this->extension->client_id);
 
 		// Let's delete all the module copies for the type we are uninstalling
-		$query = $this->db->getQuery(true);
-		$query->select($query->qn('id'))->from($query->qn('#__modules'));
-		$query->where($query->qn('module') . ' = ' . $query->q($this->extension->element));
-		$query->where($query->qn('client_id') . ' = ' . (int) $this->extension->client_id);
+		$query = $this->db->getQuery(true)
+			->select($this->db->quoteName('id'))
+			->from($this->db->quoteName('#__modules'))
+			->where($this->db->quoteName('module') . ' = ' . $this->db->quote($this->extension->element))
+			->where($this->db->quoteName('client_id') . ' = ' . (int) $this->extension->client_id);
 		$this->db->setQuery($query);
 
 		try
