@@ -29,55 +29,49 @@ class JErrorPage
 	 */
 	public static function render(Exception $error)
 	{
-		try
+		$app      = JFactory::getApplication();
+		$document = JDocument::getInstance('error');
+
+		if (!$document)
 		{
-			$app      = JFactory::getApplication();
-			$document = JDocument::getInstance('error');
-
-			if (!$document)
-			{
-				// We're probably in an CLI environment
-				exit($error->getMessage());
-				$app->close(0);
-			}
-
-			$config = JFactory::getConfig();
-
-			// Get the current template from the application
-			$template = $app->getTemplate();
-
-			// Push the error object into the document
-			$document->setError($error);
-
-			if (ob_get_contents())
-			{
-				ob_end_clean();
-			}
-			$document->setTitle(JText::_('Error') . ': ' . $error->getCode());
-			$data = $document->render(
-				false,
-				array('template' => $template,
-				'directory' => JPATH_THEMES,
-				'debug' => $config->get('debug'))
-			);
-
-			// Failsafe to get the error displayed.
-			if (empty($data))
-			{
-				exit($error->getMessage());
-			}
-			else
-			{
-				// Do not allow cache
-				JResponse::allowCache(false);
-
-				JResponse::setBody($data);
-				echo JResponse::toString();
-			}
+			// We're probably in an CLI environment
+			exit($error->getMessage());
 		}
-		catch (Exception $e)
+
+		$config = JFactory::getConfig();
+
+		// Get the current template from the application
+		$template = $app->getTemplate();
+
+		// Push the error object into the document
+		$document->setError($error);
+
+		if (ob_get_contents())
 		{
-			exit('Error displaying the error page: ' . $e->getMessage());
+			ob_end_clean();
+		}
+
+		$document->setTitle(JText::_('Error') . ': ' . $error->getCode());
+		$data = $document->render(
+			false,
+			array('template' => $template,
+			'directory' => JPATH_THEMES,
+			'debug' => $config->get('debug'))
+		);
+
+		// Failsafe to get the error displayed.
+		if (empty($data))
+		{
+			exit($error->getMessage());
+		}
+		else
+		{
+			// Do not allow cache
+			JResponse::allowCache(false);
+
+			JResponse::setBody($data);
+
+			echo JResponse::toString();
 		}
 	}
 }
