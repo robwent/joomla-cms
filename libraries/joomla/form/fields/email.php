@@ -50,6 +50,10 @@ class JFormFieldEMail extends JFormField
 		// Initialize JavaScript field attributes.
 		$onchange = $this->element['onchange'] ? ' onchange="' . (string) $this->element['onchange'] . '"' : '';
 
+		// Including fallback code for HTML5 non supported browsers.
+		JHtml::_('jquery.framework');
+		JHtml::_('script', 'system/html5fallback.js', false, true);
+		
 		return '<input type="text" name="' . $this->name . '" class="validate-email' . $class . '" id="' . $this->id . '" value="'
 			. htmlspecialchars($this->value, ENT_COMPAT, 'UTF-8') . '"' . $size . $disabled . $readonly . $onchange 
 			. $maxLength . $hint . $required . '/>';
