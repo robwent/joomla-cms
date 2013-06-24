@@ -52,6 +52,7 @@ class JFormFieldPassword extends JFormField
 		$required   = $this->required ? ' required="required" aria-required="true"' : '';
 		$hint 		= $hint ? ' placeholder="' . $hint . '"' : '';
 		$threshold	= $this->element['threshold'] ? (int) $this->element['threshold'] : 66;
+		$autocomplete = !$this->autocomplete ? ' autocomplete="off"' : '';
 
 		$script = '';
 		if ($meter)
@@ -68,7 +69,7 @@ class JFormFieldPassword extends JFormField
 		}
 
 		return '<input type="password" name="' . $this->name . '" id="' . $this->id . '"' .
-			' value="' . htmlspecialchars($this->value, ENT_COMPAT, 'UTF-8') . '"' . $hint .
+			' value="' . htmlspecialchars($this->value, ENT_COMPAT, 'UTF-8') . '"' . $hint . $autocomplete . 
 			$auto . $class . $readonly . $disabled . $size . $maxLength . $required . '/>' . $script;
 	}
 }
