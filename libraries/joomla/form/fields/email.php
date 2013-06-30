@@ -49,6 +49,7 @@ class JFormFieldEMail extends JFormField
 		$disabled = ((string) $this->element['disabled'] == 'true') ? ' disabled="disabled"' : '';
 		$required = $this->required ? ' required="required" aria-required="true"' : '';
 		$hint = $hint ? ' placeholder="' . $hint . '"' : '';
+		$autocomplete = !$this->autocomplete ? ' autocomplete="off"' : ' autocomplete="email"';
 
 		// Initialize JavaScript field attributes.
 		$onchange = $this->element['onchange'] ? ' onchange="' . (string) $this->element['onchange'] . '"' : '';
@@ -58,7 +59,7 @@ class JFormFieldEMail extends JFormField
 		JHtml::_('script', 'system/html5fallback.js', false, true);
 		
 		return '<input type="text" name="' . $this->name . '" class="validate-email' . $class . '" id="' . $this->id . '" value="'
-			. htmlspecialchars($this->value, ENT_COMPAT, 'UTF-8') . '"' . $size . $disabled . $readonly . $onchange 
+			. htmlspecialchars($this->value, ENT_COMPAT, 'UTF-8') . '"' . $size . $disabled . $readonly . $onchange . $autocomplete
 			. $maxLength . $hint . $required . '/>';
 	}
 }

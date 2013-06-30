@@ -48,6 +48,7 @@ class JFormFieldTextarea extends JFormField
 		$rows = $this->element['rows'] ? ' rows="' . (int) $this->element['rows'] . '"' : '';
 		$required = $this->required ? ' required="required" aria-required="true"' : '';
 		$hint = $hint ? ' placeholder="' . $hint . '"' : '';
+		$autocomplete = !$this->autocomplete ? ' autocomplete="off"' : '';
 
 		// Initialize JavaScript field attributes.
 		$onchange = $this->element['onchange'] ? ' onchange="' . (string) $this->element['onchange'] . '"' : '';
@@ -56,7 +57,8 @@ class JFormFieldTextarea extends JFormField
 		JHtml::_('jquery.framework');
 		JHtml::_('script', 'system/html5fallback.js', false, true);
 
-		return '<textarea name="' . $this->name . '" id="' . $this->id . '"' . $columns . $rows . $class . $hint . $disabled . $onchange . $required . '>'
+		return '<textarea name="' . $this->name . '" id="' . $this->id . '"' . $columns . $rows . $class 
+			. $hint . $disabled . $onchange . $required . $autocomplete . '>'
 			. htmlspecialchars($this->value, ENT_COMPAT, 'UTF-8') . '</textarea>';
 	}
 }
