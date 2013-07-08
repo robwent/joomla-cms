@@ -51,6 +51,7 @@ class JFormFieldEMail extends JFormField
 		$hint = $hint ? ' placeholder="' . $hint . '"' : '';
 		$autocomplete = !$this->autocomplete ? ' autocomplete="off"' : ' autocomplete="email"';
 		$autofocus = $this->autofocus ? ' autofocus' : '';
+		$multiple = $this->multiple ? ' multiple' : '';
 
 		// Initialize JavaScript field attributes.
 		$onchange = $this->element['onchange'] ? ' onchange="' . (string) $this->element['onchange'] . '"' : '';
@@ -59,8 +60,8 @@ class JFormFieldEMail extends JFormField
 		JHtml::_('jquery.framework');
 		JHtml::_('script', 'system/html5fallback.js', false, true);
 		
-		return '<input type="text" name="' . $this->name . '" class="'. $class . '" id="' . $this->id . '" value="'
+		return '<input type="email" name="' . $this->name . '" class="'. $class . '" id="' . $this->id . '" value="'
 			. JStringPunycode::emailToUTF8($this->value, ENT_COMPAT, 'UTF-8') . '"' . $size . $disabled . $readonly . $onchange . $autocomplete
-			. $maxLength . $hint . $required . $autofocus . '/>';
+			. $multiple . $maxLength . $hint . $required . $autofocus . '/>';
 	}
 }

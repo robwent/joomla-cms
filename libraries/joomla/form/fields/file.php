@@ -49,7 +49,8 @@ class JFormFieldFile extends JFormField
 		$disabled = ((string) $this->element['disabled'] == 'true') ? ' disabled="disabled"' : '';
 		$required = $this->required ? ' required="required" aria-required="true"' : '';
 		$autofocus = $this->autofocus ? ' autofocus' : '';
-
+		$multiple = $this->multiple ? ' multiple' : '';
+		
 		// Initialize JavaScript field attributes.
 		$onchange = $this->element['onchange'] ? ' onchange="' . (string) $this->element['onchange'] . '"' : '';
 
@@ -58,6 +59,6 @@ class JFormFieldFile extends JFormField
 		JHtml::_('script', 'system/html5fallback.js', false, true);
 
 		return '<input type="file" name="' . $this->name . '" id="' . $this->id . '" value=""' . $accept . $disabled . $class . $size
-			. $onchange . $required . $autofocus . ' />';
+			. $onchange . $required . $autofocus . $multiple . ' />';
 	}
 }
