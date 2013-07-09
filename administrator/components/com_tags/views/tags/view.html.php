@@ -34,7 +34,6 @@ class TagsViewTags extends JViewLegacy
 		$this->state		= $this->get('State');
 		$this->items		= $this->get('Items');
 		$this->pagination	= $this->get('Pagination');
-		$this->langs		= isset($app->has_languages) ? $app->has_languages : 0;
 
 		TagsHelper::addSubmenu('tags');
 
@@ -144,7 +143,7 @@ class TagsViewTags extends JViewLegacy
 			JHtml::_('select.options', JHtml::_('access.assetgroups'), 'value', 'text', $this->state->get('filter.access'))
 		);
 
-		if ($this->langs)
+		if (isset(JFactory::getApplication()->languages_enabled))
 		{
 			JHtmlSidebar::addFilter(
 				JText::_('JOPTION_SELECT_LANGUAGE'),
