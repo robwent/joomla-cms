@@ -18,7 +18,7 @@ require_once dirname(dirname(__DIR__)) . '/helper/component.php';
  * @subpackage  com_config
  * @since       3.2
  */
-class ConfigViewApplicationHtml extends JViewLegacy
+class ConfigViewApplicationHtml extends JViewCms
 {
 	public $state;
 
@@ -34,26 +34,30 @@ class ConfigViewApplicationHtml extends JViewLegacy
 	 * @return  void
 	 * 
 	 */
-	public function render($tpl = null)
+	public function render()
 	{
-		$form	= $this->get('Form');
-		$data	= $this->get('Data');
-		$user = JFactory::getUser();
+		$form = null;
+		$data = null;
 
-		// Check for model errors.
-		if ($errors = $this->get('Errors'))
+		try
 		{
-			JError::raiseError(500, implode('<br />', $errors));
+			// Load Form and Data
+			$form = $this->model->getForm();
+			$data = $this->model->getData();
+			$user = JFactory::getUser();
+			$app = JFactory::getApplication();
 
-			return false;
+		}
+		catch (Exception $e)
+		{
+			$app->enqueueMessage($e->getMessage(), 'error');
 		}
 
-		// Bind the form to the data.
+		// Bind data
 		if ($form && $data)
 		{
 			$form->bind($data);
 		}
-
 		// Get the params for com_users.
 		$usersParams = JComponentHelper::getParams('com_users');
 
@@ -74,11 +78,8 @@ class ConfigViewApplicationHtml extends JViewLegacy
 
 		$this->userIsSuperAdmin = $user->authorise('core.admin');
 
-		$app = JFactory::getApplication();
-		$this->_addPath('template', JPATH_THEMES . '/' . $app->getTemplate() . '/html/com_config/application');
-
 		$this->addToolbar();
-		parent::display($tpl);
+		return parent::render();
 	}
 
 	/**

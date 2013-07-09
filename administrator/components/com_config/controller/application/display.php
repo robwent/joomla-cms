@@ -47,7 +47,7 @@ class ConfigControllerApplicationDisplay extends JControllerBase
 		$viewClass  = 'ConfigView' . ucfirst($viewName) . ucfirst($viewFormat);
 		$modelClass = 'ConfigModel' . ucfirst($viewName);
 
-		if ($view = new $viewClass)
+		if (class_exists($viewClass))
 		{
 
 			if ($viewName != 'close')
@@ -57,12 +57,15 @@ class ConfigControllerApplicationDisplay extends JControllerBase
 				// Access check.
 				if (!JFactory::getUser()->authorise('core.admin', $model->getState('component.option')))
 				{
-					return JError::raiseWarning(404, JText::_('JERROR_ALERTNOAUTHOR'));
+					$app->enqueueMessage(JText::_('JERROR_ALERTNOAUTHOR'), 'error');
+
+					return;
+
 				}
 
-				// Set model
-				$view->setModel($model, true);
 			}
+
+			$view = new $viewClass($model, $paths);
 
 			$view->setLayout($layoutName);
 
@@ -72,12 +75,14 @@ class ConfigControllerApplicationDisplay extends JControllerBase
 			// Reply for service requests
 			if ($viewFormat == 'json')
 			{
+
 				return $view->render();
 			}
 
 			// Render view.
 			echo $view->render();
 		}
+
 		return true;
 	}
 

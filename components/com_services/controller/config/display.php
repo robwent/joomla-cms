@@ -62,7 +62,7 @@ class ServicesControllerConfigDisplay extends JControllerBase
 		$viewClass  = 'ServicesView' . ucfirst($viewName) . ucfirst($viewFormat);
 		$modelClass = 'ServicesModel' . ucfirst($viewName);
 
-		if ($view = new $viewClass)
+		if (class_exists($viewClass))
 		{
 
 			if ($viewName != 'close')
@@ -72,20 +72,34 @@ class ServicesControllerConfigDisplay extends JControllerBase
 				// Access check.
 				if (!JFactory::getUser()->authorise('core.admin', $model->getState('component.option')))
 				{
-					return JError::raiseWarning(404, JText::_('JERROR_ALERTNOAUTHOR'));
+					$app->enqueueMessage(JText::_('JERROR_ALERTNOAUTHOR'), 'error');
+
+					return;
+
 				}
 
-				// Set model
-				$view->setModel($model, true);
 			}
+			
+			$view = new $viewClass($model, $paths);
 
 			$view->setLayout($layoutName);
 
 			// Push document object into the view.
 			$view->document = $document;
 
+			// Load form and bind data
+			$form = $model->getForm();
+			if ($form)
+			{
+				$form->bind($serviceData);
+			}
+
+			// Set form and data to the view
+			$view->form = &$form;
+			$view->data = &$serviceData;
+
 			// Render view.
-			echo $view->render(null, $serviceData);
+			echo $view->render();
 		}
 		return true;
 	}

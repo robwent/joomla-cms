@@ -42,7 +42,7 @@ class ConfigHelperComponent
 	/**
 	 * Returns true if the component has configuration options.
 	 *
-	 * @param   string  $component  Component
+	 * @param   string  $components
 	 *
 	 * @return  boolean
 	 *
@@ -57,7 +57,7 @@ class ConfigHelperComponent
 	 * Returns an array of all components with configuration options. By only
 	 * components for which the current user has 'core.manage' rights are returned.
 	 *
-	 * @param   boolean  $authCheck  Auth Check Boolean
+	 * @param   boolean  $authCheck
 	 *
 	 * @return  array
 	 *
@@ -86,7 +86,7 @@ class ConfigHelperComponent
 	/**
 	 * Load the sys language for the given component.
 	 *
-	 * @param   string  $components  Components
+	 * @param   string  $components
 	 *
 	 * @return  void
 	 *
@@ -100,12 +100,12 @@ class ConfigHelperComponent
 		{
 			if (!empty($component))
 			{
-					// Load the core file then
-					// Load extension-local file.
-					$lang->load($component . '.sys', JPATH_BASE, null, false, false)
-				||	$lang->load($component . '.sys', JPATH_ADMINISTRATOR . '/components/' . $component, null, false, false)
-				||	$lang->load($component . '.sys', JPATH_BASE, $lang->getDefault(), false, false)
-				||	$lang->load($component . '.sys', JPATH_ADMINISTRATOR . '/components/' . $component, $lang->getDefault(), false, false);
+				// Load the core file then
+				// Load extension-local file.
+				$lang->load($component . '.sys', JPATH_BASE, null, false, false)
+				|| $lang->load($component . '.sys', JPATH_ADMINISTRATOR . '/components/' . $component, null, false, false)
+				|| $lang->load($component . '.sys', JPATH_BASE, $lang->getDefault(), false, false)
+				|| $lang->load($component . '.sys', JPATH_ADMINISTRATOR . '/components/' . $component, $lang->getDefault(), false, false);
 			}
 		}
 	}

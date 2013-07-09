@@ -17,7 +17,7 @@ defined('_JEXEC') or die;
  * @subpackage  com_services
  * @since       3.2
  */
-class ServicesViewConfigHtml extends JViewLegacy
+class ServicesViewConfigHtml extends JViewCms
 {
 	public $state;
 
@@ -29,46 +29,34 @@ class ServicesViewConfigHtml extends JViewLegacy
 	 * Method to display the view.
 	 * 
 	 * @param   string  $tpl          Layout
-	 * @param   array   $serviceData  Data from service
 	 * 
 	 * @return  void
 	 *
 	 */
-	public function render($tpl = null, $serviceData = null)
+	public function render()
 	{
-		$form	= $this->get('Form');
 
-		if ($serviceData == null)
+		try
 		{
-			$data = $this->get('Data');
+			$user = JFactory::getUser();
+			$app   = JFactory::getApplication();
 		}
-		else
+		catch (Exception $e)
 		{
-			$data = $serviceData;
+			$app->enqueueMessage($e->getMessage(), 'error');
 		}
-
-		$user = JFactory::getUser();
-
 		// Check for model errors.
-		if ($errors = $this->get('Errors'))
+		/* if ($errors = $this->get('Errors'))
 		{
-			JError::raiseError(500, implode('<br />', $errors));
+			$app->enqueueMessage(implode('<br />', $errors), 'error');
+			
+			return;
 
-			return false;
-		}
-
-		// Bind the form to the data.
-		if ($form && $data)
-		{
-			$form->bind($data);
-		}
-
-		$this->form = &$form;
-		$this->data = &$data;
+		} */
 
 		$this->userIsSuperAdmin = $user->authorise('core.admin');
 
-		parent::display($tpl);
+		return parent::render();
 	}
 
 }

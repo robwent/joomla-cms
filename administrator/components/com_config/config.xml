@@ -12,8 +12,10 @@
 	<administration>
 		<files folder="admin">
 			<filename>config.php</filename>
-			<filename>access.xml</filename>
+			<filename>controller.php</filename>
 			<filename>index.html</filename>
+			<folder>controllers</folder>
+			<folder>models</folder>
 			<folder>controller</folder>
 			<folder>model</folder>
 			<folder>view</folder>
