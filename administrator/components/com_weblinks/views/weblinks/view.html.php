@@ -37,8 +37,6 @@ class WeblinksViewWeblinks extends JViewLegacy
 		$this->items		= $this->get('Items');
 		$this->pagination	= $this->get('Pagination');
 
-		WeblinksHelper::addSubmenu('weblinks');
-
 		// Check for errors.
 		if (count($errors = $this->get('Errors')))
 		{

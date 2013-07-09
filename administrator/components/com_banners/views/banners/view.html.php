@@ -49,8 +49,6 @@ class BannersViewBanners extends JViewLegacy
 			return false;
 		}
 
-		BannersHelper::addSubmenu('banners');
-
 		$this->addToolbar();
 		require_once JPATH_COMPONENT . '/models/fields/bannerclient.php';
 

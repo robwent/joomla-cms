@@ -35,8 +35,6 @@ class TagsViewTags extends JViewLegacy
 		$this->items		= $this->get('Items');
 		$this->pagination	= $this->get('Pagination');
 
-		TagsHelper::addSubmenu('tags');
-
 		// Check for errors.
 		if (count($errors = $this->get('Errors'))) {
 			JError::raiseError(500, implode("\n", $errors));

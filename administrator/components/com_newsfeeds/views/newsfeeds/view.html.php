@@ -35,8 +35,6 @@ class NewsfeedsViewNewsfeeds extends JViewLegacy
 		$this->pagination	= $this->get('Pagination');
 		$this->state		= $this->get('State');
 
-		NewsfeedsHelper::addSubmenu('newsfeeds');
-
 		// Check for errors.
 		if (count($errors = $this->get('Errors')))
 		{

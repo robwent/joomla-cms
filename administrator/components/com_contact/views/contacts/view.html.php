@@ -37,8 +37,6 @@ class ContactViewContacts extends JViewLegacy
 		$this->pagination	= $this->get('Pagination');
 		$this->state		= $this->get('State');
 
-		ContactHelper::addSubmenu('contacts');
-
 		// Check for errors.
 		if (count($errors = $this->get('Errors')))
 		{
