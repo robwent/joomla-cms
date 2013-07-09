@@ -36,7 +36,6 @@ class WeblinksViewWeblinks extends JViewLegacy
 		$this->state		= $this->get('State');
 		$this->items		= $this->get('Items');
 		$this->pagination	= $this->get('Pagination');
-		$this->langs		= isset($app->has_languages) ? $app->has_languages : 0;
 
 		WeblinksHelper::addSubmenu('weblinks');
 
@@ -130,8 +129,7 @@ class WeblinksViewWeblinks extends JViewLegacy
 			JHtml::_('select.options', JHtml::_('access.assetgroups'), 'value', 'text', $this->state->get('filter.access'))
 		);
 
-
-		if ($this->langs)
+		if (isset(JFactory::getApplication()->languages_enabled))
 		{
 			JHtmlSidebar::addFilter(
 				JText::_('JOPTION_SELECT_LANGUAGE'),
