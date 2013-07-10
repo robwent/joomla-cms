@@ -546,3 +546,6 @@ body {
 .tooltip-inner {
 	text-align: right;
 }
+.dropdown-menu {
+	text-align: right;
+}
