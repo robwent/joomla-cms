@@ -7269,3 +7269,9 @@ th .tooltip-inner {
 .dropdown-menu > li > span {
 	padding: 3px 20px;
 }
+.alert-joomlaupdate {
+	text-align: center;
+}
+.alert-joomlaupdate button {
+	vertical-align: baseline;
+}
