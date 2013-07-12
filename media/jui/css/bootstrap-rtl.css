@@ -549,3 +549,9 @@ body {
 .dropdown-menu {
 	text-align: right;
 }
+@media (max-width: 480px) {
+	.btn-toolbar .btn-wrapper .btn {
+		margin-left: 0px;
+		margin-right: 10px;
+	}
+}
