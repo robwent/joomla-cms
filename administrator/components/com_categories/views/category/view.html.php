@@ -51,6 +51,9 @@ class CategoriesViewCategory extends JViewLegacy
 			return false;
 		}
 
+		// Check for tag type
+		$this->checkTags = JHelperTags::getTypes('objectList', array($this->state->get('category.extension') . '.category'), true);
+
 		$input->set('hidemainmenu', true);
 
 		if ($this->getLayout() == 'modal')

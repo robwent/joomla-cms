@@ -205,12 +205,15 @@ JHtml::_('formbehavior.chosen', 'select');
 				<?php else : ?>
 				<input type="hidden" name="language" value="<?php echo $this->form->getValue('language'); ?>" />
 				<?php endif; ?>
-				<div class="control-group">
-					<?php echo $this->form->getLabel('tags'); ?>
-					<div class="controls">
-						<?php echo $this->form->getInput('tags'); ?>
+
+				<?php if ($this->checkTags) : ?>
+					<div class="control-group">
+						<?php echo $this->form->getLabel('tags'); ?>
+						<div class="controls">
+							<?php echo $this->form->getInput('tags'); ?>
+						</div>
 					</div>
-				</div>
+				<?php endif; ?>
 			</fieldset>
 		</div>
 		<!-- End Sidebar -->

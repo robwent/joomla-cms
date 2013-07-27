@@ -215,14 +215,14 @@ JHtml::_('formbehavior.chosen', 'select');
 					<input type="hidden" name="language" value="<?php echo $this->form->getValue('language'); ?>" />
 				<?php endif; ?>
 				<div class="control-group">
-					<?php foreach ($this->form->getFieldset('jmetadata') as $field) : ?>
-						<?php if ($this->typeId && $field->name == 'jform[metadata][tags][]') :?>
+					<?php if ($this->checkTags) : ?>
 						<div class="control-group">
-							<div class="control-label"><?php echo $field->label; ?></div>
-							<div class="controls"><?php echo $field->input; ?></div>
+							<?php echo $this->form->getLabel('tags'); ?>
+							<div class="controls">
+								<?php echo $this->form->getInput('tags'); ?>
+							</div>
 						</div>
-						<?php endif; ?>
-					<?php endforeach; ?>
+					<?php endif; ?>
 				</div>
 			</fieldset>
 		</div>
