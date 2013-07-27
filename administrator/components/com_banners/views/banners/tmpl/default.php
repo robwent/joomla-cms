@@ -13,16 +13,16 @@ JHtml::addIncludePath(JPATH_COMPONENT.'/helpers/html');
 
 JHtml::_('bootstrap.tooltip');
 JHtml::_('behavior.multiselect');
-JHtml::_('dropdown.init');
 JHtml::_('formbehavior.chosen', 'select');
 
+$app = JFactory::getApplication();
 $user		= JFactory::getUser();
 $userId		= $user->get('id');
 $listOrder	= $this->escape($this->state->get('list.ordering'));
 $listDirn	= $this->escape($this->state->get('list.direction'));
 $canOrder	= $user->authorise('core.edit.state', 'com_banners.category');
-$archived	= $this->state->get('filter.published') == 2 ? true : false;
-$trashed	= $this->state->get('filter.published') == -2 ? true : false;
+$archived	= $this->state->get('filter.state') == 2 ? true : false;
+$trashed	= $this->state->get('filter.state') == -2 ? true : false;
 $params		= (isset($this->state->params)) ? $this->state->params : new JObject;
 $saveOrder	= $listOrder == 'ordering';
 if ($saveOrder)
@@ -31,6 +31,9 @@ if ($saveOrder)
 	JHtml::_('sortablelist.sortable', 'articleList', 'adminForm', strtolower($listDirn), $saveOrderingUrl);
 }
 $sortFields = $this->getSortFields();
+
+$langs = isset($app->languages_enabled);
+$assoc = isset($app->item_associations);
 ?>
 <script type="text/javascript">
 	Joomla.orderTable = function()
@@ -54,11 +57,9 @@ $sortFields = $this->getSortFields();
 	<div id="j-sidebar-container" class="span2">
 		<?php echo $this->sidebar; ?>
 	</div>
-	<div id="j-main-container" class="span10">
-<?php else : ?>
-	<div id="j-main-container">
-<?php endif;?>
-		<div id="filter-bar" class="btn-toolbar">
+<?php endif; ?>
+	<div id="j-main-container"<?php echo !empty($this->sidebar) ? ' class="span10"' : ''; ?>>
+	<div id="filter-bar" class="btn-toolbar">
 			<div class="filter-search btn-group pull-left">
 				<label for="filter_search" class="element-invisible"><?php echo JText::_('COM_BANNERS_SEARCH_IN_TITLE');?></label>
 				<input type="text" name="filter_search" id="filter_search" placeholder="<?php echo JText::_('JSEARCH_FILTER'); ?>" value="<?php echo $this->escape($this->state->get('filter.search')); ?>" class="hasTooltip" title="<?php echo JHtml::tooltipText('COM_BANNERS_SEARCH_IN_TITLE'); ?>" />
@@ -103,6 +104,11 @@ $sortFields = $this->getSortFields();
 					<th>
 						<?php echo JHtml::_('grid.sort', 'COM_BANNERS_HEADING_NAME', 'a.name', $listDirn, $listOrder); ?>
 					</th>
+					<?php if ($langs) : ?>
+						<th width="10%" class="nowrap hidden-phone">
+							<?php echo JHtml::_('grid.sort', 'JGRID_HEADING_LANGUAGE', 'a.language', $listDirn, $listOrder); ?>
+						</th>
+					<?php endif;?>
 					<th width="1%" class="nowrap center hidden-phone">
 						<?php echo JHtml::_('grid.sort', 'COM_BANNERS_HEADING_STICKY', 'a.sticky', $listDirn, $listOrder); ?>
 					</th>
@@ -114,9 +120,6 @@ $sortFields = $this->getSortFields();
 					</th>
 					<th width="10%" class="nowrap center hidden-phone">
 						<?php echo JHtml::_('grid.sort', 'COM_BANNERS_HEADING_CLICKS', 'clicks', $listDirn, $listOrder); ?>
-					</th>
-					<th width="10%" class="nowrap hidden-phone">
-						<?php echo JHtml::_('grid.sort', 'JGRID_HEADING_LANGUAGE', 'a.language', $listDirn, $listOrder); ?>
 					</th>
 					<th width="1%" class="nowrap center hidden-phone">
 						<?php echo JHtml::_('grid.sort', 'JGRID_HEADING_ID', 'a.id', $listDirn, $listOrder); ?>
@@ -164,7 +167,20 @@ $sortFields = $this->getSortFields();
 						<?php echo JHtml::_('grid.id', $i, $item->id); ?>
 					</td>
 					<td class="center">
-						<?php echo JHtml::_('jgrid.published', $item->state, $i, 'banners.', $canChange, 'cb', $item->publish_up, $item->publish_down); ?>
+						<div class="btn-group">
+							<?php echo JHtml::_('jgrid.published', $item->state, $i, 'banners.', $canChange, 'cb', $item->publish_up, $item->publish_down); ?>
+							<?php
+							// Create dropdown items
+							$action = $archived ? 'unarchive' : 'archive';
+							JHtml::_('actionsdropdown.' . $action, 'cb' . $i, 'banners');
+
+							$action = $trashed ? 'untrash' : 'trash';
+							JHtml::_('actionsdropdown.' . $action, 'cb' . $i, 'banners');
+
+							// Render dropdown list
+							echo JHtml::_('actionsdropdown.render', $this->escape($item->name));
+							?>
+						</div>
 					</td>
 					<td class="nowrap has-context">
 						<div class="pull-left">
@@ -181,60 +197,28 @@ $sortFields = $this->getSortFields();
 								<?php echo $this->escape($item->category_title); ?>
 							</div>
 						</div>
-						<div class="pull-left">
-							<?php
-								// Create dropdown items
-								JHtml::_('dropdown.edit', $item->id, 'banner.');
-								JHtml::_('dropdown.divider');
-								if ($item->state) :
-									JHtml::_('dropdown.unpublish', 'cb' . $i, 'banners.');
-								else :
-									JHtml::_('dropdown.publish', 'cb' . $i, 'banners.');
-								endif;
-
-								JHtml::_('dropdown.divider');
-
-								if ($archived) :
-									JHtml::_('dropdown.unarchive', 'cb' . $i, 'banners.');
-								else :
-									JHtml::_('dropdown.archive', 'cb' . $i, 'banners.');
-								endif;
-
-								if ($item->checked_out) :
-									JHtml::_('dropdown.checkin', 'cb' . $i, 'banners.');
-								endif;
-
-								if ($trashed) :
-									JHtml::_('dropdown.untrash', 'cb' . $i, 'banners.');
-								else :
-									JHtml::_('dropdown.trash', 'cb' . $i, 'banners.');
-								endif;
-
-								// render dropdown list
-								echo JHtml::_('dropdown.render');
-								?>
-						</div>
 					</td>
+
+					<?php if ($langs) : ?>
+						<td class="nowrap hidden-phone">
+							<?php if ($item->language == '*'):?>
+								<?php echo JText::alt('JALL', 'language'); ?>
+							<?php else:?>
+								<?php echo $item->language_title ? $this->escape($item->language_title) : JText::_('JUNDEFINED'); ?>
+							<?php endif;?>
+						</td>
+					<?php endif;?>
 					<td class="center hidden-phone">
 						<?php echo JHtml::_('banner.pinned', $item->sticky, $i, $canChange); ?>
 					</td>
-					<td class="small hidden-phone">
+					<td class="hidden-phone">
 						<?php echo $item->client_name;?>
 					</td>
-					<td class="small hidden-phone">
+					<td class="hidden-phone">
 						<?php echo JText::sprintf('COM_BANNERS_IMPRESSIONS', $item->impmade, $item->imptotal ? $item->imptotal : JText::_('COM_BANNERS_UNLIMITED'));?>
 					</td>
-					<td class="center small hidden-phone">
-						<?php echo $item->clicks;?> -
-						<?php echo sprintf('%.2f%%', $item->impmade ? 100 * $item->clicks / $item->impmade : 0);?>
-					</td>
-
-					<td class="small nowrap hidden-phone">
-						<?php if ($item->language == '*'):?>
-							<?php echo JText::alt('JALL', 'language'); ?>
-						<?php else:?>
-							<?php echo $item->language_title ? $this->escape($item->language_title) : JText::_('JUNDEFINED'); ?>
-						<?php endif;?>
+					<td class="center hidden-phone">
+						<?php echo $item->clicks . sprintf('%.2f%%', $item->impmade ? 100 * $item->clicks / $item->impmade : 0); ?>
 					</td>
 					<td class="center hidden-phone">
 						<?php echo $item->id; ?>

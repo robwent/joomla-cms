@@ -9,9 +9,9 @@
 
 defined('_JEXEC') or die;
 
+JHtml::_('bootstrap.tooltip');
 JHtml::_('behavior.multiselect');
 JHtml::_('formbehavior.chosen', 'select');
-JHtml::_('bootstrap.tooltip');
 
 $listOrder	= $this->escape($this->state->get('list.ordering'));
 $listDirn	= $this->escape($this->state->get('list.direction'));
@@ -22,10 +22,8 @@ $listDirn	= $this->escape($this->state->get('list.direction'));
 		<div id="j-sidebar-container" class="span2">
 			<?php echo $this->sidebar; ?>
 		</div>
-		<div id="j-main-container" class="span10">
-	<?php else : ?>
-		<div id="j-main-container">
-	<?php endif;?>
+	<?php endif; ?>
+	<div id="j-main-container"<?php echo !empty($this->sidebar) ? ' class="span10"' : ''; ?>>
 
 	<?php if ($this->showMessage) : ?>
 		<?php echo $this->loadTemplate('message'); ?>

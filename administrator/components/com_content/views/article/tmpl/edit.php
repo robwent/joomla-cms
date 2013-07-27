@@ -25,8 +25,7 @@ $editoroptions = isset($params['show_publishing_options']);
 
 $app = JFactory::getApplication();
 $input = $app->input;
-
-$assoc = isset($app->item_associations) ? $app->item_associations : 0;
+$assoc = isset($app->item_associations);
 
 if (!$editoroptions)
 {

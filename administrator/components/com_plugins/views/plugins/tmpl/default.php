@@ -14,7 +14,6 @@ JHtml::addIncludePath(JPATH_COMPONENT.'/helpers/html');
 
 JHtml::_('bootstrap.tooltip');
 JHtml::_('behavior.multiselect');
-JHtml::_('dropdown.init');
 JHtml::_('formbehavior.chosen', 'select');
 
 $user		= JFactory::getUser();
@@ -165,13 +164,13 @@ $sortFields = $this->getSortFields();
 								<?php echo $item->name; ?>
 						<?php endif; ?>
 					</td>
-					<td class="nowrap small hidden-phone">
+					<td class="nowrap hidden-phone">
 						<?php echo $this->escape($item->folder);?>
 					</td>
-					<td class="nowrap small hidden-phone">
+					<td class="nowrap hidden-phone">
 						<?php echo $this->escape($item->element);?>
 					</td>
-					<td class="small hidden-phone">
+					<td class="hidden-phone">
 						<?php echo $this->escape($item->access_level); ?>
 					</td>
 					<td class="center hidden-phone">

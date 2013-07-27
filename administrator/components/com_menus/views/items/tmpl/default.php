@@ -16,8 +16,8 @@ JHtml::_('bootstrap.tooltip');
 JHtml::_('behavior.multiselect');
 JHtml::_('formbehavior.chosen', 'select');
 
-$user		= JFactory::getUser();
 $app		= JFactory::getApplication();
+$user		= JFactory::getUser();
 $userId		= $user->get('id');
 $listOrder	= $this->escape($this->state->get('list.ordering'));
 $listDirn	= $this->escape($this->state->get('list.direction'));
@@ -29,8 +29,11 @@ if ($saveOrder)
 	$saveOrderingUrl = 'index.php?option=com_menus&task=items.saveOrderAjax&tmpl=component';
 	JHtml::_('sortablelist.sortable', 'itemList', 'adminForm', strtolower($listDirn), $saveOrderingUrl, false, true);
 }
+
 $sortFields = $this->getSortFields();
-$assoc		= isset($app->item_associations) ? $app->item_associations : 0;
+
+$langs = isset($app->languages_enabled);
+$assoc = isset($app->item_associations);
 ?>
 <script type="text/javascript">
 	Joomla.orderTable = function()
@@ -55,10 +58,8 @@ $assoc		= isset($app->item_associations) ? $app->item_associations : 0;
 	<div id="j-sidebar-container" class="span2">
 		<?php echo $this->sidebar; ?>
 	</div>
-	<div id="j-main-container" class="span10">
-<?php else : ?>
-	<div id="j-main-container">
-<?php endif;?>
+<?php endif; ?>
+	<div id="j-main-container"<?php echo !empty($this->sidebar) ? ' class="span10"' : ''; ?>>
 		<div id="filter-bar" class="btn-toolbar">
 			<div class="filter-search btn-group pull-left">
 				<label for="filter_search" class="element-invisible"><?php echo JText::_('COM_CONTENT_FILTER_SEARCH_DESC');?></label>
@@ -105,21 +106,23 @@ $assoc		= isset($app->item_associations) ? $app->item_associations : 0;
 					<th class="title">
 						<?php echo JHtml::_('grid.sort', 'JGLOBAL_TITLE', 'a.title', $listDirn, $listOrder); ?>
 					</th>
-					<th width="5%" class="nowrap hidden-phone">
+					<th width="10%" class="nowrap hidden-phone center">
 						<?php echo JHtml::_('grid.sort', 'COM_MENUS_HEADING_HOME', 'a.home', $listDirn, $listOrder); ?>
 					</th>
-				<th width="10%" class="nowrap hidden-phone">
-					<?php echo JHtml::_('grid.sort',  'JGRID_HEADING_ACCESS', 'a.access', $listDirn, $listOrder); ?>
-				</th>
-				<?php if ($assoc) : ?>
-				<th width="5%" class="nowrap hidden-phone">
-					<?php echo JHtml::_('grid.sort', 'COM_MENUS_HEADING_ASSOCIATION', 'association', $listDirn, $listOrder); ?>
-				</th>
-					<?php endif;?>
-					<th width="5%" class="nowrap hidden-phone">
+					<?php if ($langs) : ?>
+					<th width="10%" class="nowrap hidden-phone">
 						<?php echo JHtml::_('grid.sort', 'JGRID_HEADING_LANGUAGE', 'language', $this->state->get('list.direction'), $this->state->get('list.ordering')); ?>
 					</th>
-					<th width="1%" class="nowrap hidden-phone">
+					<?php endif;?>
+					<?php if ($assoc) : ?>
+					<th width="10%" class="nowrap hidden-phone center">
+						<?php echo JHtml::_('grid.sort', 'COM_MENUS_HEADING_ASSOCIATION', 'association', $listDirn, $listOrder); ?>
+					</th>
+					<?php endif;?>
+					<th width="10%" class="nowrap hidden-phone">
+						<?php echo JHtml::_('grid.sort',  'JGRID_HEADING_ACCESS', 'a.access', $listDirn, $listOrder); ?>
+					</th>
+					<th width="1%" class="nowrap hidden-phone center">
 						<?php echo JHtml::_('grid.sort', 'JGRID_HEADING_ID', 'a.id', $listDirn, $listOrder); ?>
 					</th>
 				</tr>
@@ -234,24 +237,26 @@ $assoc		= isset($app->item_associations) ? $app->item_associations : 0;
 							<?php endif;?>
 						<?php endif; ?>
 					</td>
-				<td class="small hidden-phone">
-					<?php echo $this->escape($item->access_level); ?>
-				</td>
-				<?php if ($assoc):?>
-				<td class="small hidden-phone">
+					<?php if ($langs) : ?>
+						<td class="hidden-phone">
+							<?php if ($item->language == ''):?>
+								<?php echo JText::_('JDEFAULT'); ?>
+							<?php elseif ($item->language == '*'):?>
+								<?php echo JText::alt('JALL', 'language'); ?>
+							<?php else:?>
+								<?php echo $item->language_title ? $this->escape($item->language_title) : JText::_('JUNDEFINED'); ?>
+							<?php endif;?>
+						</td>
+					<?php endif;?>
+					<?php if ($assoc): ?>
+					<td class="hidden-phone">
 					<?php if ($item->association):?>
 						<?php echo JHtml::_('MenusHtml.Menus.association', $item->id);?>
 						<?php endif;?>
 					</td>
 					<?php endif;?>
-					<td class="small hidden-phone">
-						<?php if ($item->language == ''):?>
-							<?php echo JText::_('JDEFAULT'); ?>
-						<?php elseif ($item->language == '*'):?>
-							<?php echo JText::alt('JALL', 'language'); ?>
-						<?php else:?>
-							<?php echo $item->language_title ? $this->escape($item->language_title) : JText::_('JUNDEFINED'); ?>
-						<?php endif;?>
+					<td class="hidden-phone">
+						<?php echo $this->escape($item->access_level); ?>
 					</td>
 					<td class="center hidden-phone">
 						<span title="<?php echo sprintf('%d-%d', $item->lft, $item->rgt);?>">

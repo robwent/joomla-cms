@@ -16,9 +16,8 @@ JHtml::_('behavior.formvalidation');
 JHtml::_('formbehavior.chosen', 'select');
 
 $app = JFactory::getApplication();
-$input = $app->input;
-
-$assoc = isset($app->item_associations) ? $app->item_associations : 0;
+$langs = isset($app->languages_enabled);
+$assoc = isset($app->item_associations);
 ?>
 <script type="text/javascript">
 	Joomla.submitbutton = function(task)
