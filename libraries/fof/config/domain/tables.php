@@ -42,6 +42,7 @@ class FOFConfigDomainTables implements FOFConfigDomainInterface
 		{
 			$key = (string) $aTable['name'];
 
+			$ret['tables'][$key]['behaviors'] = (string) $aTable->behaviors;
 			$ret['tables'][$key]['tablealias'] = $aTable->xpath('tablealias');
 			$ret['tables'][$key]['fields'] = array();
 			$fieldData = $aTable->xpath('field');
@@ -154,5 +155,37 @@ class FOFConfigDomainTables implements FOFConfigDomainInterface
 		}
 
 		return $tablealias;
+	}
+
+	/**
+	 * Internal method to get table alias
+	 *
+	 * @param   string  $table           The table for which we will be fetching table alias
+	 * @param   array   &$configuration  The configuration parameters hash array
+	 * @param   array   $params          Extra options; key 0 defines the table we want to fetch
+	 * @param   string  $default         Default table alias
+	 *
+	 * @return  string  Table alias
+	 */
+	protected function getBehaviors($table, &$configuration, $params, $default = '')
+	{
+		$behaviors = $default;
+		if (
+			isset($configuration['tables']['*']) && isset($configuration['tables']['*']['behaviors']) &&
+			isset($configuration['tables']['*']['behaviors'])
+			)
+		{
+			$behaviors = (string) $configuration['tables']['*']['behaviors'];
+		}
+
+		if (
+			isset($configuration['tables'][$table]) && isset($configuration['tables'][$table]['behaviors']) &&
+			isset($configuration['tables'][$table]['behaviors'])
+			)
+		{
+			$behaviors = (string) $configuration['tables'][$table]['behaviors'];
+		}
+
+		return $behaviors;
 	}
 }

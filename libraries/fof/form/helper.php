@@ -20,7 +20,6 @@ JLoader::import('joomla.form.helper');
  */
 class FOFFormHelper extends JFormHelper
 {
-
 	/**
 	 * Method to load a form field object given a type.
 	 *
@@ -165,7 +164,6 @@ class FOFFormHelper extends JFormHelper
 		// If the type is complex, add the base type to the paths.
 		if ($pos = strpos($type, '_'))
 		{
-
 			// Add the complex type prefix to the paths.
 			for ($i = 0, $n = count($paths); $i < $n; $i++)
 			{
@@ -178,6 +176,7 @@ class FOFFormHelper extends JFormHelper
 					$paths[] = $path;
 				}
 			}
+
 			// Break off the end of the complex type.
 			$type = substr($type, $pos + 1);
 		}
@@ -228,5 +227,4 @@ class FOFFormHelper extends JFormHelper
 	{
 		return self::addPath('header', $new);
 	}
-
 }

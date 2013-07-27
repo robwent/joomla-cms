@@ -18,7 +18,6 @@ JLoader::import('joomla.application.component.view');
  */
 class FOFViewForm extends FOFViewHtml
 {
-
 	/** @var FOFForm The form to render */
 	protected $form;
 
@@ -74,6 +73,7 @@ class FOFViewForm extends FOFViewHtml
 		{
 			$path .= '_' . $tpl;
 		}
+
 		$viewTemplate = $this->loadAnyTemplate($path);
 
 		// If there was no template file found, display the form
@@ -110,6 +110,7 @@ class FOFViewForm extends FOFViewHtml
 			// Get the form's HTML
 			$html = $renderer->renderForm($this->form, $this->getModel(), $this->input);
 		}
+
 		return $html;
 	}
 
@@ -134,5 +135,4 @@ class FOFViewForm extends FOFViewHtml
 
 		return true;
 	}
-
 }

@@ -15,7 +15,6 @@ defined('_JEXEC') or die();
  */
 class FOFModelFieldNumber extends FOFModelField
 {
-
 	/**
 	 * The partial match is mapped to an exact match
 	 *

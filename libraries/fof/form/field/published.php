@@ -21,7 +21,6 @@ if (!class_exists('JFormFieldList'))
  */
 class FOFFormFieldPublished extends JFormFieldList implements FOFFormField
 {
-
 	protected $static;
 
 	protected $repeatable;
@@ -186,5 +185,4 @@ class FOFFormFieldPublished extends JFormFieldList implements FOFFormField
 		// Get the HTML
 		return JHTML::_('jgrid.published', $this->value, $this->rowid, $prefix, $enabled, $checkbox, $publish_up, $publish_down);
 	}
-
 }

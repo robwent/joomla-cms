@@ -16,7 +16,6 @@ defined('_JEXEC') or die();
  */
 abstract class FOFFormHeader
 {
-
 	/**
 	 * The description text for the form field.  Usually used in tooltips.
 	 *
@@ -577,5 +576,4 @@ abstract class FOFFormHeader
 	{
 		return array();
 	}
-
 }

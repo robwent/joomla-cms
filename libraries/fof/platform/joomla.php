@@ -17,6 +17,8 @@ defined('_JEXEC') or die();
  */
 class FOFPlatformJoomla extends FOFPlatform implements FOFPlatformInterface
 {
+	private $_cache = null;
+
 	/**
 	 * Is this platform enabled?
 	 *
@@ -529,4 +531,210 @@ class FOFPlatformJoomla extends FOFPlatform implements FOFPlatformInterface
 	{
 		return $this->checkVersion(JVERSION, '3.0', 'ge');
 	}
+
+	/**
+	 * Is the global FOF cache enabled?
+	 *
+	 * @return  boolean
+	 */
+	public function isGlobalFOFCacheEnabled()
+	{
+		return !(defined('JDEBUG') && JDEBUG);
+	}
+
+	/**
+	 * Saves something to the cache. This is supposed to be used for system-wide
+	 * FOF data, not application data.
+	 *
+	 * @param   string  $key      The key of the data to save
+	 * @param   string  $content  The actual data to save
+	 *
+	 * @return  boolean  True on success
+	 */
+	public function setCache($key, $content)
+	{
+		$registry = $this->getCacheObject();
+
+		$registry->set($key, $content);
+
+		return $this->saveCache();
+	}
+
+	/**
+	 * Retrieves data from the cache. This is supposed to be used for system-side
+	 * FOF data, not application data.
+	 *
+	 * @param   string  $key      The key of the data to retrieve
+	 * @param   string  $default  The default value to return if the key is not found or the cache is not populated
+	 *
+	 * @return  string  The cached value
+	 */
+	public function getCache($key, $default = null)
+	{
+		$registry = $this->getCacheObject();
+
+		return $registry->get($key, $default);
+	}
+
+	/**
+	 * Gets a reference to the cache object, loading it from the disk if
+	 * needed.
+	 *
+	 * @param   boolean  $force  Should I forcibly reload the registry?
+	 *
+	 * @return  JRegistry
+	 */
+	private function &getCacheObject($force = false)
+	{
+		// Check if we have to load the cache file or we are forced to do that
+		if (is_null($this->_cache) || $force)
+		{
+			// Create a new JRegistry object
+			JLoader::import('joomla.registry.registry');
+			$this->_cache = new JRegistry;
+
+			// Find the path to the file
+			$cachePath = JPATH_CACHE . '/fof';
+			$filename  = $cachePath . '/cache.php';
+
+			JLoader::import('joomla.filesystem.file');
+
+			// Load the cache file if it exists. JRegistryFormatPHP fails
+			// miserably, so I have to work around it.
+			if (JFile::exists($filename))
+			{
+				@include_once $filename;
+
+				$className = 'FOFCacheStorage';
+
+				if (class_exists($className))
+				{
+					$object = new $className;
+					$this->_cache->loadObject($object);
+				}
+			}
+		}
+
+		return $this->_cache;
+	}
+
+	/**
+	 * Save the cache object back to disk
+	 *
+	 * @return  boolean  True on success
+	 */
+	private function saveCache()
+	{
+		// Get the JRegistry object of our cached data
+		$registry = $this->getCacheObject();
+
+		// Import core libraries
+		JLoader::import('joomla.filesystem.file');
+		JLoader::import('joomla.filesystem.folder');
+
+		// Find the path to the file
+		$cachePath = JPATH_CACHE . '/fof';
+		$filename  = $cachePath . '/cache.php';
+
+		// Does the path exist?
+		if (!JFolder::exists($cachePath))
+		{
+			// No? Create it.
+			JFolder::create($cachePath);
+		}
+
+		// Get the data
+		$options = array(
+			'class' => 'FOFCacheStorage'
+		);
+		$data	 = $registry->toString('PHP', $options);
+
+		// And save it to the file
+		return JFile::write($filename, $data);
+	}
+
+	/**
+	 * Clears the cache of system-wide FOF data. You are supposed to call this in
+	 * your components' installation script post-installation and post-upgrade
+	 * methods or whenever you are modifying the structure of database tables
+	 * accessed by FOF. Please note that FOF's cache never expires and is not
+	 * purged by Joomla!. You MUST use this method to manually purge the cache.
+	 *
+	 * @return  boolean  True on success
+	 */
+	public function clearCache()
+	{
+		// Import core libraries
+		JLoader::import('joomla.filesystem.file');
+		JLoader::import('joomla.filesystem.folder');
+
+		// Find the path to the file
+		$cachePath = JPATH_CACHE . '/fof';
+		$filename  = $cachePath . '/cache.php';
+
+		if (JFile::exists($filename))
+		{
+			/*
+			 This prevents stupid Joomla! error messages when the file is owned
+			 by the web server user and the FTP layer is enabled (yeah, I know,
+			 right?)
+			*/
+			if (!@unlink($filename))
+			{
+				return JFile::delete($filename);
+			}
+			else
+			{
+				return true;
+			}
+		}
+	}
+
+	/**
+	 * logs in a user
+	 *
+	 * @param   array  $authInfo  authentification information
+	 *
+	 * @return  boolean  True on success
+	 */
+	public function loginUser($authInfo)
+	{
+		JLoader::import('joomla.user.authentication');
+		$options = array('remember'		 => false);
+		$authenticate = JAuthentication::getInstance();
+		$response = $authenticate->authenticate($authInfo, $options);
+
+		if ($response->status == JAuthentication::STATUS_SUCCESS)
+		{
+			$this->importPlugin('user');
+			$results = $this->runPlugins('onLoginUser', array((array) $response, $options));
+
+			JLoader::import('joomla.user.helper');
+			$userid = JUserHelper::getUserId($response->username);
+			$user = $this->getUser($userid);
+
+			$session = JFactory::getSession();
+			$session->set('user', $user);
+
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * logs out a user
+	 *
+	 * @return  boolean  True on success
+	 */
+	public function logoutUser()
+	{
+		JLoader::import('joomla.user.authentication');
+		$app = JFactory::getApplication();
+		$options = array('remember'	 => false);
+		$parameters = array('username'	 => $this->getUser()->username);
+
+		return $app->triggerEvent('onLogoutUser', array($parameters, $options));
+	}
+
 }

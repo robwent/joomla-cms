@@ -463,7 +463,7 @@ class FOFController extends JObject
 		$iMethods = array('accesspublic', 'accessregistered', 'accessspecial',
 			'add', 'apply', 'browse', 'cancel', 'copy', 'edit', 'orderdown',
 			'orderup', 'publish', 'read', 'remove', 'save', 'savenew',
-			'saveorder', 'unpublish', 'display');
+			'saveorder', 'unpublish', 'display', 'archive', 'trash');
 
 		// Get the public methods in this class using reflection.
 		$r = new ReflectionClass($this);
@@ -496,6 +496,7 @@ class FOFController extends JObject
 			$defComponent = 'com_foobar';
 			$defView = 'cpanel';
 		}
+
 		$this->component = $this->input->get('option', $defComponent, 'cmd');
 		$this->view = $this->input->get('view', $defView, 'cmd');
 		$this->layout = $this->input->get('layout', null, 'cmd');
@@ -515,6 +516,7 @@ class FOFController extends JObject
 		{
 			$this->layout = $config['layout'];
 		}
+
 		$this->layout = $this->configProvider->get($this->component . '.views.' . FOFInflector::singularize($this->view) . '.config.layout', $this->layout);
 
 		$this->input->set('option', $this->component);
@@ -599,6 +601,7 @@ class FOFController extends JObject
 			{
 				$modelPath = $this->basePath . '/' . $altModelPath;
 			}
+
 			$this->addModelPath($modelPath, $this->model_prefix);
 		}
 
@@ -621,6 +624,7 @@ class FOFController extends JObject
 			{
 				$viewPath = $this->basePath . '/' . $altViewPath;
 			}
+
 			$this->setPath('view', $viewPath);
 		}
 
@@ -636,6 +640,7 @@ class FOFController extends JObject
 			{
 				$this->default_view = $this->getName();
 			}
+
 			$this->default_view = $this->configProvider->get(
 				$this->component . '.views.' .
 				FOFInflector::singularize($this->view) . '.config.default_view', $this->default_view
@@ -718,6 +723,7 @@ class FOFController extends JObject
 					{
 						$temp[] = trim($t);
 					}
+
 					$temp = array_unique($temp);
 					$this->cacheableTasks = $temp;
 				}
@@ -748,7 +754,6 @@ class FOFController extends JObject
 				$this->registerTask($aliasedtask, $realmethod);
 			}
 		}
-
 	}
 
 	/**
@@ -903,6 +908,17 @@ class FOFController extends JObject
 			$result = true;
 		}
 
+		if ($result)
+		{
+			$plugin_event = FOFInflector::camelize('on before ' . $this->bareComponent . ' controller ' . $this->view . ' ' . $task);
+			$plugin_result = FOFPlatform::getInstance()->runPlugins($plugin_event, array(&$this, &$this->input));
+
+			if (in_array(false, $plugin_result, true))
+			{
+				$result = false;
+			}
+		}
+
 		if (!$result)
 		{
 			throw new Exception(JText::_('JLIB_APPLICATION_ERROR_ACCESS_FORBIDDEN'), 403);
@@ -940,11 +956,26 @@ class FOFController extends JObject
 		if (method_exists($this, $method_name))
 		{
 			$result = $this->$method_name();
+		}
+		else
+		{
+			$result = true;
+		}
 
-			if (!$result)
+		if ($result)
+		{
+			$plugin_event = FOFInflector::camelize('on after ' . $this->bareComponent . ' controller ' . $this->view . ' ' . $task);
+			$plugin_result = FOFPlatform::getInstance()->runPlugins($plugin_event, array(&$this, &$this->input, &$ret));
+
+			if (in_array(false, $plugin_result, true))
 			{
-				throw new Exception(JText::_('JLIB_APPLICATION_ERROR_ACCESS_FORBIDDEN'), 403);
+				$result = false;
 			}
+		}
+
+		if (!$result)
+		{
+			throw new Exception(JText::_('JLIB_APPLICATION_ERROR_ACCESS_FORBIDDEN'), 403);
 		}
 
 		return $ret;
@@ -991,7 +1022,7 @@ class FOFController extends JObject
 		// Display the view
 		$conf = JFactory::getConfig();
 
-		if (!FOFPlatform::getInstance()->isCli() && JFactory::getApplication()->isSite() && $cachable && $viewType != 'feed' && $conf->get('caching') >= 1)
+		if (!FOFPlatform::getInstance()->isCli() && JFactory::getApplication()->isSite() && $cachable && ($viewType != 'feed') && $conf->get('caching') >= 1)
 		{
 			// Get a JCache object
 			$option = $this->input->get('option', 'com_foobar', 'cmd');
@@ -1009,15 +1040,37 @@ class FOFController extends JObject
 				$groups = $user->groups;
 			}
 
-			$cacheId = md5(serialize(array(JCache::makeId(), $view->getName(), $this->doTask, $groups)));
-
 			// Set up safe URL parameters
+
+			if (!is_array($urlparams))
+			{
+				$urlparams = array(
+					'option'		=> 'CMD',
+					'view'			=> 'CMD',
+					'task'			=> 'CMD',
+					'format'		=> 'CMD',
+					'layout'		=> 'CMD',
+					'id'			=> 'INT',
+				);
+			}
 
 			if (is_array($urlparams))
 			{
 				$app = JFactory::getApplication();
 
-				$registeredurlparams = $app->get('registeredurlparams');
+				$registeredurlparams = null;
+
+				if (FOFPlatform::getInstance()->checkVersion(JVERSION, '3.0', 'ge'))
+				{
+					if (property_exists($app, 'registeredurlparams'))
+					{
+						$registeredurlparams = $app->registeredurlparams;
+					}
+				}
+				else
+				{
+					$registeredurlparams = $app->get('registeredurlparams');
+				}
 
 				if (empty($registeredurlparams))
 				{
@@ -1030,8 +1083,18 @@ class FOFController extends JObject
 					$registeredurlparams->$key = $value;
 				}
 
-				$app->set('registeredurlparams', $registeredurlparams);
+				if (FOFPlatform::getInstance()->checkVersion(JVERSION, '3.0', 'ge'))
+				{
+					$app->registeredurlparams = $registeredurlparams;
+				}
+				else
+				{
+					$app->set('registeredurlparams', $registeredurlparams);
+				}
 			}
+
+			// Create the cache ID after setting the registered URL params, as they are used to generate the ID
+			$cacheId = md5(serialize(array(JCache::makeId(), $view->getName(), $this->doTask, $groups)));
 
 			// Get the cached view or cache the current view
 			$cache->get($view, 'display', $cacheId);
@@ -1069,6 +1132,7 @@ class FOFController extends JObject
 		{
 			$formname = 'form.' . $this->layout;
 		}
+
 		$model->setState('form_name', $formname);
 
 		$item = $model->getItem();
@@ -1246,6 +1310,7 @@ class FOFController extends JObject
 			{
 				$customURL = base64_decode($customURL);
 			}
+
 			$url = !empty($customURL) ? $customURL : 'index.php?option=' . $this->component . '&view=' . $this->view . '&task=edit&id=' . $id;
 			$this->setRedirect($url, JText::_($textkey));
 		}
@@ -1325,6 +1390,7 @@ class FOFController extends JObject
 			{
 				$customURL = base64_decode($customURL);
 			}
+
 			$url = !empty($customURL) ? $customURL : 'index.php?option=' . $this->component . '&view=' . FOFInflector::pluralize($this->view);
 			$this->setRedirect($url, JText::_($textkey));
 		}
@@ -1357,6 +1423,7 @@ class FOFController extends JObject
 			{
 				$customURL = base64_decode($customURL);
 			}
+
 			$url = !empty($customURL) ? $customURL : 'index.php?option=' . $this->component . '&view=' . $this->view . '&task=add';
 			$this->setRedirect($url, JText::_($textkey));
 		}
@@ -1389,6 +1456,7 @@ class FOFController extends JObject
 		{
 			$customURL = base64_decode($customURL);
 		}
+
 		$url = !empty($customURL) ? $customURL : 'index.php?option=' . $this->component . '&view=' . FOFInflector::pluralize($this->view);
 		$this->setRedirect($url);
 
@@ -1460,7 +1528,6 @@ class FOFController extends JObject
 	public function publish()
 	{
 		// CSRF prevention
-
 		if ($this->csrfProtection)
 		{
 			$this->_csrfProtection();
@@ -1477,13 +1544,44 @@ class FOFController extends JObject
 	public function unpublish()
 	{
 		// CSRF prevention
-
 		if ($this->csrfProtection)
 		{
 			$this->_csrfProtection();
 		}
 
 		return $this->setstate(0);
+	}
+
+	/**
+	 * Archive (set enabled = 2) an item.
+	 *
+	 * @return  void
+	 */
+	public function archive()
+	{
+		// CSRF prevention
+		if ($this->csrfProtection)
+		{
+			$this->_csrfProtection();
+		}
+
+		return $this->setstate(2);
+	}
+
+	/**
+	 * Trash (set enabled = -2) an item.
+	 *
+	 * @return  void
+	 */
+	public function trash()
+	{
+		// CSRF prevention
+		if ($this->csrfProtection)
+		{
+			$this->_csrfProtection();
+		}
+
+		return $this->setstate(-2);
 	}
 
 	/**
@@ -1656,7 +1754,7 @@ class FOFController extends JObject
 
 		// Redirect
 
-		if ($customURL = $this->input->get('returnurl', '', 'input'))
+		if ($customURL = $this->input->get('returnurl', '', 'string'))
 		{
 			$customURL = base64_decode($customURL);
 		}
@@ -1832,6 +1930,7 @@ class FOFController extends JObject
 				$this->messageType = 'message';
 			}
 		}
+
 		// If the type is explicitly set, set it.
 		else
 		{
@@ -1983,6 +2082,7 @@ class FOFController extends JObject
 			{
 				$customURL = base64_decode($customURL);
 			}
+
 			$url = !empty($customURL) ? $customURL : 'index.php?option=' . $this->component . '&view=' . $this->view . '&task=edit&id=' . $id;
 			$this->setRedirect($url, '<li>' . implode('</li><li>', $model->getErrors()), 'error') . '</li>';
 
@@ -2096,6 +2196,7 @@ class FOFController extends JObject
 				}
 			}
 		}
+
 		return $model;
 	}
 
@@ -2156,6 +2257,7 @@ class FOFController extends JObject
 			{
 				$config['input'] = $this->input;
 			}
+
 			$config['input']->set('base_path', $this->basePath);
 
 			$this->_viewObject = $this->getView($viewName, $viewType, $prefix, $config);
@@ -2387,6 +2489,7 @@ class FOFController extends JObject
 				$component = $config['option'];
 			}
 		}
+
 		$config['option'] = $component;
 
 		$view = strtolower($viewName);
@@ -3055,5 +3158,4 @@ class FOFController extends JObject
 			return false;
 		}
 	}
-
 }

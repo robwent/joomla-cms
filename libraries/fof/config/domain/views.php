@@ -81,6 +81,36 @@ class FOFConfigDomainViews implements FOFConfigDomainInterface
 					$ret['views'][$key]['config'][$k] = (string) $option;
 				}
 			}
+
+			// Parse the toolbar
+			$ret['views'][$key]['toolbar'] = array();
+			$toolBar = $aView->xpath('toolbar');
+
+			if (!empty($toolBar))
+			{
+				$toolbarAttributes = $toolBar[0]->attributes();
+
+				// If a toolbar title is specified, create a title element.
+				if (isset($toolbarAttributes['title']))
+				{
+					$ret['views'][$key]['toolbar']['title'] = array(
+						'value' => (string) $toolbarAttributes['title']
+					);
+				}
+
+				// Parse the toolbar buttons data
+				$toolbarData = $aView->xpath('toolbar/button');
+
+				if (!empty($toolbarData))
+				{
+					foreach ($toolbarData as $button)
+					{
+						$k = (string) $button['type'];
+						$ret['views'][$key]['toolbar'][$k] = current($button->attributes());
+						$ret['views'][$key]['toolbar'][$k]['value'] = (string) $button;
+					}
+				}
+			}
 		}
 	}
 
@@ -215,5 +245,37 @@ class FOFConfigDomainViews implements FOFConfigDomainInterface
 		}
 
 		return $ret;
+	}
+
+	/**
+	 * Internal method to return the toolbar infos.
+	 *
+	 * @param   string  $view            The view for which we will be fetching buttons
+	 * @param   array   &$configuration  The configuration parameters hash array
+	 * @param   array   $params          Extra options
+	 * @param   string  $default         Default option
+	 *
+	 * @return  string  The toolbar data for this view
+	 */
+	protected function getToolbar($view, &$configuration, $params, $default = '')
+	{
+		$toolbar = array();
+
+		if (isset($configuration['views']['*']) && isset($configuration['views']['*']['toolbar']))
+		{
+			$toolbar = $configuration['views']['*']['toolbar'];
+		}
+
+		if (isset($configuration['views'][$view]) && isset($configuration['views'][$view]['toolbar']))
+		{
+			$toolbar = array_merge($toolbar, $configuration['views'][$view]['toolbar']);
+		}
+
+		if (empty($toolbar))
+		{
+			return $default;
+		}
+
+		return $toolbar;
 	}
 }

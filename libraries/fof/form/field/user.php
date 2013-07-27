@@ -268,12 +268,12 @@ class FOFFormFieldUser extends JFormFieldUser implements FOFFormField
 
 				if ($scheme == 'http')
 				{
-					$url = 'http://www.gravatar.com/avatar/' . $md5 . '.jpg?s='
+					$avatar_url = 'http://www.gravatar.com/avatar/' . $md5 . '.jpg?s='
 						. $avatar_size . '&d=mm';
 				}
 				else
 				{
-					$url = 'https://secure.gravatar.com/avatar/' . $md5 . '.jpg?s='
+					$avatar_url = 'https://secure.gravatar.com/avatar/' . $md5 . '.jpg?s='
 						. $avatar_size . '&d=mm';
 				}
 			}

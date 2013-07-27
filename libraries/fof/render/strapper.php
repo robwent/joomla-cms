@@ -243,6 +243,7 @@ ENDJAVASCRIPT;
 					{
 						echo "<i class=\"icon icon-" . $link['icon'] . "\"></i>";
 					}
+
 					echo $link['name'];
 					echo '<b class="caret"></b>';
 					echo '</a>';
@@ -251,7 +252,6 @@ ENDJAVASCRIPT;
 
 					foreach ($link['items'] as $item)
 					{
-
 						echo "<li";
 
 						if ($item['active'])
@@ -277,6 +277,7 @@ ENDJAVASCRIPT;
 
 						echo "</li>";
 					}
+
 					echo "</ul>\n";
 				}
 				else
@@ -307,6 +308,7 @@ ENDJAVASCRIPT;
 
 				echo "</li>\n";
 			}
+
 			echo "</ul>\n";
 		}
 	}
@@ -382,7 +384,6 @@ ENDJAVASCRIPT;
 
 		$substitutions = array(
 			'icon-32-new'		 => 'icon-plus',
-			'icon-32-edit'		 => 'icon-pencil',
 			'icon-32-publish'	 => 'icon-eye-open',
 			'icon-32-unpublish'	 => 'icon-eye-close',
 			'icon-32-delete'	 => 'icon-trash',
@@ -413,6 +414,7 @@ ENDJAVASCRIPT;
 				{
 					$id = null;
 				}
+
 				$action	 = call_user_func_array(array(&$button, 'fetchButton'), $node);
 				$action	 = str_replace('class="toolbar"', 'class="toolbar btn"', $action);
 				$action	 = str_replace('<span ', '<i ', $action);
@@ -481,12 +483,37 @@ ENDJS;
 
 		// Joomla! 3.0 sidebar support
 
-		if (FOFPlatform::getInstance()->checkVersion(JVERSION, '3.0', 'gt') && $show_filters)
+		if (FOFPlatform::getInstance()->checkVersion(JVERSION, '3.0', 'gt'))
 		{
-			JHtmlSidebar::setAction("index.php?option=" .
-				$input->getCmd('option') . "&view=" .
-				FOFInflector::pluralize($input->getCmd('view'))
-			);
+			if ($show_filters)
+			{
+				JHtmlSidebar::setAction("index.php?option=" .
+					$input->getCmd('option') . "&view=" .
+					FOFInflector::pluralize($input->getCmd('view'))
+				);
+			}
+
+			// Reorder the fields with ordering first
+			$tmpFields = array();
+			$i = 1;
+
+			foreach ($headerFields as $tmpField)
+			{
+				if ($tmpField instanceof FOFFormHeaderOrdering)
+				{
+					$tmpFields[0] = $tmpField;
+				}
+
+				else
+				{
+					$tmpFields[$i] = $tmpField;
+				}
+
+				$i++;
+			}
+
+			$headerFields = $tmpFields;
+			ksort($headerFields, SORT_NUMERIC);
 		}
 
 		// Pre-render the header and filter rows
@@ -544,7 +571,7 @@ ENDJS;
 					{
 						$filter_html .= '<div class="filter-search btn-group pull-left">' . "\n";
 						$filter_html .= "\t" . '<label for="title" class="element-invisible">';
-						$filter_html .= $headerField->label;
+						$filter_html .= JText::_($headerField->label);
 						$filter_html .= "</label>\n";
 						$filter_html .= "\t$filter\n";
 						$filter_html .= "</div>\n";
@@ -747,6 +774,31 @@ ENDJS;
 
 				$fields = $form->getFieldset('items');
 
+				// Reorder the fields to have ordering first
+				if (FOFPlatform::getInstance()->checkVersion(JVERSION, '3.0', 'gt'))
+				{
+					$tmpFields = array();
+					$i = 1;
+
+					foreach ($fields as $tmpField)
+					{
+						if ($tmpField instanceof FOFFormFieldOrdering)
+						{
+							$tmpFields[0] = $tmpField;
+						}
+
+						else
+						{
+							$tmpFields[$i] = $tmpField;
+						}
+
+						$i++;
+					}
+
+					$fields = $tmpFields;
+					ksort($fields, SORT_NUMERIC);
+				}
+
 				foreach ($fields as $field)
 				{
 					$field->rowid	 = $i;
@@ -764,6 +816,7 @@ ENDJS;
 			$html .= JText::_($norows_placeholder);
 			$html .= "</td></tr>\n";
 		}
+
 		$html .= "\t\t\t</tbody>" . PHP_EOL;
 
 		// Render the pagination bar, if enabled, on J! 2.5
@@ -898,10 +951,10 @@ ENDJS;
 	/**
 	 * Renders a raw FOFForm and returns the corresponding HTML
 	 *
-	 * @param   FOFForm   &$form  	The form to render
-	 * @param   FOFModel  $model  	The model providing our data
-	 * @param   FOFInput  $input  	The input object
-	 * @param   string	  $formType The form type e.g. 'edit' or 'read'
+	 * @param   FOFForm   &$form     The form to render
+	 * @param   FOFModel  $model     The model providing our data
+	 * @param   FOFInput  $input     The input object
+	 * @param   string	  $formType  The form type e.g. 'edit' or 'read'
 	 *
 	 * @return  string    The HTML rendering of the form
 	 */
@@ -938,13 +991,15 @@ ENDJS;
 				// Field label
 				$title 		 = $form->getFieldAttribute($field->fieldname, 'label', '', $field->group);
 				$emptylabel  = $form->getFieldAttribute($field->fieldname, 'emptylabel', false, $field->group);
+
 				if (empty($title) && !$emptylabel)
 				{
 					$model->getName();
 					$title = strtoupper($input->get('option') . '_' . $model->getName() . '_' . $field->id . '_LABEL');
 				}
+
 				// Field description
-				$description 		= $form->getFieldAttribute($field->fieldname, 'description', '', $field->group);
+				$description = $form->getFieldAttribute($field->fieldname, 'description', '', $field->group);
 
 				// The following code is backwards incompatible. Most forms don't require a description in their form
 				// fields. Having to use emptydescription="1" on each one of them is an overkill. Removed.
@@ -960,7 +1015,7 @@ ENDJS;
 				{
 					$inputField = $field->static;
 				}
-				else if ($formType == 'edit')
+				elseif ($formType == 'edit')
 				{
 					$inputField = $field->input;
 				}
@@ -985,6 +1040,7 @@ ENDJS;
 					{
 						$html .= ' *';
 					}
+
 					$html .= "\t\t\t\t" . '</label>' . PHP_EOL;
 					$html .= "\t\t\t\t" . '<div class="controls">' . PHP_EOL;
 					$html .= "\t\t\t\t" . $inputField . PHP_EOL;

@@ -98,11 +98,13 @@ class FOFFormFieldText extends JFormFieldText implements FOFFormField
 	public function getRepeatable()
 	{
 		// Initialise
-		$class             = $this->id;
-		$format_string     = '';
-		$show_link         = false;
-		$link_url          = '';
-		$empty_replacement = '';
+		$class					= $this->id;
+		$format_string			= '';
+		$format_if_not_empty	= false;
+		$parse_value			= false;
+		$show_link				= false;
+		$link_url				= '';
+		$empty_replacement		= '';
 
 		// Get field parameters
 		if ($this->element['class'])
@@ -117,6 +119,14 @@ class FOFFormFieldText extends JFormFieldText implements FOFFormField
 		{
 			$show_link = true;
 		}
+		if ($this->element['format_if_not_empty'] == 'true')
+		{
+			$format_if_not_empty = true;
+		}
+		if ($this->element['parse_value'] == 'true')
+		{
+			$parse_value = true;
+		}
 		if ($this->element['url'])
 		{
 			$link_url = $this->element['url'];
@@ -127,28 +137,7 @@ class FOFFormFieldText extends JFormFieldText implements FOFFormField
 		}
 		if ($show_link && ($this->item instanceof FOFTable))
 		{
-			// Replace [ITEM:ID] in the URL with the item's key value (usually:
-			// the auto-incrementing numeric ID)
-			$keyfield = $this->item->getKeyName();
-			$replace  = $this->item->$keyfield;
-			$link_url = str_replace('[ITEM:ID]', $replace, $link_url);
-
-			// Replace other field variables in the URL
-			$fields = $this->item->getFields();
-
-			foreach ($fields as $fielddata)
-			{
-				$fieldname = $fielddata->Field;
-
-				if (empty($fieldname))
-				{
-					$fieldname = $fielddata->column_name;
-				}
-
-				$search    = '[ITEM:' . strtoupper($fieldname) . ']';
-				$replace   = $this->item->$fieldname;
-				$link_url  = str_replace($search, $replace, $link_url);
-			}
+			$link_url = $this->parseFieldTags($link_url);
 		}
 		else
 		{
@@ -161,17 +150,25 @@ class FOFFormFieldText extends JFormFieldText implements FOFFormField
 		}
 
 		// Get the (optionally formatted) value
+		$value = $this->value;
 		if (!empty($empty_replacement) && empty($this->value))
 		{
-			$this->value = JText::_($empty_replacement);
+			$value = JText::_($empty_replacement);
 		}
-		if (empty($format_string))
+
+		if ($parse_value)
 		{
-			$value = htmlspecialchars($this->value, ENT_COMPAT, 'UTF-8');
+			$value = $this->parseFieldTags($value);
+		}
+
+		if (!empty($format_string) && (!$format_if_not_empty || ($format_if_not_empty && !empty($this->value))))
+		{
+			$format_string = $this->parseFieldTags($format_string);
+			$value = sprintf($format_string, $value);
 		}
 		else
 		{
-			$value = sprintf($format_string, $this->value);
+			$value = htmlspecialchars($value, ENT_COMPAT, 'UTF-8');
 		}
 
 		// Create the HTML
@@ -194,4 +191,33 @@ class FOFFormFieldText extends JFormFieldText implements FOFFormField
 		return $html;
 	}
 
+	protected function parseFieldTags($text)
+	{
+		$ret = $text;
+
+		// Replace [ITEM:ID] in the URL with the item's key value (usually:
+		// the auto-incrementing numeric ID)
+		$keyfield = $this->item->getKeyName();
+		$replace  = $this->item->$keyfield;
+		$ret = str_replace('[ITEM:ID]', $replace, $ret);
+
+		// Replace other field variables in the URL
+		$fields = $this->item->getFields();
+
+		foreach ($fields as $fielddata)
+		{
+			$fieldname = $fielddata->Field;
+
+			if (empty($fieldname))
+			{
+				$fieldname = $fielddata->column_name;
+			}
+
+			$search    = '[ITEM:' . strtoupper($fieldname) . ']';
+			$replace   = $this->item->$fieldname;
+			$ret  = str_replace($search, $replace, $ret);
+		}
+
+		return $ret;
+	}
 }

@@ -16,7 +16,6 @@ defined('_JEXEC') or die();
  */
 class FOFFormFieldOrdering extends JFormField implements FOFFormField
 {
-
 	protected $static;
 
 	protected $repeatable;
@@ -154,5 +153,4 @@ class FOFFormFieldOrdering extends JFormField implements FOFFormField
 
 		return $html;
 	}
-
 }
