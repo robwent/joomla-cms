@@ -1129,7 +1129,7 @@ class PlgSystemDebug extends JPlugin
 	 *
 	 * @since   3.1.2
 	 */
-	protected function renderBars(&$bars, $class = '', $id = '')
+	protected function renderBars(&$bars, $class = '', $id = null)
 	{
 		$html = array();
 
@@ -1142,7 +1142,7 @@ class PlgSystemDebug extends JPlugin
 
 			$barClass = trim('bar dbg-bar ' . (isset($bar->class) ? $bar->class : ''));
 
-			if ($id != '' && $i == $id)
+			if ($id !== null && $i == $id)
 			{
 				$barClass .= ' dbg-bar-active';
 			}
@@ -1228,6 +1228,12 @@ class PlgSystemDebug extends JPlugin
 					// Display duration in ms with the unit instead of seconds:
 					$html[] = sprintf('%.1f&nbsp;ms', $td * 1000);
 				}
+				elseif ($k == 'Error')
+				{
+					// An error in the EXPLAIN query occured, display it instead of the result (means original query had syntax error most probably):
+					$html[] = '<td class="dbg-warning">' . htmlspecialchars($td);
+					$hasWarnings = true;
+				}
 				elseif ($k == 'key')
 				{
 					if ($td === 'NULL')
@@ -1291,17 +1297,35 @@ class PlgSystemDebug extends JPlugin
 
 		if ($dbVersion5037)
 		{
-			// Run a SHOW PROFILE query:
-			$db->setQuery('SHOW PROFILES'); //SHOW PROFILE ALL FOR QUERY ' . (int) ($k+1));
-			$this->sqlShowProfiles = $db->loadAssocList();
-
-			if ($this->sqlShowProfiles)
+			try
 			{
-				foreach ($this->sqlShowProfiles as $qn)
+				// Check if profiling is enabled:
+				$db->setQuery("SHOW VARIABLES LIKE 'have_profiling'");
+				$hasProfiling = $db->loadResult();
+
+				if ($hasProfiling)
 				{
-					$db->setQuery('SHOW PROFILE FOR QUERY ' . (int) ($qn['Query_ID']));
-					$this->sqlShowProfileEach[(int) ($qn['Query_ID'] - 1)] = $db->loadAssocList();
+					// Run a SHOW PROFILE query:
+					$db->setQuery('SHOW PROFILES');
+					$this->sqlShowProfiles = $db->loadAssocList();
+
+					if ($this->sqlShowProfiles)
+					{
+						foreach ($this->sqlShowProfiles as $qn)
+						{
+							// Run SHOW PROFILE FOR QUERY for each query where a profile is available (max 100):
+							$db->setQuery('SHOW PROFILE FOR QUERY ' . (int) ($qn['Query_ID']));
+							$this->sqlShowProfileEach[(int) ($qn['Query_ID'] - 1)] = $db->loadAssocList();
+						}
+					}
 				}
+				else
+				{
+					$this->sqlShowProfileEach[0] = array(array('Error' => 'MySql have_profiling = off'));
+				}
+			}
+			catch (Exception $e) {
+				$this->sqlShowProfileEach[0] = array(array('Error' => $e->getMessage()));
 			}
 		}
 
@@ -1315,8 +1339,14 @@ class PlgSystemDebug extends JPlugin
 
 				if ((stripos($query, 'select') === 0) || ($dbVersion56 && ((stripos($query, 'delete') === 0) || (stripos($query, 'update') === 0))))
 				{
-					$db->setQuery('EXPLAIN ' . ($dbVersion56 ? 'EXTENDED ' : '') . $query);
-					$this->explains[$k] = $db->loadAssocList();
+					try
+					{
+						$db->setQuery('EXPLAIN ' . ($dbVersion56 ? 'EXTENDED ' : '') . $query);
+						$this->explains[$k] = $db->loadAssocList();
+					}
+					catch (Exception $e) {
+						$this->explains[$k] = array(array('Error' => $e->getMessage()));
+					}
 				}
 			}
 		}
