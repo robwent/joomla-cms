@@ -46,15 +46,15 @@ class JHelperTags
 	/**
 	 * Method to add tag rows to mapping table.
 	 *
-	 * @param   integer  $ucmId  ID of the #__ucm_content item being tagged
-	 * @param   JTable   $table  JTable object being tagged
-	 * @param   array    $tags   Array of tags to be applied.
+	 * @param   integer  		$ucmId  ID of the #__ucm_content item being tagged
+	 * @param   JTableInterface $table  JTableInterface object being tagged
+	 * @param   array    		$tags   Array of tags to be applied.
 	 *
 	 * @return  boolean  true on success, otherwise false.
 	 *
 	 * @since   3.1
 	 */
-	public function addTagMapping($ucmId, $table, $tags = array())
+	public function addTagMapping($ucmId, JTableInterface $table, $tags = array())
 	{
 		$db = $table->getDbo();
 		$key = $table->getKeyName();
@@ -336,14 +336,14 @@ class JHelperTags
 	/**
 	 * Method to delete the tag mappings and #__ucm_content record for for an item
 	 *
-	 * @param   JTable   $table          JTable object of content table where delete occurred
+	 * @param   JTableInterface   $table  JTableInterface object of content table where delete occurred
 	 * @param   integer  $contentItemId  ID of the content item.
 	 *
 	 * @return  boolean  true on success, false on failure
 	 *
 	 * @since   3.1
 	 */
-	public function deleteTagData(JTable $table, $contentItemId)
+	public function deleteTagData(JTableInterface $table, $contentItemId)
 	{
 		$result = $this->unTagItem($contentItemId, $table);
 
@@ -756,15 +756,15 @@ class JHelperTags
 	/**
 	 * Function that handles saving tags used in a table class after a store()
 	 *
-	 * @param   JTable   $table    JTable being processed
-	 * @param   array    $newTags  Array of new tags
-	 * @param   boolean  $replace  Flag indicating if all exising tags should be replaced
+	 * @param   JTableInterface	$table    JTableInterface being processed
+	 * @param   array    		$newTags  Array of new tags
+	 * @param   boolean  		$replace  Flag indicating if all exising tags should be replaced
 	 *
 	 * @return  boolean
 	 *
 	 * @since   3.1
 	 */
-	public function postStoreProcess($table, $newTags = array(), $replace = true)
+	public function postStoreProcess(JTableInterface $table, $newTags = array(), $replace = true)
 	{
 		if (!empty($table->newTags) && empty($newTags))
 		{
@@ -816,14 +816,14 @@ class JHelperTags
 	/**
 	 * Function that preProcesses data from a table prior to a store() to ensure proper tag handling
 	 *
-	 * @param   JTable  $table    JTable being processed
-	 * @param   array   $newTags  Array of new tags
+	 * @param   JTableInterface	$table    JTableInterface being processed
+	 * @param   array   		$newTags  Array of new tags
 	 *
 	 * @return  null
 	 *
 	 * @since   3.1
 	 */
-	public function preStoreProcess($table, $newTags = array())
+	public function preStoreProcess(JTableInterface $table, $newTags = array())
 	{
 		if ($newTags != array())
 		{
@@ -959,16 +959,16 @@ class JHelperTags
 	/**
 	 * Method to add or update tags associated with an item.
 	 *
-	 * @param   integer  $ucmId    Id of the #__ucm_content item being tagged
-	 * @param   JTable   $table    JTable object being tagged
-	 * @param   array    $tags     Array of tags to be applied.
-	 * @param   boolean  $replace  Flag indicating if all exising tags should be replaced
+	 * @param   integer 		$ucmId    Id of the #__ucm_content item being tagged
+	 * @param   JTableInterface	$table    JTableInterface object being tagged
+	 * @param   array    		$tags     Array of tags to be applied.
+	 * @param   boolean  		$replace  Flag indicating if all exising tags should be replaced
 	 *
 	 * @return  boolean  true on success, otherwise false.
 	 *
 	 * @since   3.1
 	 */
-	public function tagItem($ucmId, $table, $tags = array(), $replace = true)
+	public function tagItem($ucmId, JTableInterface $table, $tags = array(), $replace = true)
 	{
 		$key = $table->get('_tbl_key');
 		$oldTags = $this->getTagIds((int) $table->$key, $this->typeAlias);
@@ -1007,15 +1007,15 @@ class JHelperTags
 	/**
 	 * Method to untag an item
 	 *
-	 * @param   integer  $contentId  ID of the content item being untagged
-	 * @param   JTable   $table      JTable object being untagged
-	 * @param   array    $tags       Array of tags to be untagged. Use an empty array to untag all existing tags.
+	 * @param   integer           $contentId  ID of the content item being untagged
+	 * @param   JTableInterface   $table      JTableInterface object being untagged
+	 * @param   array             $tags       Array of tags to be untagged. Use an empty array to untag all existing tags.
 	 *
 	 * @return  boolean  true on success, otherwise false.
 	 *
 	 * @since   3.1
 	 */
-	public function unTagItem($contentId, $table, $tags = array())
+	public function unTagItem($contentId, JTableInterface $table, $tags = array())
 	{
 		$key = $table->getKeyName();
 		$id = $table->$key;
