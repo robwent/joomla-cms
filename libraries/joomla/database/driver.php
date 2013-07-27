@@ -1527,13 +1527,30 @@ abstract class JDatabaseDriver extends JDatabase implements JDatabaseInterface
 				continue;
 			}
 
+			// Let's check if the string has been already quoted
 			if (strlen($q) == 1)
 			{
-				$parts[] = $q . $part . $q;
+				// Already quoted, continue
+				if ($part{0} == $q && substr($part, -1) == $q)
+				{
+					$parts[] = $part;
+				}
+				else
+				{
+					$parts[] = $q . $part . $q;
+				}
 			}
 			else
 			{
-				$parts[] = $q{0} . $part . $q{1};
+				// Already quoted, continue
+				if ($part{0} == $q{0} && substr($part, -1) == $q{1})
+				{
+					$parts[] = $part;
+				}
+				else
+				{
+					$parts[] = $q{0} . $part . $q{1};
+				}
 			}
 		}
 
