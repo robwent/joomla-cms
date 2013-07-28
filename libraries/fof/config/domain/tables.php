@@ -138,18 +138,17 @@ class FOFConfigDomainTables implements FOFConfigDomainInterface
 	protected function getTablealias($table, &$configuration, $params, $default = '')
 	{
 		$tablealias = $default;
-		if (
-			isset($configuration['tables']['*']) && isset($configuration['tables']['*']['tablealias']) &&
-			isset($configuration['tables']['*']['tablealias'][0])
-			)
+
+		if (isset($configuration['tables']['*'])
+			&& isset($configuration['tables']['*']['tablealias'])
+			&& isset($configuration['tables']['*']['tablealias'][0]))
 		{
 			$tablealias = (string) $configuration['tables']['*']['tablealias'][0];
 		}
 
-		if (
-			isset($configuration['tables'][$table]) && isset($configuration['tables'][$table]['tablealias']) &&
-			isset($configuration['tables'][$table]['tablealias'][0])
-			)
+		if (isset($configuration['tables'][$table])
+			&& isset($configuration['tables'][$table]['tablealias'])
+			&& isset($configuration['tables'][$table]['tablealias'][0]))
 		{
 			$tablealias = (string) $configuration['tables'][$table]['tablealias'][0];
 		}
@@ -170,18 +169,17 @@ class FOFConfigDomainTables implements FOFConfigDomainInterface
 	protected function getBehaviors($table, &$configuration, $params, $default = '')
 	{
 		$behaviors = $default;
-		if (
-			isset($configuration['tables']['*']) && isset($configuration['tables']['*']['behaviors']) &&
-			isset($configuration['tables']['*']['behaviors'])
-			)
+
+		if (isset($configuration['tables']['*'])
+			&& isset($configuration['tables']['*']['behaviors'])
+			&& isset($configuration['tables']['*']['behaviors']))
 		{
 			$behaviors = (string) $configuration['tables']['*']['behaviors'];
 		}
 
-		if (
-			isset($configuration['tables'][$table]) && isset($configuration['tables'][$table]['behaviors']) &&
-			isset($configuration['tables'][$table]['behaviors'])
-			)
+		if (isset($configuration['tables'][$table])
+			&& isset($configuration['tables'][$table]['behaviors'])
+			&& isset($configuration['tables'][$table]['behaviors']))
 		{
 			$behaviors = (string) $configuration['tables'][$table]['behaviors'];
 		}

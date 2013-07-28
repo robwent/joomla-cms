@@ -15,7 +15,6 @@ defined('_JEXEC') or die();
  */
 class FOFFormHeaderFielddate extends FOFFormHeaderField
 {
-
 	/**
 	 * Get the filter field
 	 *
@@ -26,26 +25,32 @@ class FOFFormHeaderFielddate extends FOFFormHeaderField
 		// Initialize some field attributes.
 		$format		 = $this->element['format'] ? (string) $this->element['format'] : '%Y-%m-%d';
 		$attributes  = array();
+
 		if ($this->element['size'])
 		{
 			$attributes['size'] = (int) $this->element['size'];
 		}
+
 		if ($this->element['maxlength'])
 		{
 			$attributes['maxlength'] = (int) $this->element['maxlength'];
 		}
+
 		if ($this->element['filterclass'])
 		{
 			$attributes['class'] = (string) $this->element['filterclass'];
 		}
+
 		if ((string) $this->element['readonly'] == 'true')
 		{
 			$attributes['readonly'] = 'readonly';
 		}
+
 		if ((string) $this->element['disabled'] == 'true')
 		{
 			$attributes['disabled'] = 'disabled';
 		}
+
 		if ($this->element['onchange'])
 		{
 			$attributes['onchange'] = (string) $this->element['onchange'];
@@ -54,12 +59,13 @@ class FOFFormHeaderFielddate extends FOFFormHeaderField
 		{
 			$onchange = 'document.adminForm.submit()';
 		}
+
 		if ((string) $this->element['placeholder'])
 		{
 			$attributes['placeholder'] = JText::_((string) $this->element['placeholder']);
 		}
 
-		$name        = $this->element['searchfieldname'] ? $this->element['searchfieldname'] : $this->name;
+		$name = $this->element['searchfieldname'] ? $this->element['searchfieldname'] : $this->name;
 
 		if ($this->element['searchfieldname'])
 		{
@@ -117,5 +123,4 @@ class FOFFormHeaderFielddate extends FOFFormHeaderField
 	{
 		return '';
 	}
-
 }

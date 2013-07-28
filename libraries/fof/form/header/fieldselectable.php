@@ -15,7 +15,6 @@ defined('_JEXEC') or die();
  */
 class FOFFormHeaderFieldselectable extends FOFFormHeaderField
 {
-
 	/**
 	 * Create objects for the options
 	 *
@@ -26,12 +25,12 @@ class FOFFormHeaderFieldselectable extends FOFFormHeaderField
 		$options = array();
 
 		// Do we have a class and method source for our options?
-		$source_file = empty($this->element['source_file']) ? '' : (string)$this->element['source_file'];
-		$source_class = empty($this->element['source_class']) ? '' : (string)$this->element['source_class'];
-		$source_method = empty($this->element['source_method']) ? '' : (string)$this->element['source_method'];
-		$source_key = empty($this->element['source_key']) ? '*' : (string)$this->element['source_key'];
-		$source_value = empty($this->element['source_value']) ? '*' : (string)$this->element['source_value'];
-		$source_translate = empty($this->element['source_translate']) ? 'true' : (string)$this->element['source_translate'];
+		$source_file = empty($this->element['source_file']) ? '' : (string) $this->element['source_file'];
+		$source_class = empty($this->element['source_class']) ? '' : (string) $this->element['source_class'];
+		$source_method = empty($this->element['source_method']) ? '' : (string) $this->element['source_method'];
+		$source_key = empty($this->element['source_key']) ? '*' : (string) $this->element['source_key'];
+		$source_value = empty($this->element['source_value']) ? '*' : (string) $this->element['source_value'];
+		$source_translate = empty($this->element['source_translate']) ? 'true' : (string) $this->element['source_translate'];
 		$source_translate = in_array(strtolower($source_translate), array('true','yes','1','on')) ? true : false;
 
 		if ($source_class && $source_method)
@@ -59,7 +58,7 @@ class FOFFormHeaderFieldselectable extends FOFFormHeaderField
 					$source_data = $source_class::$source_method();
 
 					// Loop through the data and prime the $options array
-					foreach($source_data as $k => $v)
+					foreach ($source_data as $k => $v)
 					{
 						$key = (empty($source_key) || ($source_key == '*')) ? $k : $v[$source_key];
 						$value = (empty($source_value) || ($source_value == '*')) ? $v : $v[$source_value];
@@ -78,7 +77,6 @@ class FOFFormHeaderFieldselectable extends FOFFormHeaderField
 		// Get the field $options
 		foreach ($this->element->children() as $option)
 		{
-
 			// Only add <option /> elements.
 			if ($option->getName() != 'option')
 			{
@@ -101,5 +99,4 @@ class FOFFormHeaderFieldselectable extends FOFFormHeaderField
 
 		return $options;
 	}
-
 }

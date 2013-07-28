@@ -79,6 +79,7 @@ class FOFViewJson extends FOFViewHtml
 		{
 			JError::setErrorHandling(E_ALL, 'ignore');
 		}
+
 		$hasFailed = false;
 
 		try
@@ -101,6 +102,7 @@ class FOFViewJson extends FOFViewHtml
 			{
 				$hasFailed = true;
 			}
+
 			JError::setErrorHandling(E_WARNING, 'callback');
 		}
 
@@ -198,6 +200,7 @@ class FOFViewJson extends FOFViewHtml
 			{
 				$hasFailed = true;
 			}
+
 			JError::setErrorHandling(E_WARNING, 'callback');
 		}
 

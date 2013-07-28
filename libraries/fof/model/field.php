@@ -131,7 +131,16 @@ abstract class FOFModelField
 			return '';
 		}
 
-		return $this->search($value, '=');
+		if (is_array($value))
+		{
+			$db = JFactory::getDbo();
+			$value = array_map(array($db, 'quote'), $value);
+			return '(' . $this->getFieldName() . ' IN (' . implode(',', $value) . '))';
+		}
+		else
+		{
+			return $this->search($value, '=');
+		}
 	}
 
 	/**

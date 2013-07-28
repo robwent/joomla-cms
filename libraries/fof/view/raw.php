@@ -127,7 +127,6 @@ class FOFViewRaw extends FOFView
 	 */
 	protected function preRender()
 	{
-
 	}
 
 	/**
@@ -138,7 +137,6 @@ class FOFViewRaw extends FOFView
 	 */
 	protected function postRender()
 	{
-
 	}
 
 	/**
@@ -316,5 +314,4 @@ class FOFViewRaw extends FOFView
 	{
 		return $this->perms;
 	}
-
 }

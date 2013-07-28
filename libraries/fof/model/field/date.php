@@ -26,6 +26,72 @@ class FOFModelFieldDate extends FOFModelFieldText
 	}
 
 	/**
+	 * Perform a between limits match. When $include is true
+	 * the condition tested is:
+	 * $from <= VALUE <= $to
+	 * When $include is false the condition tested is:
+	 * $from < VALUE < $to
+	 *
+	 * @param   mixed    $from     The lowest value to compare to
+	 * @param   mixed    $to       The higherst value to compare to
+	 * @param   boolean  $include  Should we include the boundaries in the search?
+	 *
+	 * @return  string  The SQL where clause for this search
+	 */
+	public function between($from, $to, $include = true)
+	{
+		if ($this->isEmpty($from) || $this->isEmpty($to))
+		{
+			return '';
+		}
+
+		$extra = '';
+
+		if ($include)
+		{
+			$extra = '=';
+		}
+
+		$sql = '((' . $this->getFieldName() . ' >' . $extra . ' ' . $from . ') AND ';
+		$sql .= '(' . $this->getFieldName() . ' <' . $extra . ' ' . $to . '))';
+
+		return $sql;
+	}
+
+	/**
+	 * Perform an outside limits match. When $include is true
+	 * the condition tested is:
+	 * (VALUE <= $from) || (VALUE >= $to)
+	 * When $include is false the condition tested is:
+	 * (VALUE < $from) || (VALUE > $to)
+	 *
+	 * @param   mixed    $from     The lowest value of the excluded range
+	 * @param   mixed    $to       The higherst value of the excluded range
+	 * @param   boolean  $include  Should we include the boundaries in the search?
+	 *
+	 * @return  string  The SQL where clause for this search
+	 */
+	public function outside($from, $to, $include = false)
+	{
+		if ($this->isEmpty($from) || $this->isEmpty($to))
+		{
+			return '';
+		}
+
+		$extra = '';
+
+		if ($include)
+		{
+			$extra = '=';
+		}
+
+		$sql = '((' . $this->getFieldName() . ' <' . $extra . ' ' . $from . ') AND ';
+		$sql .= '(' . $this->getFieldName() . ' >' . $extra . ' ' . $to . '))';
+
+		return $sql;
+	}
+
+	/**
 	 * Interval date search
 	 *
 	 * @param   string               $value     The value to search

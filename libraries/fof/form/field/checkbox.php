@@ -21,7 +21,6 @@ if (!class_exists('JFormFieldCheckbox'))
  */
 class FOFFormFieldCheckbox extends JFormFieldCheckbox implements FOFFormField
 {
-
 	protected $static;
 
 	protected $repeatable;
@@ -119,5 +118,4 @@ class FOFFormFieldCheckbox extends JFormFieldCheckbox implements FOFFormField
 			. htmlspecialchars($value, ENT_COMPAT, 'UTF-8') . '"' . $checked . $disabled . $onclick . ' />' .
 			'</span>';
 	}
-
 }

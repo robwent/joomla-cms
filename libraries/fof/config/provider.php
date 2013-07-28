@@ -135,6 +135,7 @@ class FOFConfigProvider
 		{
 			return $ret;
 		}
+
 		$data = JFile::read($filename);
 
 		// Load the XML data in a SimpleXMLElement object
@@ -152,6 +153,7 @@ class FOFConfigProvider
 		{
 			return $ret;
 		}
+
 		$xml = array_shift($areaData);
 
 		// Parse individual configuration domains
@@ -207,55 +209,4 @@ class FOFConfigProvider
 
 		return $domains;
 	}
-
-	/**
-	 * Internal method to parse the view configuration data
-	 *
-	 * @param   array  $viewData  The data to parse
-	 *
-	 * @return  array  Parsed data
-	 */
-	protected function parseViews(array $viewData)
-	{
-		$ret = array();
-
-		if (empty($viewData))
-		{
-			return $ret;
-		}
-
-		foreach ($viewData as $aView)
-		{
-			$key = (string) $aView['name'];
-
-			// Parse ACL options
-			$ret[$key]['acl'] = array();
-			$aclData = $aView->xpath('acl/task');
-
-			if (!empty($aclData))
-			{
-				foreach ($aclData as $acl)
-				{
-					$k = (string) $acl['name'];
-					$ret[$key]['acl'][$k] = (string) $acl;
-				}
-			}
-
-			// Parse taskmap
-			$ret[$key]['taskmap'] = array();
-			$taskmapData = $aView->xpath('taskmap/task');
-
-			if (!empty($taskmapData))
-			{
-				foreach ($taskmapData as $map)
-				{
-					$k = (string) $map['name'];
-					$ret[$key]['taskmap'][$k] = (string) $map;
-				}
-			}
-		}
-
-		return $ret;
-	}
-
 }

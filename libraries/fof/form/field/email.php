@@ -21,7 +21,6 @@ if (!class_exists('JFormFieldEMail'))
  */
 class FOFFormFieldEmail extends JFormFieldEMail implements FOFFormField
 {
-
 	protected $static;
 
 	protected $repeatable;
@@ -120,10 +119,12 @@ class FOFFormFieldEmail extends JFormFieldEMail implements FOFFormField
 		{
 			$class = (string) $this->element['class'];
 		}
+
 		if ($this->element['show_link'] == 'true')
 		{
 			$show_link = true;
 		}
+
 		if ($this->element['url'])
 		{
 			$link_url = $this->element['url'];
@@ -143,6 +144,7 @@ class FOFFormFieldEmail extends JFormFieldEMail implements FOFFormField
 		{
 			$this->value = JText::_($empty_replacement);
 		}
+
 		$value = htmlspecialchars($this->value, ENT_COMPAT, 'UTF-8');
 
 		// Create the HTML
@@ -164,5 +166,4 @@ class FOFFormFieldEmail extends JFormFieldEMail implements FOFFormField
 
 		return $html;
 	}
-
 }

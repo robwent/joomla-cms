@@ -206,7 +206,7 @@ class FOFHalDocument
 	 *
 	 * @return  string  The rendered document
 	 *
-	 * @throws  Exception  If the format is unknown, i.e. there is no suitable renderer
+	 * @throws  RuntimeException  If the format is unknown, i.e. there is no suitable renderer
 	 */
 	public function render($format = 'json')
 	{
@@ -214,7 +214,7 @@ class FOFHalDocument
 
 		if (!class_exists($class_name, true))
 		{
-			throw new Exception("Unsupported HAL Document format '$format'. Render aborted.");
+			throw new RuntimeException("Unsupported HAL Document format '$format'. Render aborted.");
 		}
 
 		$renderer = new $class_name($this);

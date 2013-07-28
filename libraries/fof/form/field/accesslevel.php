@@ -21,7 +21,6 @@ if (!class_exists('JFormFieldAccessLevel'))
  */
 class FOFFormFieldAccesslevel extends JFormFieldAccessLevel implements FOFFormField
 {
-
 	protected $static;
 
 	protected $repeatable;
@@ -94,6 +93,7 @@ class FOFFormFieldAccesslevel extends JFormFieldAccessLevel implements FOFFormFi
 		{
 			$options = array_merge($params, $options);
 		}
+
 		// If all levels is allowed, push it into the array.
 		elseif ($params)
 		{
@@ -137,6 +137,7 @@ class FOFFormFieldAccesslevel extends JFormFieldAccessLevel implements FOFFormFi
 		{
 			$options = array_merge($params, $options);
 		}
+
 		// If all levels is allowed, push it into the array.
 		elseif ($params)
 		{
@@ -147,5 +148,4 @@ class FOFFormFieldAccesslevel extends JFormFieldAccessLevel implements FOFFormFi
 			htmlspecialchars(FOFFormFieldList::getOptionName($options, $this->value), ENT_COMPAT, 'UTF-8') .
 			'</span>';
 	}
-
 }

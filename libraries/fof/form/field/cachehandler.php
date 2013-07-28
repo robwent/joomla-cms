@@ -21,7 +21,6 @@ if (!class_exists('JFormFieldCacheHandler'))
  */
 class FOFFormFieldCachehandler extends JFormFieldCacheHandler implements FOFFormField
 {
-
 	protected $static;
 
 	protected $repeatable;
@@ -95,5 +94,4 @@ class FOFFormFieldCachehandler extends JFormFieldCacheHandler implements FOFForm
 			htmlspecialchars(FOFFormFieldList::getOptionName($this->getOptions(), $this->value), ENT_COMPAT, 'UTF-8') .
 			'</span>';
 	}
-
 }

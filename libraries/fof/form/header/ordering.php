@@ -15,7 +15,6 @@ defined('_JEXEC') or die();
  */
 class FOFFormHeaderOrdering extends FOFFormHeader
 {
-
 	/**
 	 * Get the header
 	 *
@@ -59,5 +58,4 @@ class FOFFormHeaderOrdering extends FOFFormHeader
 			);
 		}
 	}
-
 }

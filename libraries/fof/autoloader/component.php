@@ -17,7 +17,7 @@ defined('FOF_INCLUDED') or die();
  * @package  FrameworkOnFramework
  * @since    2.1
  */
-class FOFAutloaderComponent
+class FOFAutoloaderComponent
 {
 	/**
 	 * An instance of this autoloader
@@ -43,7 +43,7 @@ class FOFAutloaderComponent
 	/**
 	 * Initialise this autoloader
 	 *
-	 * @return  FOFAutloaderComponent
+	 * @return  FOFAutoloaderComponent
 	 */
 	public static function init()
 	{
@@ -244,6 +244,7 @@ class FOFAutloaderComponent
 		{
 			$this->class_alias($alt_class, $class_name);
 		}
+
 		// No class found? Map to FOFController
 		elseif (!class_exists($class_name))
 		{
@@ -359,6 +360,7 @@ class FOFAutloaderComponent
 		{
 			$this->class_alias($alt_class, $class_name);
 		}
+
 		// No class found? Map to FOFModel
 		elseif (!class_exists($class_name))
 		{
@@ -497,6 +499,7 @@ class FOFAutloaderComponent
 		{
 			$this->class_alias($alt_class, $class_name);
 		}
+
 		// No class found? Map to FOFModel
 		elseif (!class_exists($class_name))
 		{
@@ -515,6 +518,7 @@ class FOFAutloaderComponent
 				{
 					$default_class = 'FOFView' . ucfirst($format);
 				}
+
 				$this->class_alias($default_class, $class_name, true);
 			}
 		}
@@ -605,6 +609,7 @@ class FOFAutloaderComponent
 		{
 			$this->class_alias($alt_class, $class_name);
 		}
+
 		// No class found? Map to FOFModel
 		elseif (!class_exists($class_name))
 		{

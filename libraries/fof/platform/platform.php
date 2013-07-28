@@ -53,6 +53,20 @@ abstract class FOFPlatform implements FOFPlatformInterface
 	protected static $instance = null;
 
 	/**
+	 * Set the error Handling, if possible
+	 *
+	 * @param integer 	$level     PHP error level (E_ALL)
+	 * @param string 	$log_level What to do with the error (ignore, callback)
+	 */
+	public function setErrorHandling($level, $log_level)
+	{
+		if ($this->checkVersion(JVERSION, '3.0', 'lt') )
+		{
+			JError::setErrorHandling($level, $log_level);
+		}
+	}
+
+	/**
 	 * Register a path where platform files will be looked for. These take
 	 * precedence over the built-in platform files.
 	 *
@@ -118,6 +132,7 @@ abstract class FOFPlatform implements FOFPlatformInterface
 			{
 				$paths = array_merge(array(__DIR__), self::$paths);
 			}
+
 			$paths = array_unique($paths);
 
 			// Loop all paths
@@ -378,7 +393,6 @@ abstract class FOFPlatform implements FOFPlatformInterface
 	 */
 	public function importPlugin($type)
 	{
-
 	}
 
 	/**
@@ -549,5 +563,4 @@ abstract class FOFPlatform implements FOFPlatformInterface
 	{
 		return true;
 	}
-
 }

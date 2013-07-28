@@ -15,7 +15,6 @@ defined('_JEXEC') or die();
  */
 class FOFFormHeaderFiltersql extends FOFFormHeaderFieldsql
 {
-
 	/**
 	 * Get the header
 	 *
@@ -25,5 +24,4 @@ class FOFFormHeaderFiltersql extends FOFFormHeaderFieldsql
 	{
 		return '';
 	}
-
 }

@@ -168,5 +168,4 @@ class FOFFormFieldCalendar extends JFormFieldCalendar implements FOFFormField
 			htmlspecialchars($this->value, ENT_COMPAT, 'UTF-8') .
 			'</span>';
 	}
-
 }

@@ -16,7 +16,6 @@ defined('_JEXEC') or die();
  */
 abstract class FOFQueryAbstract
 {
-
 	/**
 	 * Returns a new database query class
 	 *
@@ -39,5 +38,4 @@ abstract class FOFQueryAbstract
 
 		return $ret;
 	}
-
 }

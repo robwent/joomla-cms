@@ -15,7 +15,6 @@ defined('_JEXEC') or die();
  */
 class FOFEncryptTotp
 {
-
 	private $_passCodeLength = 6;
 
 	private $_pinModulo;
@@ -78,7 +77,6 @@ class FOFEncryptTotp
 
 		for ($i = -1; $i <= 1; $i++)
 		{
-
 			if ($this->getCode($secret, $time + $i) == $code)
 			{
 				return true;
@@ -99,7 +97,6 @@ class FOFEncryptTotp
 	 */
 	public function getCode($secret, $time = null)
 	{
-
 		$period = $this->getPeriod($time);
 		$base32 = new FOFEncryptBase32;
 		$secret = $base32->decode($secret);
@@ -120,10 +117,10 @@ class FOFEncryptTotp
 	/**
 	 * Extracts a part of a hash as an integer
 	 *
-	 * @param   type  $bytes  The hash
-	 * @param   type  $start  The char to start from (0 = first char)
+	 * @param   string  $bytes  The hash
+	 * @param   string  $start  The char to start from (0 = first char)
 	 *
-	 * @return type
+	 * @return  string
 	 */
 	protected function hashToInt($bytes, $start)
 	{
@@ -140,7 +137,7 @@ class FOFEncryptTotp
 	 * @param   string  $hostname  Hostname
 	 * @param   string  $secret    Secret string
 	 *
-	 * @return string
+	 * @return  string
 	 */
 	public function getUrl($user, $hostname, $secret)
 	{
@@ -154,7 +151,7 @@ class FOFEncryptTotp
 	/**
 	 * Generates a (semi-)random Secret Key for TOTP generation
 	 *
-	 * @return string
+	 * @return  string
 	 */
 	public function generateSecret()
 	{
@@ -165,9 +162,9 @@ class FOFEncryptTotp
 			$c = rand(0, 255);
 			$secret .= pack("c", $c);
 		}
+
 		$base32 = new FOFEncryptBase32;
 
 		return $base32->encode($secret);
 	}
-
 }

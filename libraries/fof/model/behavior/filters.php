@@ -44,7 +44,7 @@ class FOFModelBehaviorFilters extends FOFModelBehavior
 
 			$field = FOFModelField::getField($field, array('dbo' => $db, 'table_alias' => $model->getTableAlias()));
 
-			if (is_array($filterState) || is_object($filterState))
+			if ((is_array($filterState) && array_key_exists('value', $filterState)) || is_object($filterState))
 			{
 				$options = new JRegistry($filterState);
 			}

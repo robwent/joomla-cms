@@ -14,7 +14,7 @@ defined('FOF_INCLUDED') or die();
  * @package  FrameworkOnFramework
  * @since    2.1
  */
-class FOFAutloaderFof
+class FOFAutoloaderFof
 {
 	/**
 	 * An instance of this autoloader
@@ -33,7 +33,7 @@ class FOFAutloaderFof
 	/**
 	 * Initialise this autoloader
 	 *
-	 * @return  FOFAutloaderFof
+	 * @return  FOFAutoloaderFof
 	 */
 	public static function init()
 	{

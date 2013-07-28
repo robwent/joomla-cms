@@ -18,7 +18,6 @@ JFormHelper::loadFieldClass('text');
  */
 class FOFFormFieldButton extends FOFFormFieldText implements FOFFormField
 {
-
 	protected $static;
 
 	protected $repeatable;

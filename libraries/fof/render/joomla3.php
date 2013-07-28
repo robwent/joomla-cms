@@ -14,7 +14,6 @@ defined('_JEXEC') or die;
  */
 class FOFRenderJoomla3 extends FOFRenderStrapper
 {
-
 	/**
 	 * Public constructor. Determines the priority of this class and if it should be enabled
 	 */
@@ -85,5 +84,4 @@ class FOFRenderJoomla3 extends FOFRenderStrapper
 
 		echo "</div>\n";
 	}
-
 }

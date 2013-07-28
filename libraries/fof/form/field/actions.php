@@ -76,36 +76,36 @@ class FOFFormFieldActions extends JFormFieldList implements FOFFormField
 		$config = array(
 			'published'		 => 1,
 			'unpublished'	 => 1,
-			'archived'		 => 1,
-			'trash'			 => 1,
+			'archived'		 => 0,
+			'trash'			 => 0,
 			'all'			 => 0,
 		);
 
 		$stack = array();
 
-		if ($this->element['show_published'] == 'false')
+		if (isset($this->element['show_published']))
 		{
-			$config['published'] = 0;
+			$config['published'] = FOFStringUtils::toBool($this->element['show_published']);
 		}
 
-		if ($this->element['show_unpublished'] == 'false')
+		if (isset($this->element['show_unpublished']))
 		{
-			$config['unpublished'] = 0;
+			$config['unpublished'] = FOFStringUtils::toBool($this->element['show_unpublished']);
 		}
 
-		if ($this->element['show_archived'] == 'true')
+		if (isset($this->element['show_archived']))
 		{
-			$config['archived'] = 1;
+			$config['archived'] = FOFStringUtils::toBool($this->element['show_archived']);
 		}
 
-		if ($this->element['show_trash'] == 'true')
+		if (isset($this->element['show_trash']))
 		{
-			$config['trash'] = 1;
+			$config['trash'] = FOFStringUtils::toBool($this->element['show_trash']);
 		}
 
-		if ($this->element['show_all'] == 'true')
+		if (isset($this->element['show_all']))
 		{
-			$config['all'] = 1;
+			$config['all'] = FOFStringUtils::toBool($this->element['show_all']);
 		}
 
 		return $config;
@@ -209,11 +209,14 @@ class FOFFormFieldActions extends JFormFieldList implements FOFFormField
 		// Render a published field
 		if ($publishedFieldName = $this->item->getColumnAlias('enabled'))
 		{
-			// Generate a FOFFormFieldPublished field
-			$publishedField = $this->getPublishedField($publishedFieldName);
+			if ($config['published'] || $config['unpublished'])
+			{
+				// Generate a FOFFormFieldPublished field
+				$publishedField = $this->getPublishedField($publishedFieldName);
 
-			// Render the publish button
-			$html .= $publishedField->getRepeatable();
+				// Render the publish button
+				$html .= $publishedField->getRepeatable();
+			}
 
 			if ($config['archived'])
 			{
@@ -233,7 +236,7 @@ class FOFFormFieldActions extends JFormFieldList implements FOFFormField
 			}
 
 			// Render dropdown list
-			if ($config['archived'] && $config['trash'])
+			if ($config['archived'] || $config['trash'])
 			{
 				$html .= JHtml::_('actionsdropdown.render', $this->item->title);
 			}

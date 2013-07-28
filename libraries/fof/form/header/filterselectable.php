@@ -15,7 +15,6 @@ defined('_JEXEC') or die();
  */
 class FOFFormHeaderFilterselectable extends FOFFormHeaderFieldselectable
 {
-
 	/**
 	 * Get the header
 	 *
@@ -25,5 +24,4 @@ class FOFFormHeaderFilterselectable extends FOFFormHeaderFieldselectable
 	{
 		return '';
 	}
-
 }

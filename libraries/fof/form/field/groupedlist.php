@@ -21,7 +21,6 @@ if (!class_exists('JFormFieldGroupedList'))
  */
 class FOFFormFieldGroupedlist extends JFormFieldGroupedList implements FOFFormField
 {
-
 	protected $static;
 
 	protected $repeatable;
@@ -179,5 +178,4 @@ class FOFFormFieldGroupedlist extends JFormFieldGroupedList implements FOFFormFi
 
 		return $ret;
 	}
-
 }

@@ -64,13 +64,13 @@ class FOFHalLink
 	 * @param   string   $hreflang   See $this->_hreflang
 	 * @param   string   $title      See $this->_title
 	 *
-	 * @throws  Exception  If $href is empty
+	 * @throws  RuntimeException  If $href is empty
 	 */
 	public function __construct($href, $templated = false, $name = null, $hreflang = null, $title = null)
 	{
 		if (empty($href))
 		{
-			throw new Exception('A HAL link must always have a non-empty href');
+			throw new RuntimeException('A HAL link must always have a non-empty href');
 		}
 
 		$this->_href = $href;

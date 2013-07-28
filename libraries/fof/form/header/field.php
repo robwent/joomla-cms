@@ -15,7 +15,6 @@ defined('_JEXEC') or die();
  */
 class FOFFormHeaderField extends FOFFormHeader
 {
-
 	/**
 	 * Get the header
 	 *
@@ -31,12 +30,13 @@ class FOFFormHeaderField extends FOFFormHeader
 		{
 			$view = $this->form->getView();
 
-			return JHTML::_('grid.sort', $label, $this->name, $view->getLists()->order_Dir, $view->getLists()->order);
+			return JHTML::_('grid.sort', $label, $this->name,
+				$view->getLists()->order_Dir, $view->getLists()->order
+			);
 		}
 		else
 		{
 			return JText::_($label);
 		}
 	}
-
 }

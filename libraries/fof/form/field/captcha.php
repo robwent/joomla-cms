@@ -18,7 +18,6 @@ JFormHelper::loadFieldClass('text');
  */
 class FOFFormFieldCaptcha extends JFormFieldCaptcha implements FOFFormField
 {
-
 	protected $static;
 
 	protected $repeatable;
@@ -84,5 +83,4 @@ class FOFFormFieldCaptcha extends JFormFieldCaptcha implements FOFFormField
 	{
 		return $this->getInput();
 	}
-
 }

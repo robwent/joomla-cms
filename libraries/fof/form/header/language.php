@@ -15,7 +15,6 @@ defined('_JEXEC') or die();
  */
 class FOFFormHeaderLanguage extends FOFFormHeaderFieldselectable
 {
-
 	/**
 	 * Method to get the filter options.
 	 *
@@ -40,5 +39,4 @@ class FOFFormHeaderLanguage extends FOFFormHeaderFieldselectable
 
 		return $options;
 	}
-
 }

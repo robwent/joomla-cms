@@ -15,7 +15,6 @@ defined('_JEXEC') or die();
  */
 class FOFFormHeaderAccesslevel extends FOFFormHeaderFieldselectable
 {
-
 	/**
 	 * Method to get the list of access levels
 	 *
@@ -40,5 +39,4 @@ class FOFFormHeaderAccesslevel extends FOFFormHeaderFieldselectable
 
 		return $options;
 	}
-
 }

@@ -736,5 +736,4 @@ class FOFPlatformJoomla extends FOFPlatform implements FOFPlatformInterface
 
 		return $app->triggerEvent('onLogoutUser', array($parameters, $options));
 	}
-
 }

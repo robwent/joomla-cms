@@ -132,15 +132,17 @@ class FOFFormFieldComponents extends JFormFieldList implements FOFFormField
 		}
 
 		$query = $db->getQuery(true)
-			->select(array(
-				$db->qn('name'),
-				$db->qn('element'),
-				$db->qn('client_id'),
-				$db->qn('manifest_cache'),
-			))
+			->select(
+				array(
+					$db->qn('name'),
+					$db->qn('element'),
+					$db->qn('client_id'),
+					$db->qn('manifest_cache'),
+				)
+			)
 			->from($db->qn('#__extensions'))
-			->where($db->qn('type').' = '.$db->q('component'))
-			->where($db->qn('client_id').' IN ('.implode(',', $client_ids).')');
+			->where($db->qn('type') . ' = ' . $db->q('component'))
+			->where($db->qn('client_id') . ' IN (' . implode(',', $client_ids) . ')');
 		$db->setQuery($query);
 		$components = $db->loadObjectList('element');
 
@@ -148,11 +150,13 @@ class FOFFormFieldComponents extends JFormFieldList implements FOFFormField
 		// Also translate component names with JText::_()
 		$aComponents = array();
 		$user = JFactory::getUser();
+
 		foreach ($components as $component)
 		{
 			// Don't show components in the list where the user doesn't have access for
 			// TODO: perhaps add an option for this
-			if(!$user->authorise('core.manage', $component->element)) {
+			if (!$user->authorise('core.manage', $component->element))
+			{
 				continue;
 			}
 
@@ -167,7 +171,8 @@ class FOFFormFieldComponents extends JFormFieldList implements FOFFormField
 		// ordering changed due to the JText::_() translation
 		uasort($aComponents, function ($a, $b) {
 			return strcasecmp($a->text, $b->text);
-		});
+			}
+		);
 
 		return $aComponents;
 	}
@@ -175,12 +180,12 @@ class FOFFormFieldComponents extends JFormFieldList implements FOFFormField
 	/**
 	 * Translate a list of objects with JText::_().
 	 *
-	 * @param  array $item			The array of objects
-	 * @param  string $type			The extension type (e.g. component)
+	 * @param   array   $item  The array of objects
+	 * @param   string  $type  The extension type (e.g. component)
 	 *
-	 * @since    2.1
+	 * @since   2.1
 	 *
-	 * @return string $text			The translated name of the extension
+	 * @return  string  $text  The translated name of the extension
 	 *
 	 * @see administrator/com_installer/models/extension.php
 	 */
@@ -189,18 +194,25 @@ class FOFFormFieldComponents extends JFormFieldList implements FOFFormField
 		// Map the manifest cache to $item. This is needed to get the name from the
 		// manifest_cache and NOT from the name column, else some JText::_() translations fails.
 		$mData = json_decode($item->manifest_cache);
-		if ($mData) {
-			foreach($mData as $key => $value) {
-				if ($key == 'type') {
-					// ignore the type field
+
+		if ($mData)
+		{
+			foreach ($mData as $key => $value)
+			{
+				if ($key == 'type')
+				{
+					// Ignore the type field
 					continue;
 				}
+
 				$item->$key = $value;
 			}
 		}
 
 		$lang = JFactory::getLanguage();
-		switch ($type) {
+
+		switch ($type)
+		{
 			case 'component':
 				$source = JPATH_ADMINISTRATOR . '/components/' . $item->element;
 				$lang->load("$item->element.sys", JPATH_ADMINISTRATOR, null, false, false)
@@ -209,6 +221,7 @@ class FOFFormFieldComponents extends JFormFieldList implements FOFFormField
 					||	$lang->load("$item->element.sys", $source, $lang->getDefault(), false, false);
 				break;
 		}
+
 		$text = JText::_($item->name);
 
 		return $text;

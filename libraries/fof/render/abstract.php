@@ -147,10 +147,10 @@ abstract class FOFRenderAbstract
 	/**
 	 * Renders a raw FOFForm and returns the corresponding HTML
 	 *
-	 * @param   FOFForm   &$form  	The form to render
-	 * @param   FOFModel  $model  	The model providing our data
-	 * @param   FOFInput  $input  	The input object
-	 * @param   string	  $formType The form type e.g. 'edit' or 'read'
+	 * @param   FOFForm   &$form  	 The form to render
+	 * @param   FOFModel  $model  	 The model providing our data
+	 * @param   FOFInput  $input  	 The input object
+	 * @param   string	  $formType  The form type e.g. 'edit' or 'read'
 	 *
 	 * @return  string    The HTML rendering of the form
 	 */

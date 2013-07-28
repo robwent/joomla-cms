@@ -121,6 +121,7 @@ class FOFDispatcher extends JObject
 				{
 					$config['input'] = (array) $config['input'];
 				}
+
 				$config['input'] = array_merge($_REQUEST, $config['input']);
 				$input = new FOFInput($config['input']);
 			}
@@ -193,7 +194,7 @@ class FOFDispatcher extends JObject
 		}
 		else
 		{
-			$this->input = JRequest::get('default', 3);
+			$this->input = new FOFInput;
 		}
 
 		// Get the default values for the component name
@@ -222,6 +223,7 @@ class FOFDispatcher extends JObject
 		{
 			$this->view = $this->defaultView;
 		}
+
 		$this->layout = $this->input->getCmd('layout', null);
 
 		// Overrides from the config
@@ -419,6 +421,7 @@ class FOFDispatcher extends JObject
 				{
 					$task = 'add';
 				}
+
 				// If it's an edit in the frontend, it's really a read
 				elseif (($task == 'edit') && FOFPlatform::getInstance()->isFrontend())
 				{
@@ -729,5 +732,4 @@ class FOFDispatcher extends JObject
 
 		return array($isCLI, $isAdmin);
 	}
-
 }

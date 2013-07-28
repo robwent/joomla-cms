@@ -73,12 +73,14 @@ abstract class FOFStringUtils
 	 */
 	public static function toBool($string)
 	{
-		if ($string === 'true')
+		$string = trim((string) $string);
+
+		if ($string == 'true')
 		{
 			return true;
 		}
 
-		if ($string === 'false')
+		if ($string == 'false')
 		{
 			return false;
 		}

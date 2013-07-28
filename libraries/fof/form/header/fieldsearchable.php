@@ -15,7 +15,6 @@ defined('_JEXEC') or die();
  */
 class FOFFormHeaderFieldsearchable extends FOFFormHeaderField
 {
-
 	/**
 	 * Get the filter field
 	 *
@@ -82,5 +81,4 @@ class FOFFormHeaderFieldsearchable extends FOFFormHeaderField
 
 		return $html;
 	}
-
 }

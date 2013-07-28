@@ -24,7 +24,6 @@ if (!class_exists('JFormFieldEditor'))
  */
 class FOFFormFieldEditor extends JFormFieldEditor implements FOFFormField
 {
-
 	protected $static;
 
 	protected $repeatable;
@@ -94,5 +93,4 @@ class FOFFormFieldEditor extends JFormFieldEditor implements FOFFormField
 
 		return '<div class="' . $this->id . ' ' . $class . '">' . $this->value . '</div>';
 	}
-
 }

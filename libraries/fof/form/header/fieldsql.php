@@ -15,7 +15,6 @@ defined('_JEXEC') or die();
  */
 class FOFFormHeaderFieldsql extends FOFFormHeaderFieldselectable
 {
-
 	/**
 	 * Create objects for the options
 	 *
@@ -59,5 +58,4 @@ class FOFFormHeaderFieldsql extends FOFFormHeaderFieldselectable
 
 		return $options;
 	}
-
 }

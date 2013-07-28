@@ -15,7 +15,6 @@ defined('_JEXEC') or die();
  */
 class FOFInput extends JInput
 {
-
 	/**
 	 * Public constructor. Overriden to allow specifying the global input array
 	 * to use as a string and instantiate from an objetc holding variables.
@@ -113,7 +112,7 @@ class FOFInput extends JInput
 	/**
 	 * Returns a copy of the raw data stored in the class
 	 *
-	 * @return type
+	 * @return  array
 	 */
 	public function getData()
 	{
@@ -211,7 +210,7 @@ class FOFInput extends JInput
 	 * @param   array    &$input     The input array or FOFInput object
 	 * @param   boolean  $overwrite  Should I overwrite existing values (default: true)
 	 *
-	 * @return  void
+	 * @return  string   Previous value
 	 *
 	 * @deprecated
 	 */
@@ -295,7 +294,7 @@ class FOFInput extends JInput
 		{
 			$var = $this->filter->clean($var, $type);
 		}
+
 		return $var;
 	}
-
 }

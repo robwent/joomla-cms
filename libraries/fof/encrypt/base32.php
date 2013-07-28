@@ -20,7 +20,6 @@ class FOFEncryptBase32
 	 * The character set as defined by RFC3548
 	 * @link http://www.ietf.org/rfc/rfc3548.txt
 	 */
-
 	const CSRFC3548 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
 	/**
@@ -123,6 +122,8 @@ class FOFEncryptBase32
 	 * @param   string  $str  The base32 string to convert
 	 *
 	 * @return  string  Ascii binary string
+	 *
+	 * @throws  Exception
 	 */
 	private function toBin($str)
 	{
@@ -189,7 +190,7 @@ class FOFEncryptBase32
 	 *
 	 * @param   string  $str  The string of 0's and 1's you want to convert
 	 *
-	 * @return  char  Resulting base32 character
+	 * @return  string  Resulting base32 character
 	 *
 	 * @access private
 	 */
@@ -207,9 +208,9 @@ class FOFEncryptBase32
 	 * Used with array_map to map the characters from a base32
 	 * character set directly into a binary string
 	 *
-	 * @param   char  $chr  The caracter to map
+	 * @param   string  $chr  The caracter to map
 	 *
-	 * @return  str  String of 0's and 1's
+	 * @return  string  String of 0's and 1's
 	 *
 	 * @access private
 	 */

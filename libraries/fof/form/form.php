@@ -17,7 +17,6 @@ defined('_JEXEC') or die();
  */
 class FOFForm extends JForm
 {
-
 	/**
 	 * The model attached to this view
 	 *
@@ -296,23 +295,21 @@ class FOFForm extends JForm
 		// Get only fields in a specific group?
 		if ($group)
 		{
-
 			// Get the fields elements for a given group.
 			$elements = &$this->findHeader($group);
 
 			// Get all of the field elements for the fields elements.
 			foreach ($elements as $element)
 			{
-
 				// If there are field elements add them to the return result.
 				if ($tmp = $element->xpath('descendant::header'))
 				{
-
 					// If we also want fields in nested groups then just merge the arrays.
 					if ($nested)
 					{
 						$fields = array_merge($fields, $tmp);
 					}
+
 					// If we want to exclude nested groups then we need to check each field.
 					else
 					{
@@ -403,7 +400,6 @@ class FOFForm extends JForm
 		// Let's get the appropriate field element based on the method arguments.
 		if ($group)
 		{
-
 			// Get the fields elements for a given group.
 			$elements = &$this->findGroup($group);
 
@@ -459,6 +455,7 @@ class FOFForm extends JForm
 				{
 					continue;
 				}
+
 				// Found it!
 				else
 				{
@@ -618,5 +615,4 @@ class FOFForm extends JForm
 	{
 		return FOFFormHelper::addRulePath($new);
 	}
-
 }

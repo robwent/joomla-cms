@@ -23,6 +23,13 @@ defined('_JEXEC') or die();
 interface FOFPlatformInterface
 {
 	/**
+	 * Set the error Handling, if possible
+	 *
+	 * @param integer 	$level     PHP error level (E_ALL)
+	 * @param string 	$log_level What to do with the error (ignore, callback)
+	 */
+	public function setErrorHandling($level, $log_level);
+	/**
 	 * Returns the ordering of the platform class. Files with a lower ordering
 	 * number will be loaded first.
 	 *

@@ -15,7 +15,6 @@ defined('_JEXEC') or die();
  */
 class FOFFormHeaderRowselect extends FOFFormHeader
 {
-
 	/**
 	 * Get the header
 	 *
@@ -27,5 +26,4 @@ class FOFFormHeaderRowselect extends FOFFormHeader
 			. JText::_('JGLOBAL_CHECK_ALL')
 			. '" onclick="Joomla.checkAll(this)" />';
 	}
-
 }

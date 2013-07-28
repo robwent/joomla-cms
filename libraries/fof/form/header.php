@@ -447,8 +447,6 @@ abstract class FOFFormHeader
 	 */
 	protected function getLabel()
 	{
-		$title = '';
-
 		// Get the label text from the XML element, defaulting to the element name.
 		$title = $this->element['label'] ? (string) $this->element['label'] : '';
 
@@ -518,6 +516,7 @@ abstract class FOFFormHeader
 			{
 				$this->header = $this->getHeader();
 			}
+
 			$sortable = !empty($this->header);
 		}
 

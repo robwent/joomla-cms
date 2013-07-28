@@ -17,6 +17,11 @@ if (class_exists('FOFTable', false))
 	return;
 }
 
+if (!interface_exists('JTableInterface', true))
+{
+	interface JTableInterface {}
+}
+
 /**
  * FrameworkOnFramework Table class. The Table is one part controller, one part
  * model and one part data adapter. It's supposed to handle operations for single
@@ -541,7 +546,7 @@ class FOFTable extends JObject implements JTableInterface
 		// Apply table behaviors
 		$type = explode("_", $this->_tbl);
 		$type = $type[count($type) - 1];
-		
+
 		$configKey = $component . '.tables.' . FOFInflector::singularize($type) . '.behaviors';
 
 		if (isset($config['behaviors']))
@@ -2425,11 +2430,12 @@ class FOFTable extends JObject implements JTableInterface
 	protected function onAfterLoad(&$result)
 	{
 		// Call the behaviors
-		$result = $this->tableDispatcher->trigger('onAfterLoad', array(&$this, &$result));
+		$eventRistult = $this->tableDispatcher->trigger('onAfterLoad', array(&$this, &$result));
 
-		if (in_array(false, $result, true))
+		if (in_array(false, $eventRistult, true))
 		{
 			// Behavior failed, return false
+			$result = false;
 			return false;
 		}
 
@@ -2590,7 +2596,7 @@ class FOFTable extends JObject implements JTableInterface
 	 * The event which runs after binding data to the class
 	 *
 	 * @param   object|array  &$src  The data to bind
-	 * 
+	 *
 	 * @return  boolean  True to allow binding without an error
 	 */
 	protected function onAfterBind(&$src)

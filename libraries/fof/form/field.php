@@ -15,7 +15,6 @@ defined('_JEXEC') or die();
  */
 interface FOFFormField
 {
-
 	/**
 	 * Get the rendering of this field type for static display, e.g. in a single
 	 * item view (typically a "read" task).

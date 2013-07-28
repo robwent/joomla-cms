@@ -15,7 +15,6 @@ defined('_JEXEC') or die();
  */
 class FOFFormHeaderFiltersearchable extends FOFFormHeaderFieldsearchable
 {
-
 	/**
 	 * Get the header
 	 *
@@ -25,5 +24,4 @@ class FOFFormHeaderFiltersearchable extends FOFFormHeaderFieldsearchable
 	{
 		return '';
 	}
-
 }

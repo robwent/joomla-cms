@@ -16,7 +16,6 @@ defined('_JEXEC') or die();
  */
 class FOFEncryptAES
 {
-
 	/** @var string The AES cipher to use (this is an mcrypt identifier, not the bit strength) */
 	private $_cipherType = 0;
 
@@ -77,9 +76,6 @@ class FOFEncryptAES
 	 */
 	public function encryptString($stringToEncrypt, $base64encoded = true)
 	{
-		// Calculate the key to use for encryption
-		$keySize = mcrypt_get_key_size($this->_cipherType, $this->_cipherMode);
-
 		if (strlen($this->_keyString) != 32)
 		{
 			$key = hash('sha256', $this->_keyString, true);
@@ -97,6 +93,7 @@ class FOFEncryptAES
 		{
 			$iv = mcrypt_create_iv($iv_size, MCRYPT_DEV_RANDOM);
 		}
+
 		if (empty($iv))
 		{
 			$iv = mcrypt_create_iv($iv_size, MCRYPT_RAND);
@@ -128,9 +125,6 @@ class FOFEncryptAES
 	 */
 	public function decryptString($stringToDecrypt, $base64encoded = true)
 	{
-		// Calculate the key to use for encryption
-		$keySize = mcrypt_get_key_size($this->_cipherType, $this->_cipherMode);
-
 		if (strlen($this->_keyString) != 32)
 		{
 			$key = hash('sha256', $this->_keyString, true);
@@ -241,5 +235,4 @@ class FOFEncryptAES
 
 		return true;
 	}
-
 }

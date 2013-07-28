@@ -14,7 +14,6 @@ defined('_JEXEC') or die;
  */
 class FOFRenderStrapper extends FOFRenderAbstract
 {
-
 	/**
 	 * Public constructor. Determines the priority of this class and if it should be enabled
 	 */

@@ -110,6 +110,7 @@ class FOFViewCsv extends FOFViewHtml
 		{
 			$document->setMimeEncoding('text/csv');
 		}
+
 		JResponse::setHeader('Pragma', 'public');
 		JResponse::setHeader('Expires', '0');
 		JResponse::setHeader('Cache-Control', 'must-revalidate, post-check=0, pre-check=0');
