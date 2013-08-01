@@ -5,7 +5,7 @@
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
  */
 // Protect from unauthorized access
-defined('_JEXEC') or die();
+defined('_JEXEC') or die;
 
 /**
  * FrameworkOnFramework table behavior class for assets
@@ -18,8 +18,8 @@ class FOFTableBehaviorAssets extends FOFTableBehavior
 	/**
 	 * The event which runs before storing (saving) data to the database
 	 *
-	 * @param   FOFTable  &$table  The table which calls this event
-	 * @param   boolean  $updateNulls  Should nulls be saved as nulls (true) or just skipped over (false)?
+	 * @param   FOFTable  &$table       The table which calls this event
+	 * @param   boolean   $updateNulls  Should nulls be saved as nulls (true) or just skipped over (false)?
 	 *
 	 * @return  boolean  True to allow saving
 	 */
@@ -28,6 +28,7 @@ class FOFTableBehaviorAssets extends FOFTableBehavior
 		$result = true;
 
 		$asset_id_field	= $table->getColumnAlias('asset_id');
+
 		if (in_array($asset_id_field, $table->getKnownFields()))
 		{
 			if (!empty($table->$asset_id_field))
@@ -45,79 +46,79 @@ class FOFTableBehaviorAssets extends FOFTableBehavior
 		// Create the object used for inserting/udpating data to the database
 		$fields     = $table->getTableFields();
 
-        // Let's remove the asset_id field, since we unset the property above and we would get a PHP notice
-        if(isset($fields[$asset_id_field]))
-        {
-            unset($fields[$asset_id_field]);
-        }
+		// Let's remove the asset_id field, since we unset the property above and we would get a PHP notice
+		if (isset($fields[$asset_id_field]))
+		{
+			unset($fields[$asset_id_field]);
+		}
 
-        /*
-         * Asset Tracking
-         */
-        if (in_array($asset_id_field, $table->getKnownFields()) && $table->isAssetsTracked())
-        {
-        	$parentId = $table->getAssetParentId();
-        	$name     = $table->getAssetName();
-        	$title    = $table->getAssetTitle();
+		/*
+		 * Asset Tracking
+		 */
+		if (in_array($asset_id_field, $table->getKnownFields()) && $table->isAssetsTracked())
+		{
+			$parentId = $table->getAssetParentId();
+			$name     = $table->getAssetName();
+			$title    = $table->getAssetTitle();
 
-        	$asset = JTable::getInstance('Asset', 'JTable', array('dbo' => $table->getDbo()));
-        	$asset->loadByName($name);
+			$asset = JTable::getInstance('Asset', 'JTable', array('dbo' => $table->getDbo()));
+			$asset->loadByName($name);
 
-        	// Re-inject the asset id.
-        	$this->$asset_id_field = $asset->id;
+			// Re-inject the asset id.
+			$this->$asset_id_field = $asset->id;
 
-        	// Check for an error.
-        	$error = $asset->getError();
+			// Check for an error.
+			$error = $asset->getError();
 
-        	if ($error)
-        	{
-        		$table->setError($error);
+			if ($error)
+			{
+				$table->setError($error);
 
-        		return false;
-        	}
+				return false;
+			}
 
-        	// Specify how a new or moved node asset is inserted into the tree.
-        	if (empty($table->$asset_id_field) || $asset->parent_id != $parentId)
-        	{
-        		$asset->setLocation($parentId, 'last-child');
-        	}
+			// Specify how a new or moved node asset is inserted into the tree.
+			if (empty($table->$asset_id_field) || $asset->parent_id != $parentId)
+			{
+				$asset->setLocation($parentId, 'last-child');
+			}
 
-        	// Prepare the asset to be stored.
-        	$asset->parent_id = $parentId;
-        	$asset->name      = $name;
-        	$asset->title     = $title;
+			// Prepare the asset to be stored.
+			$asset->parent_id = $parentId;
+			$asset->name      = $name;
+			$asset->title     = $title;
 
-        	if ($table->getRules() instanceof JAccessRules)
-        	{
-        		$asset->rules = (string) $table->getRules();
-        	}
+			if ($table->getRules() instanceof JAccessRules)
+			{
+				$asset->rules = (string) $table->getRules();
+			}
 
-        	if (!$asset->check() || !$asset->store($updateNulls))
-        	{
-        		$table->setError($asset->getError());
+			if (!$asset->check() || !$asset->store($updateNulls))
+			{
+				$table->setError($asset->getError());
 
-        		return false;
-        	}
+				return false;
+			}
 
-        	// Create an asset_id or heal one that is corrupted.
-        	if (empty($table->$asset_id_field) || (($currentAssetId != $table->$asset_id_field) && !empty($table->$asset_id_field)))
-        	{
-        		// Update the asset_id field in this table.
-        		$table->$asset_id_field = (int) $asset->id;
+			// Create an asset_id or heal one that is corrupted.
+			if (empty($table->$asset_id_field) || (($currentAssetId != $table->$asset_id_field) && !empty($table->$asset_id_field)))
+			{
+				// Update the asset_id field in this table.
+				$table->$asset_id_field = (int) $asset->id;
 
-        		$k = $table->getKeyName();
+				$k = $table->getKeyName();
 
-        		$query = $table->getDbo()->getQuery(true);
-        		$query->update($table->getDbo()->qn($table->getTableName()));
-        		$query->set('asset_id = ' . (int) $table->$asset_id_field);
-        		$query->where($table->getDbo()->qn($k) . ' = ' . (int) $table->$k);
-        		$table->getDbo()->setQuery($query);
+				$query = $table->getDbo()->getQuery(true);
+				$query->update($table->getDbo()->qn($table->getTableName()));
+				$query->set('asset_id = ' . (int) $table->$asset_id_field);
+				$query->where($table->getDbo()->qn($k) . ' = ' . (int) $table->$k);
+				$table->getDbo()->setQuery($query);
 
-        		$table->getDbo()->execute();
-        	}
+				$table->getDbo()->execute();
+			}
 
-        	$result = true;
-        }
+			$result = true;
+		}
 
 		return $result;
 	}
@@ -125,8 +126,8 @@ class FOFTableBehaviorAssets extends FOFTableBehavior
 	/**
 	 * The event which runs after binding data to the table
 	 *
-	 * @param   FOFTable  &$table  The table which calls this event
-	 * @param   object|array  &$src  The data to bind
+	 * @param   FOFTable      &$table  The table which calls this event
+	 * @param   object|array  &$src    The data to bind
 	 *
 	 * @return  boolean  True on success
 	 */
@@ -148,8 +149,8 @@ class FOFTableBehaviorAssets extends FOFTableBehavior
 	/**
 	 * The event which runs before deleting a record
 	 *
-	 * @param   FOFTable &$table  The table which calls this event
-	 * @param   integer  $oid  The PK value of the record to delete
+	 * @param   FOFTable  &$table  The table which calls this event
+	 * @param   integer   $oid     The PK value of the record to delete
 	 *
 	 * @return  boolean  True to allow the deletion
 	 */
@@ -177,6 +178,7 @@ class FOFTableBehaviorAssets extends FOFTableBehavior
 			else
 			{
 				$table->setError($asset->getError());
+
 				return false;
 			}
 		}

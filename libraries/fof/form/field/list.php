@@ -5,7 +5,7 @@
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
  */
 // Protect from unauthorized access
-defined('_JEXEC') or die();
+defined('_JEXEC') or die;
 
 if (!class_exists('JFormFieldList'))
 {
@@ -249,11 +249,12 @@ class FOFFormFieldList extends JFormFieldList implements FOFFormField
 		// Create a $sortOptions array in order to apply sorting
 		$i = 0;
 		$sortOptions = array();
+
 		foreach ($this->element->children() as $option)
 		{
 			$name = JText::alt(trim((string) $option), preg_replace('/[^a-zA-Z0-9_\-]/', '_', $this->fieldname));
 
-			$sortOptions[$i] = new stdClass();
+			$sortOptions[$i] = new stdClass;
 			$sortOptions[$i]->option = $option;
 			$sortOptions[$i]->value = $option['value'];
 			$sortOptions[$i]->name = $name;
@@ -271,12 +272,12 @@ class FOFFormFieldList extends JFormFieldList implements FOFFormField
 		$options = array();
 
 		// Do we have a class and method source for our options?
-		$source_file = empty($this->element['source_file']) ? '' : (string)$this->element['source_file'];
-		$source_class = empty($this->element['source_class']) ? '' : (string)$this->element['source_class'];
-		$source_method = empty($this->element['source_method']) ? '' : (string)$this->element['source_method'];
-		$source_key = empty($this->element['source_key']) ? '*' : (string)$this->element['source_key'];
-		$source_value = empty($this->element['source_value']) ? '*' : (string)$this->element['source_value'];
-		$source_translate = empty($this->element['source_translate']) ? 'true' : (string)$this->element['source_translate'];
+		$source_file      = empty($this->element['source_file']) ? '' : (string) $this->element['source_file'];
+		$source_class     = empty($this->element['source_class']) ? '' : (string) $this->element['source_class'];
+		$source_method    = empty($this->element['source_method']) ? '' : (string) $this->element['source_method'];
+		$source_key       = empty($this->element['source_key']) ? '*' : (string) $this->element['source_key'];
+		$source_value     = empty($this->element['source_value']) ? '*' : (string) $this->element['source_value'];
+		$source_translate = empty($this->element['source_translate']) ? 'true' : (string) $this->element['source_translate'];
 		$source_translate = in_array(strtolower($source_translate), array('true','yes','1','on')) ? true : false;
 
 		if ($source_class && $source_method)
@@ -304,7 +305,7 @@ class FOFFormFieldList extends JFormFieldList implements FOFFormField
 					$source_data = $source_class::$source_method();
 
 					// Loop through the data and prime the $options array
-					foreach($source_data as $k => $v)
+					foreach ($source_data as $k => $v)
 					{
 						$key = (empty($source_key) || ($source_key == '*')) ? $k : $v[$source_key];
 						$value = (empty($source_value) || ($source_value == '*')) ? $v : $v[$source_value];

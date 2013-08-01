@@ -5,7 +5,7 @@
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
  */
 // Protect from unauthorized access
-defined('_JEXEC') or die();
+defined('_JEXEC') or die;
 
 if (!class_exists('JFormFieldImagelist'))
 {
@@ -21,7 +21,6 @@ if (!class_exists('JFormFieldImagelist'))
  */
 class FOFFormFieldImagelist extends JFormFieldImageList implements FOFFormField
 {
-
 	protected $static;
 
 	protected $repeatable;
@@ -80,26 +79,32 @@ class FOFFormFieldImagelist extends JFormFieldImageList implements FOFFormField
 		{
 			$imgattr['class'] = (string) $this->element['class'];
 		}
+
 		if ($this->element['style'])
 		{
 			$imgattr['style'] = (string) $this->element['style'];
 		}
+
 		if ($this->element['width'])
 		{
 			$imgattr['width'] = (string) $this->element['width'];
 		}
+
 		if ($this->element['height'])
 		{
 			$imgattr['height'] = (string) $this->element['height'];
 		}
+
 		if ($this->element['align'])
 		{
 			$imgattr['align'] = (string) $this->element['align'];
 		}
+
 		if ($this->element['rel'])
 		{
 			$imgattr['rel'] = (string) $this->element['rel'];
 		}
+
 		if ($this->element['alt'])
 		{
 			$alt = JText::_((string) $this->element['alt']);
@@ -108,6 +113,7 @@ class FOFFormFieldImagelist extends JFormFieldImageList implements FOFFormField
 		{
 			$alt = null;
 		}
+
 		if ($this->element['title'])
 		{
 			$imgattr['title'] = JText::_((string) $this->element['title']);
@@ -140,5 +146,4 @@ class FOFFormFieldImagelist extends JFormFieldImageList implements FOFFormField
 	{
 		return $this->getStatic();
 	}
-
 }

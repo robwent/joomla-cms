@@ -5,7 +5,7 @@
  * @copyright   Copyright (C) 2010 - 2012 Akeeba Ltd. All rights reserved.
  * @license     GNU General Public License version 2 or later; see LICENSE.txt
  */
-defined('_JEXEC') or die();
+defined('_JEXEC') or die;
 
 /**
  * Implements the HAL over JSON renderer
@@ -113,7 +113,14 @@ class FOFHalRenderJson implements FOFHalRenderInterface
 
 		if (is_object($data))
 		{
-			$data = (array) $data;
+			if ($data instanceof FOFTable)
+			{
+				$data = $data->getData();
+			}
+			else
+			{
+				$data = (array) $data;
+			}
 
 			if (!empty($data))
 			{

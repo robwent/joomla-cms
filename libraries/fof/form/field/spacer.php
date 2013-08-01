@@ -5,7 +5,7 @@
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
  */
 // Protect from unauthorized access
-defined('_JEXEC') or die();
+defined('_JEXEC') or die;
 
 if (!class_exists('JFormFieldSpacer'))
 {
@@ -21,7 +21,6 @@ if (!class_exists('JFormFieldSpacer'))
  */
 class FOFFormFieldSpacer extends JFormFieldSpacer implements FOFFormField
 {
-
 	protected $static;
 
 	protected $repeatable;
@@ -87,5 +86,4 @@ class FOFFormFieldSpacer extends JFormFieldSpacer implements FOFFormField
 	{
 		return $this->getInput();
 	}
-
 }

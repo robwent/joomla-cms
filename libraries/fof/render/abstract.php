@@ -80,6 +80,7 @@ abstract class FOFRenderAbstract
 		{
 			$formType = strtolower($formType);
 		}
+
 		switch ($formType)
 		{
 			case 'browse':
@@ -123,7 +124,7 @@ abstract class FOFRenderAbstract
 	abstract protected function renderFormBrowse(FOFForm &$form, FOFModel $model, FOFInput $input);
 
 	/**
-	 * Renders a FOFForm for a Browse view and returns the corresponding HTML
+	 * Renders a FOFForm for a Read view and returns the corresponding HTML
 	 *
 	 * @param   FOFForm   &$form  The form to render
 	 * @param   FOFModel  $model  The model providing our data
@@ -134,7 +135,7 @@ abstract class FOFRenderAbstract
 	abstract protected function renderFormRead(FOFForm &$form, FOFModel $model, FOFInput $input);
 
 	/**
-	 * Renders a FOFForm for a Browse view and returns the corresponding HTML
+	 * Renders a FOFForm for an Edit view and returns the corresponding HTML
 	 *
 	 * @param   FOFForm   &$form  The form to render
 	 * @param   FOFModel  $model  The model providing our data
@@ -147,10 +148,10 @@ abstract class FOFRenderAbstract
 	/**
 	 * Renders a raw FOFForm and returns the corresponding HTML
 	 *
-	 * @param   FOFForm   &$form  	 The form to render
-	 * @param   FOFModel  $model  	 The model providing our data
-	 * @param   FOFInput  $input  	 The input object
-	 * @param   string	  $formType  The form type e.g. 'edit' or 'read'
+	 * @param   FOFForm   &$form     The form to render
+	 * @param   FOFModel  $model     The model providing our data
+	 * @param   FOFInput  $input     The input object
+	 * @param   string    $formType  The form type e.g. 'edit' or 'read'
 	 *
 	 * @return  string    The HTML rendering of the form
 	 */

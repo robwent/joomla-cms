@@ -5,7 +5,7 @@
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
  */
 // Protect from unauthorized access
-defined('_JEXEC') or die();
+defined('_JEXEC') or die;
 
 JFormHelper::loadFieldClass('text');
 
@@ -60,5 +60,4 @@ class FOFFormFieldTitle extends FOFFormFieldText implements FOFFormField
 
 		return $html;
 	}
-
 }

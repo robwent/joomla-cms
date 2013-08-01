@@ -5,7 +5,7 @@
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
  */
 // Protect from unauthorized access
-defined('_JEXEC') or die();
+defined('_JEXEC') or die;
 
 if (!class_exists('JFormFieldTimezone'))
 {
@@ -21,7 +21,6 @@ if (!class_exists('JFormFieldTimezone'))
  */
 class FOFFormFieldTimezone extends JFormFieldTimezone implements FOFFormField
 {
-
 	protected $static;
 
 	protected $repeatable;
@@ -104,5 +103,4 @@ class FOFFormFieldTimezone extends JFormFieldTimezone implements FOFFormField
 	{
 		return $this->getStatic();
 	}
-
 }

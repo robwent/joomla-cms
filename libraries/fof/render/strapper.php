@@ -464,7 +464,7 @@ ENDJAVASCRIPT;
 		else {
 			dirn = direction.options[direction.selectedIndex].value;
 		}
-		Joomla.tableOrdering(order, dirn, '');
+		Joomla.tableOrdering(order, dirn);
 	}
 </script>
 
@@ -858,7 +858,7 @@ ENDJS;
 	}
 
 	/**
-	 * Renders a FOFForm for a Browse view and returns the corresponding HTML
+	 * Renders a FOFForm for a Read view and returns the corresponding HTML
 	 *
 	 * @param   FOFForm   &$form  The form to render
 	 * @param   FOFModel  $model  The model providing our data
@@ -874,7 +874,7 @@ ENDJS;
 	}
 
 	/**
-	 * Renders a FOFForm for a Browse view and returns the corresponding HTML
+	 * Renders a FOFForm for an Edit view and returns the corresponding HTML
 	 *
 	 * @param   FOFForm   &$form  The form to render
 	 * @param   FOFModel  $model  The model providing our data
@@ -953,7 +953,7 @@ ENDJS;
 	 * @param   FOFForm   &$form     The form to render
 	 * @param   FOFModel  $model     The model providing our data
 	 * @param   FOFInput  $input     The input object
-	 * @param   string	  $formType  The form type e.g. 'edit' or 'read'
+	 * @param   string    $formType  The form type e.g. 'edit' or 'read'
 	 *
 	 * @return  string    The HTML rendering of the form
 	 */
@@ -1000,8 +1000,10 @@ ENDJS;
 				// Field description
 				$description = $form->getFieldAttribute($field->fieldname, 'description', '', $field->group);
 
-				// The following code is backwards incompatible. Most forms don't require a description in their form
-				// fields. Having to use emptydescription="1" on each one of them is an overkill. Removed.
+				/**
+				 * The following code is backwards incompatible. Most forms don't require a description in their form
+				 * fields. Having to use emptydescription="1" on each one of them is an overkill. Removed.
+				 */
 				/*
 				$emptydescription   = $form->getFieldAttribute($field->fieldname, 'emptydescription', false, $field->group);
 				if (empty($description) && !$emptydescription)

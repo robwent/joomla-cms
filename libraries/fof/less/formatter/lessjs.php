@@ -5,7 +5,7 @@
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
  */
 // Protect from unauthorized access
-defined('_JEXEC') or die();
+defined('_JEXEC') or die;
 
 /**
  * This class is taken verbatim from:
@@ -23,7 +23,6 @@ defined('_JEXEC') or die();
  */
 class FOFLessFormatterLessjs extends FOFLessFormatterClassic
 {
-
 	public $disableSingle = true;
 
 	public $breakSelectors = true;
@@ -31,5 +30,4 @@ class FOFLessFormatterLessjs extends FOFLessFormatterClassic
 	public $assignSeparator = ": ";
 
 	public $selectorSeparator = ",";
-
 }

@@ -6,7 +6,7 @@
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
  */
 // Protect from unauthorized access
-defined('_JEXEC') or die();
+defined('_JEXEC') or die;
 
 /**
  * This class is taken verbatim from:
@@ -100,6 +100,7 @@ class FOFLessFormatterClassic
 
 			return true;
 		}
+
 		return false;
 	}
 
@@ -185,5 +186,4 @@ class FOFLessFormatterClassic
 			$this->indentLevel--;
 		}
 	}
-
 }
