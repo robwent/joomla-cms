@@ -5,7 +5,7 @@
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
  */
 // Protect from unauthorized access
-defined('_JEXEC') or die();
+defined('_JEXEC') or die;
 
 /**
  * Part of the FOF Platform Abstraction Layer. It implements everything that
@@ -55,8 +55,10 @@ abstract class FOFPlatform implements FOFPlatformInterface
 	/**
 	 * Set the error Handling, if possible
 	 *
-	 * @param integer 	$level     PHP error level (E_ALL)
-	 * @param string 	$log_level What to do with the error (ignore, callback)
+	 * @param   integer  $level      PHP error level (E_ALL)
+	 * @param   string   $log_level  What to do with the error (ignore, callback)
+	 *
+	 * @return  void
 	 */
 	public function setErrorHandling($level, $log_level)
 	{

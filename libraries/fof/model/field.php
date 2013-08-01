@@ -6,7 +6,7 @@
  */
 
 // Protect from unauthorized access
-defined('_JEXEC') or die();
+defined('_JEXEC') or die;
 
 /**
  * FrameworkOnFramework model behavior class
@@ -49,9 +49,9 @@ abstract class FOFModelField
 	/**
 	 * Constructor
 	 *
-	 * @param   JDatabaseDriver  $db     		The database object
-	 * @param   object           $field  		The field informations as taken from the db
-	 * @param   string           $table_alias  	The table alias to use when filtering
+	 * @param   JDatabaseDriver  $db           The database object
+	 * @param   object           $field        The field informations as taken from the db
+	 * @param   string           $table_alias  The table alias to use when filtering
 	 */
 	public function __construct($db, $field, $table_alias = false)
 	{
@@ -107,6 +107,7 @@ abstract class FOFModelField
 		{
 			$tmp[] = $method->name;
 		}
+
 		$methods = $tmp;
 
 		if ($methods = array_diff($methods, $ignore))
@@ -135,6 +136,7 @@ abstract class FOFModelField
 		{
 			$db = JFactory::getDbo();
 			$value = array_map(array($db, 'quote'), $value);
+
 			return '(' . $this->getFieldName() . ' IN (' . implode(',', $value) . '))';
 		}
 		else
@@ -308,7 +310,7 @@ abstract class FOFModelField
 
 			case 'tinyint':
 			case 'smallint':
-				$type='Boolean';
+				$type = 'Boolean';
 				break;
 
 			default:

@@ -5,7 +5,7 @@
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
  */
 // Protect from unauthorized access
-defined('_JEXEC') or die();
+defined('_JEXEC') or die;
 
 if (!class_exists('JFormFieldTextarea'))
 {
@@ -21,7 +21,6 @@ if (!class_exists('JFormFieldTextarea'))
  */
 class FOFFormFieldTextarea extends JFormFieldTextarea implements FOFFormField
 {
-
 	protected $static;
 
 	protected $repeatable;
@@ -91,5 +90,4 @@ class FOFFormFieldTextarea extends JFormFieldTextarea implements FOFFormField
 	{
 		return $this->getStatic();
 	}
-
 }

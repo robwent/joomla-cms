@@ -5,7 +5,7 @@
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
  */
 // Protect from unauthorized access
-defined('_JEXEC') or die();
+defined('_JEXEC') or die;
 
 if (!class_exists('JFormFieldSql'))
 {
@@ -21,7 +21,6 @@ if (!class_exists('JFormFieldSql'))
  */
 class FOFFormFieldModel extends FOFFormFieldList implements FOFFormField
 {
-
 	protected $static;
 
 	protected $repeatable;
@@ -100,14 +99,17 @@ class FOFFormFieldModel extends FOFFormFieldList implements FOFFormField
 		{
 			$class = (string) $this->element['class'];
 		}
+
 		if ($this->element['format'])
 		{
 			$format_string = (string) $this->element['format'];
 		}
+
 		if ($this->element['show_link'] == 'true')
 		{
 			$show_link = true;
 		}
+
 		if ($this->element['url'])
 		{
 			$link_url = $this->element['url'];

@@ -5,7 +5,7 @@
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
  */
 // Protect from unauthorized access
-defined('_JEXEC') or die();
+defined('_JEXEC') or die;
 
 JLoader::import('legacy.dispatcher.dispatcher');
 
@@ -17,5 +17,4 @@ JLoader::import('legacy.dispatcher.dispatcher');
  */
 class FOFModelDispatcherBehavior extends JDispatcher
 {
-
 }

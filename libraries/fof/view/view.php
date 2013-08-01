@@ -5,7 +5,7 @@
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
  */
 // Protect from unauthorized access
-defined('_JEXEC') or die();
+defined('_JEXEC') or die;
 
 /**
  * FrameworkOnFramework View class. The View is the MVC component which gets the
@@ -182,7 +182,7 @@ abstract class FOFView extends JObject
 		parent::__construct($config);
 
 		$component = 'com_foobar';
-		
+
 		// Get the component name
 		if (array_key_exists('input', $config))
 		{
@@ -1107,7 +1107,7 @@ abstract class FOFView extends JObject
 
 				if (!FOFPlatform::getInstance()->isCli())
 				{
-					$fallback = FOFPlatform::getInstance()->getTemplateOverridePath($this->option) . '/' . $this->getName();
+					$fallback = FOFPlatform::getInstance()->getTemplateOverridePath($this->input->getCmd('option', '')) . '/' . $this->getName();
 					$this->_addPath('template', $fallback);
 				}
 

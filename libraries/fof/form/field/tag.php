@@ -5,7 +5,7 @@
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
  */
 // Protect from unauthorized access
-defined('_JEXEC') or die();
+defined('_JEXEC') or die;
 
 if (!class_exists('JFormFieldAccessLevel'))
 {
@@ -41,11 +41,10 @@ class FOFFormFieldTag extends JFormFieldTag implements FOFFormField
 			->from('#__tags AS a')
 			->join('LEFT', $db->quoteName('#__tags') . ' AS b ON a.lft > b.lft AND a.rgt < b.rgt');
 
-
 		$item = $this->form->getModel()->getItem();
 
-		if ($item instanceof FOFTable) {
-
+		if ($item instanceof FOFTable)
+		{
 			// Fake value for selected tags
 			$keyfield = $item->getKeyName();
 			$content_id  = $item->$keyfield;
@@ -61,7 +60,7 @@ class FOFFormFieldTag extends JFormFieldTag implements FOFFormField
 			$db->setQuery($selected_query);
 
 			$this->value = $db->loadColumn();
-		}		
+		}
 
 		// Ajax tag only loads assigned values
 		if (!$this->isNested())
@@ -120,7 +119,6 @@ class FOFFormFieldTag extends JFormFieldTag implements FOFFormField
 
 		return $options;
 	}
-
 
 	/**
 	 * Get the rendering of this field type for static display, e.g. in a single
