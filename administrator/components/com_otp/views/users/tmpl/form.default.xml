@@ -15,7 +15,6 @@
 >
     <headerset>
 		<header name="id" type="rowselect" tdwidth="20" />
-		<header name="id" type="field" tdwidth="20" label="#" id="num" />
 		<header name="name" type="field" sortable="true" />
 		<header name="username" type="field" sortable="true" />
 		<header name="email" type="field" sortable="true" />
@@ -29,14 +28,13 @@
 		</header>
 		<header name="lastvisitDate" type="field" sortable="true" tdwidth="15%" />
 		<header name="registerDate" type="field" sortable="true" tdwidth="15%" />
+		<header name="id" type="field" tdwidth="20" label="ID" id="num" />
 
 		<header name="search" type="filtersearchable" placeholder="COM_OTP_FILTER_SEARCH" />
     </headerset>
 
     <fieldset name="items">
 		<field name="id" type="selectrow" />
-
-		<field name="id" type="text" label="#" id="num" />
 
 		<field name="name" type="text"
 			translate="false"
@@ -71,6 +69,6 @@
 
 		 <field name="registerDate" type="text" />
 		 
-		 
+		<field name="id" type="text" label="#" id="num" />		 
     </fieldset>
 </form>
