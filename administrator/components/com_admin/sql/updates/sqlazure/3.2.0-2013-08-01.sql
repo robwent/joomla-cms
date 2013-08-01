@@ -7,3 +7,6 @@ SELECT 30, 'com_otp', 'component', 'com_otp', '', 1, 1, 1, 1, '{"name":"com_otp"
 ALTER TABLE [#__users] ADD [otpKey] [nvarchar](max) NOT NULL DEFAULT '';
 
 ALTER TABLE [#__users] ADD [otep] [nvarchar](max) NOT NULL DEFAULT '';
+
+INSERT INTO #__menu (id, menutype, title, alias, note, path, link, type, published, parent_id, level, component_id, checked_out, checked_out_time, browserNav, access, img, template_style_id, params, lft, rgt, home, language, client_id)
+SELECT 24, 'menu', 'com_otp', 'Two Factor Authentication', '', 'Two Factor Authentication', 'index.php?option=com_otp', 'component', 0, 1, 1, 29, 0, '1900-01-01 00:00:00', 0, 0, 'class:otp', 0, '', 43, 44, 0, '*', 1;

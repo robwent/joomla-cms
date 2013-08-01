@@ -8,3 +8,6 @@ INSERT INTO "#__extensions" ("extension_id", "name", "type", "element", "folder"
 ALTER TABLE `#__users` ADD COLUMN "otpKey" varchar(1000) DEAFULT '' NOT NULL;
 
 ALTER TABLE `#__users` ADD COLUMN "otep" varchar(1000) DEFAULT '' NOT NULL;
+
+INSERT INTO "#__menu" ( "id", "menutype", "title", "alias", "note", "path", "link", "type", "published", "parent_id", "level", "component_id", "checked_out", "checked_out_time", "browserNav", "access", "img", "template_style_id", "params", "lft", "rgt", "home", "language", "client_id") VALUES
+(24, 'main', 'com_otp', 'Two Factor Authentication', '', 'Two Factor Authentication', 'index.php?option=com_otp', 'component', 0, 1, 1, 29, 0, '1970-01-01 00:00:00', 0, 1, 'class:otp', 0, '', 43, 44, 0, '', 1);
