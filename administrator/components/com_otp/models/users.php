@@ -9,8 +9,18 @@
 
 defined('_JEXEC') or die;
 
+/**
+ * The model of the Two Factor Authentication component for Joomla!
+ */
 class OtpModelUsers extends FOFModel
 {
+	/**
+	 * Applies the custom filters to the query used to retrieve a list of records
+	 *
+	 * @param   boolean  $overrideLimits  When true all limits are overriden
+	 *
+	 * @return  JDatabaseQuery
+	 */
 	public function buildQuery($overrideLimits = false)
 	{
 		$query = parent::buildQuery($overrideLimits);
@@ -57,6 +67,15 @@ class OtpModelUsers extends FOFModel
 		return $query;
 	}
 
+	/**
+	 * Post-processes the list of records, adding virtual fields which denote
+	 * if two factor authentication is enabled and which is the preferred
+	 * method for generating and validating a TOTP.
+	 *
+	 * @param   array  $resultArray  An array of OtpTableUser objects
+	 *
+	 * @return  void  This method modifies the $resultArray directly
+	 */
 	public function onProcessList(&$resultArray)
 	{
 		if (empty($resultArray))

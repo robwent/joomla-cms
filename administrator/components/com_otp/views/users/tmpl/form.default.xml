@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+@package     Joomla.Administrator
+@subpackage  com_otp
+ 
+@copyright   Copyright (C) 2005 - 2013 Open Source Matters, Inc. All rights reserved.
+@license     GNU General Public License version 2 or later; see LICENSE.txt
+-->
 <form
     type="browse"
     show_header="1"
