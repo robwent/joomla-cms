@@ -4,6 +4,15 @@
 		<dispatcher>
 			<option name="default_view">users</option>
 		</dispatcher>
+		<view name="user">
+			<acl>
+				<task name="*">false</task>
+				<task name="browse">core.admin</task>
+				<task name="edit">core.admin</task>
+				<task name="save">core.admin</task>
+				<task name="apply">core.admin</task>
+			</acl>
+		</view>
 	</backend>
 	
 	<frontend>

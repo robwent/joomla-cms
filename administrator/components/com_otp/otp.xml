@@ -27,6 +27,7 @@
 			<filename>fof.xml</filename>
 			<filename>index.html</filename>
 			<filename>otp.php</filename>
+			<filename>toolbar.php</filename>
 			<folder>controllers</folder>
 			<folder>models</folder>
 			<folder>views</folder>
