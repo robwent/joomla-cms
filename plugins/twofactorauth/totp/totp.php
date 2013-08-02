@@ -20,6 +20,28 @@ class PlgTwofactorauthTotp extends JPlugin
 	protected $methodName = 'totp';
 
 	/**
+	 * Constructor
+	 *
+	 * @param   object  &$subject  The object to observe
+	 * @param   array   $config    An optional associative array of configuration settings.
+	 *                             Recognized key values include 'name', 'group', 'params', 'language'
+	 *                             (this list is not meant to be comprehensive).
+	 */
+	public function __construct(&$subject, $config = array())
+	{
+		parent::__construct($subject, $config);
+
+		// Load the Joomla! RAD layer
+		if (!defined('FOF_INCLUDED'))
+		{
+			include_once JPATH_LIBRARIES . '/fof/include.php';
+		}
+
+		// Load the translation files
+		$this->loadLanguage();
+	}
+
+	/**
 	 * This method returns the identification object for this two factor
 	 * authentication plugin.
 	 *
@@ -36,21 +58,14 @@ class PlgTwofactorauthTotp extends JPlugin
 	/**
 	 * Shows the configuration page for this two factor authentication method.
 	 *
-	 * @param   string  $method     The two factor auth method for which we'll show the config page
 	 * @param   object  $otpConfig  The two factor auth configuration object
 	 *
 	 * @see UsersModelUser::getOtpConfig
 	 *
 	 * @return  boolean|string  False if the method is not ours, the HTML of the configuration page otherwise
 	 */
-	public function onUserTwofactorShowConfiguration($method, $otpConfig)
+	public function onUserTwofactorShowConfiguration($otpConfig)
 	{
-		// Check if it's the correct two factor auth method
-		if ($method != $this->methodName)
-		{
-			return false;
-		}
-
 		// Create a new TOTP class with Google Authenticator compatible settings
 		$totp = new FOFEncryptTotp(30, 6, 10);
 
@@ -78,6 +93,8 @@ class PlgTwofactorauthTotp extends JPlugin
 		// Include the form.php from a template override. If none is found use the default.
 		$path = FOFPlatform::getInstance()->getTemplateOverridePath('plg_twofactorauth_totp', true);
 
+		JLoader::import('joomla.filesystem.file');
+
 		if (JFile::exists($path . 'form.php'))
 		{
 			include_once $path . 'form.php';
@@ -91,7 +108,10 @@ class PlgTwofactorauthTotp extends JPlugin
 		$html = @ob_get_clean();
 
 		// Return the form contents
-		return $html;
+		return array(
+			'method'	=> $this->methodName,
+			'form'		=> $html,
+		);
 	}
 
 	/**

@@ -43,32 +43,41 @@ defined('_JEXEC') or die;
 	<legend>
 		<?php echo JText::_('PLG_TWOFACTORAUTH_TOTP_STEP2_HEAD') ?>
 	</legend>
-	<p>
-		<?php echo JText::_('PLG_TWOFACTORAUTH_TOTP_STEP2_TEXT') ?>
-	</p>
-	<table class="table table-striped">
-		<tr>
-			<td>
-				<?php echo JText::_('PLG_TWOFACTORAUTH_TOTP_STEP2_ACCOUNT') ?>
-			</td>
-			<td>
-				<?php echo $username ?>@<?php echo $hostname ?>
-			</td>
-		</tr>
-		<tr>
-			<td>
-				<?php echo JText::_('PLG_TWOFACTORAUTH_TOTP_STEP2_KEY') ?>
-			</td>
-			<td>
-				<?php echo $secret ?>
-			</td>
-		</tr>
-	</table>
-	<p>
-		<?php echo JText::_('PLG_TWOFACTORAUTH_TOTP_STEP2_ALTTEXT') ?>
-		<br />
-		<img src="<?php echo $url ?>" style="float: none;" />
-	</p>
+
+	<div class="span6">
+		<p>
+			<?php echo JText::_('PLG_TWOFACTORAUTH_TOTP_STEP2_TEXT') ?>
+		</p>
+		<table class="table table-striped">
+			<tr>
+				<td>
+					<?php echo JText::_('PLG_TWOFACTORAUTH_TOTP_STEP2_ACCOUNT') ?>
+				</td>
+				<td>
+					<?php echo $username ?>@<?php echo $hostname ?>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<?php echo JText::_('PLG_TWOFACTORAUTH_TOTP_STEP2_KEY') ?>
+				</td>
+				<td>
+					<?php echo $secret ?>
+				</td>
+			</tr>
+		</table>
+	</div>
+
+	<div class="span6">
+		<p>
+			<?php echo JText::_('PLG_TWOFACTORAUTH_TOTP_STEP2_ALTTEXT') ?>
+			<br />
+			<img src="<?php echo $url ?>" style="float: none;" />
+		</p>
+	</div>
+
+	<div class="clearfix"></div>
+
 	<div class="alert alert-info">
 		<?php echo JText::_('PLG_TWOFACTORAUTH_TOTP_STEP2_RESET') ?>
 	</div>

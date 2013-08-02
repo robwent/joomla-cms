@@ -19,6 +19,22 @@ defined('_JEXEC') or die;
 class UsersModelUser extends JModelAdmin
 {
 	/**
+	 * Constructor.
+	 *
+	 * @param   array  $config  An optional associative array of configuration settings.
+	 */
+	public function __construct($config = array())
+	{
+		parent::__construct($config);
+
+		// Load the Joomla! RAD layer
+		if (!defined('FOF_INCLUDED'))
+		{
+			include_once JPATH_LIBRARIES . '/fof/include.php';
+		}
+	}
+
+	/**
 	 * Returns a reference to the a Table object, always creating it.
 	 *
 	 * @param   string  $type    The table type to instantiate
@@ -716,7 +732,7 @@ class UsersModelUser extends JModelAdmin
 		// Sanity check, we need a user ID
 		if (empty($user_id))
 		{
-			$user_id = JFactory::getUser()->id;
+			$user_id = $this->getItem()->id;
 		}
 
 		if (empty($user_id))
@@ -736,12 +752,6 @@ class UsersModelUser extends JModelAdmin
 		// Get the encrypted data
 		list($method, $encryptedConfig) = explode(':', $item, 2);
 		$encryptedOtep = $item->otep;
-
-		// Load the Joomla! RAD layer
-		if (!defined('FOF_INCLUDED'))
-		{
-			include_once JPATH_LIBRARIES . '/fof/include.php';
-		}
 
 		// Create an encryptor class
 		$key = $this->getOtpConfigEncryptionKey();
@@ -779,13 +789,13 @@ class UsersModelUser extends JModelAdmin
 	 */
 	public function setOtpConfig($user_id, $otpConfig)
 	{
-		// Load the Joomla! RAD layer
-		if (!defined('FOF_INCLUDED'))
+		// Get the user object
+		// Sanity check, we need a user ID
+		if (empty($user_id))
 		{
-			include_once JPATH_LIBRARIES . '/fof/include.php';
+			$user_id = $this->getItem()->id;
 		}
 
-		// Get the user object
 		$user = JFactory::getUser($user_id);
 
 		// Create an encryptor class
@@ -816,6 +826,22 @@ class UsersModelUser extends JModelAdmin
 	public function getOtpConfigEncryptionKey()
 	{
 		return JFactory::getConfig()->get('secret');
+	}
+
+	/**
+	 * Gets the configuration forms for all two-factor authentication methods
+	 * in an array.
+	 *
+	 * @param   integer  $user_id  The user ID to load the forms for (optional)
+	 *
+	 * @return  array
+	 */
+	public function getTwofactorform($user_id = null)
+	{
+		$otpConfig = $this->getOtpConfig($user_id);
+
+		FOFPlatform::getInstance()->importPlugin('twofactorauth');
+		return FOFPlatform::getInstance()->runPlugins('onUserTwofactorShowConfiguration', array($otpConfig));
 	}
 
 	/**
