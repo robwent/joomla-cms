@@ -695,4 +695,212 @@ class UsersModelUser extends JModelAdmin
 
 		return $result;
 	}
+
+	/**
+	 * Returns the one time password (OTP) – a.k.a. two factor authentication –
+	 * configuration for a particular user.
+	 *
+	 * @param   integer  $user_id  The numeric ID of the user
+	 *
+	 * @return  stdClass  An object holding the OTP configuration for this user
+	 */
+	public function getOtpConfig($user_id = null)
+	{
+		// Initialise
+		$otpConfig = (object)array(
+			'method'	=> 'none',
+			'config'	=> array(),
+			'otep'		=> array(),
+		);
+
+		// Sanity check, we need a user ID
+		if (empty($user_id))
+		{
+			$user_id = JFactory::getUser()->id;
+		}
+
+		if (empty($user_id))
+		{
+			return $otpConfig;
+		}
+
+		// Get the raw data
+		$item = $this->getItem($user_id);
+
+		// Make sure this user does have OTP enabled
+		if (empty($item->otpKey))
+		{
+			return $otpConfig;
+		}
+
+		// Get the encrypted data
+		list($method, $encryptedConfig) = explode(':', $item, 2);
+		$encryptedOtep = $item->otep;
+
+		// Load the Joomla! RAD layer
+		if (!defined('FOF_INCLUDED'))
+		{
+			include_once JPATH_LIBRARIES . '/fof/include.php';
+		}
+
+		// Create an encryptor class
+		$key = $this->getOtpConfigEncryptionKey();
+		$aes = new FOFEncryptAES($key, 256);
+
+		// Decrypt the data
+		$decryptedConfig = $aes->decryptString($encryptedConfig);
+		$decryptedOtep = $aes->decryptString($encryptedOtep);
+
+		// Update the configuration object
+		$otpConfig->config = @json_decode($decryptedConfig);
+		$otpConfig->otep = @json_decode($decryptedOtep);
+
+		// If the decryption failed for any reason we essentially disable the
+		// two-factor authentication. This prevents impossible to log in sites
+		// if the site admin changes the site secret for any reason.
+		if (is_null($otpConfig->config))
+		{
+			$otpConfig->config = array();
+		}
+
+		// Return the configuration object
+		return $otpConfig;
+	}
+
+	/**
+	 * Sets the one time password (OTP) – a.k.a. two factor authentication –
+	 * configuration for a particular user. The $otpConfig object is the same as
+	 * the one returned by the getOtpConfig method.
+	 *
+	 * @param   integer   $user_id    The numeric ID of the user
+	 * @param   stdClass  $otpConfig  The OTP configuration object
+	 *
+	 * @return  boolean  True on success
+	 */
+	public function setOtpConfig($user_id, $otpConfig)
+	{
+		// Load the Joomla! RAD layer
+		if (!defined('FOF_INCLUDED'))
+		{
+			include_once JPATH_LIBRARIES . '/fof/include.php';
+		}
+
+		// Get the user object
+		$user = JFactory::getUser($user_id);
+
+		// Create an encryptor class
+		$key = $this->getOtpConfigEncryptionKey();
+		$aes = new FOFEncryptAES($key, 256);
+
+		// Create the encrypted option strings
+		$user->otpKey = '';
+		$user->otep = '';
+
+		if (!empty($otpConfig->method) && ($otpConfig->method != 'none'))
+		{
+			$decryptedConfig = json_encode($otpConfig->config);
+			$decryptedOtep = json_encode($otpConfig->otep);
+			$user->otpKey = $otpConfig->method . ':' . $aes->encryptString($decryptedConfig);
+			$user->otep = $aes->encryptString($decryptedOtep);
+		}
+
+		return $user->save(true);
+	}
+
+	/**
+	 * Gets the symmetric encryption key for the OTP configuration data. It
+	 * currently returns the site's secret.
+	 *
+	 * @return  string  The encryption key
+	 */
+	public function getOtpConfigEncryptionKey()
+	{
+		return JFactory::getConfig()->get('secret');
+	}
+
+	/**
+	 * Checks if a given string $otep is a valid One Time Emergency Password. If
+	 * it is, it will be immediately removed from the list of valid OTEPs.
+	 *
+	 * @param   integer  $user_id  The user ID to check
+	 * @param   string   $otep     The OTEP to check if it's valid
+	 *
+	 * @return  boolean  True if it's a valid OTEP
+	 */
+	public function checkAndRemoteOtep($user_id, $otep)
+	{
+		// Get the OTP configuration for the user
+		$otpConfig = $this->getOtpConfig($user_id);
+
+		// What happens if we don't have any OTEPs?
+		if (empty($otpConfig->otep))
+		{
+			if (empty($otpConfig->method) || ($otpConfig->method == 'none'))
+			{
+				// Two factor authentication is not enabled on this account.
+				// Any string is assumed to be a valid OTEP.
+				return true;
+			}
+			else
+			{
+				// Two factor authentication enabled and no OTEPs defined. The
+				// user has used them all up. Therefore anything he enters is
+				// an invalid OTEP.
+				return false;
+			}
+		}
+
+		// Did we find a valid OTEP?
+		if (in_array($otep, $otpConfig->otep))
+		{
+			// Remove the OTEP from the array
+			$array_key = array_search($otep, $otpConfig->otep);
+			unset($otpConfig->otep[$array_key]);
+
+			// Save the now modified OTP configuration
+			$this->setOtpConfig($user_id, $otpConfig);
+
+			// Return true; the OTEP was a valid one
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Generates a new set of One Time Emergency Passwords (OTEPs) for a given
+	 * user.
+	 *
+	 * @param   integer  $user_id  The user ID
+	 * @param   integer  $count    How many OTEPs to generate? Default: 10
+	 *
+	 * @return  array  The generated OTEPs
+	 */
+	public function generateOteps($user_id, $count = 10)
+	{
+		// Initialise
+		$oteps = array();
+
+		// Get the OTP configuration for the user
+		$otpConfig = $this->getOtpConfig($user_id);
+
+		// If two factor authentication is not enabled, abort
+		if (empty($otpConfig->method) || ($otpConfig->method == 'none'))
+		{
+			return $oteps;
+		}
+
+		for ($i = 0; $i++; $i < $count)
+		{
+			JUserHelper::getCryptedPassword($plaintext);
+			$oteps[] = JUserHelper::genRandomPassword(16);
+		}
+
+		$otpConfig->oteps = $oteps;
+
+		// Save the now modified OTP configuration
+		$this->setOtpConfig($user_id, $otpConfig);
+
+		return $oteps;
+	}
 }
