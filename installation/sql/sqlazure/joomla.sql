@@ -102,9 +102,7 @@ SELECT 33,1,63,64,1,'com_finder','com_finder','{"core.admin":{"7":1},"core.manag
 UNION ALL
 SELECT 34,1,65,66,1,'com_joomlaupdate','com_joomlaupdate','{"core.admin":[],"core.manage":[],"core.delete":[],"core.edit.state":[]}'
 UNION ALL
-SELECT 35,1,67,68,1,'com_tags','com_tags','{"core.admin":[],"core.manage":[],"core.delete":[],"core.edit.state":[]}'
-UNION ALL
-SELECT 36,1,69,70,1,'com_otp','com_otp','{"core.admin":[],"core.manage":[],"core.delete":[],"core.edit.state":[]}';
+SELECT 35,1,67,68,1,'com_tags','com_tags','{"core.admin":[],"core.manage":[],"core.delete":[],"core.edit.state":[]}';
 
 SET IDENTITY_INSERT #__assets OFF;
 
@@ -787,9 +785,7 @@ SELECT 27, 'com_finder', 'component', 'com_finder', '', 1, 1, 0, 0, '', '{"show_
 UNION ALL
 SELECT 28, 'com_joomlaupdate', 'component', 'com_joomlaupdate', '', 1, 1, 0, 1, '{"name":"com_joomlaupdate","type":"component","creationDate":"February 2012","author":"Joomla! Project","copyright":"(C) 2005 - 2013 Open Source Matters. All rights reserved.","authorEmail":"admin@joomla.org","authorUrl":"www.joomla.org","version":"2.5.2","description":"COM_JOOMLAUPDATE_XML_DESCRIPTION","group":""}', '{}', '', '', 0, '1900-01-01 00:00:00', 0, 0
 UNION ALL
-SELECT 29, 'com_tags', 'component', 'com_tags', '', 1, 1, 1, 1, '{"name":"com_tags","type":"component","creationDate":"March 2013","author":"Joomla! Project","copyright":"(C) 2005 - 2013 Open Source Matters. All rights reserved.","authorEmail":"admin@joomla.org","authorUrl":"www.joomla.org","version":"3.1.0","description":"COM_TAGS_XML_DESCRIPTION","group":""}', '{}', '', '', 0, '1900-01-01 00:00:00', 0, 0
-UNION ALL
-SELECT 30, 'com_otp', 'component', 'com_otp', '', 1, 1, 1, 1, '{"name":"com_otp","type":"component","creationDate":"August 2013","author":"Joomla! Project","copyright":"(C) 2005 - 2013 Open Source Matters. All rights reserved.","authorEmail":"admin@joomla.org","authorUrl":"www.joomla.org","version":"3.1.0","description":"COM_OTP_XML_DESCRIPTION","group":""}', '{}', '', '', 0, '1900-01-01 00:00:00', 0, 0;
+SELECT 29, 'com_tags', 'component', 'com_tags', '', 1, 1, 1, 1, '{"name":"com_tags","type":"component","creationDate":"March 2013","author":"Joomla! Project","copyright":"(C) 2005 - 2013 Open Source Matters. All rights reserved.","authorEmail":"admin@joomla.org","authorUrl":"www.joomla.org","version":"3.1.0","description":"COM_TAGS_XML_DESCRIPTION","group":""}', '{}', '', '', 0, '1900-01-01 00:00:00', 0, 0;
 
 INSERT INTO #__extensions (extension_id, name, type, element, folder, client_id, enabled, access, protected, manifest_cache, params, custom_data, system_data, checked_out, checked_out_time, ordering, state)
 SELECT 100, 'PHPMailer', 'library', 'phpmailer', '', 0, 1, 1, 1, '', '', '', '', 0, '1900-01-01 00:00:00', 0, 0
@@ -2002,8 +1998,6 @@ UNION ALL
 SELECT 22, 'menu', 'com_joomlaupdate', 'Joomla! Update', '', 'Joomla! Update', 'index.php?option=com_joomlaupdate', 'component', 0, 1, 1, 28, 0, '1900-01-01 00:00:00', 0, 0, 'class:joomlaupdate', 0, '', 41, 42, 0, '*', 1
 UNION ALL
 SELECT 23, 'menu', 'com_tags', 'Tags', '', 'Tags', 'index.php?option=com_tags', 'component', 0, 1, 1, 29, 0, '1900-01-01 00:00:00', 0, 0, 'class:tags', 0, '', 43, 44, 0, '*', 1
-UNION ALL
-SELECT 24, 'menu', 'com_otp', 'Two Factor Authentication', '', 'Two Factor Authentication', 'index.php?option=com_otp', 'component', 0, 1, 1, 29, 0, '1900-01-01 00:00:00', 0, 0, 'class:otp', 0, '', 43, 44, 0, '*', 1
 UNION ALL
 SELECT 101, 'mainmenu', 'Home', 'home', '', 'home', 'index.php?option=com_content&view=featured', 'component', 1, 1, 1, 22, 0, '1900-01-01 00:00:00', 0, 1, '', 0, '{"featured_categories":[""],"num_leading_articles":"1","num_intro_articles":"3","num_columns":"3","num_links":"0","orderby_pri":"","orderby_sec":"front","order_date":"","multi_column_order":"1","show_pagination":"2","show_pagination_results":"1","show_noauth":"","article-allow_ratings":"","article-allow_comments":"","show_feed_link":"1","feed_summary":"","show_title":"","link_titles":"","show_intro":"","show_category":"","link_category":"","show_parent_category":"","link_parent_category":"","show_author":"","show_create_date":"","show_modify_date":"","show_publish_date":"","show_item_navigation":"","show_readmore":"","show_icons":"","show_print_icon":"","show_email_icon":"","show_hits":"","menu-anchor_title":"","menu-anchor_css":"","menu_image":"","show_page_heading":1,"page_title":"","page_heading":"","pageclass_sfx":"","menu-meta_description":"","menu-meta_keywords":"","robots":"","secure":0}', 45, 46, 1, '*', 0;
 
