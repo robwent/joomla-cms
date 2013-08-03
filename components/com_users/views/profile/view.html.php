@@ -35,10 +35,13 @@ class UsersViewProfile extends JViewLegacy
 	public function display($tpl = null)
 	{
 		// Get the view data.
-		$this->data		= $this->get('Data');
-		$this->form		= $this->get('Form');
-		$this->state	= $this->get('State');
-		$this->params	= $this->state->get('params');
+		$this->data		        = $this->get('Data');
+		$this->form		        = $this->get('Form');
+		$this->state	        = $this->get('State');
+		$this->params	        = $this->state->get('params');
+		$this->twofactorform    = $this->get('Twofactorform');
+		$this->twofactormethods = UsersHelper::getTwoFactorMethods();
+		$this->otpConfig        = $this->get('OtpConfig');
 
 		// Check for errors.
 		if (count($errors = $this->get('Errors')))
@@ -54,6 +57,7 @@ class UsersViewProfile extends JViewLegacy
 			return false;
 		}
 
+		// Load the tags data
 		$this->data->tags = new JHelperTags;
 		$this->data->tags->getItemTags('com_users.user.', $this->data->id);
 
