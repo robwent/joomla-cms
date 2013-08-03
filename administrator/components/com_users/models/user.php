@@ -233,10 +233,15 @@ class UsersModelUser extends JModelAdmin
 			else
 			{
 				$otpConfig->method = 'none';
+				$otpConfig->config = array();
 				$this->setOtpConfig($pk, $otpConfig);
 			}
 
+			// Unset the raw data
 			unset($data['twofactor']);
+
+			// Reload the user record with the updated OTP configuration
+			$user->load($pk);
 		}
 
 		// Bind the data.
