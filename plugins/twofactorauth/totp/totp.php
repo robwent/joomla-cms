@@ -58,13 +58,14 @@ class PlgTwofactorauthTotp extends JPlugin
 	/**
 	 * Shows the configuration page for this two factor authentication method.
 	 *
-	 * @param   object  $otpConfig  The two factor auth configuration object
+	 * @param   object   $otpConfig  The two factor auth configuration object
+	 * @param   integer  $user_id    The numeric user ID of the user whose form we'll display
 	 *
 	 * @see UsersModelUser::getOtpConfig
 	 *
 	 * @return  boolean|string  False if the method is not ours, the HTML of the configuration page otherwise
 	 */
-	public function onUserTwofactorShowConfiguration($otpConfig)
+	public function onUserTwofactorShowConfiguration($otpConfig, $user_id = null)
 	{
 		// Create a new TOTP class with Google Authenticator compatible settings
 		$totp = new FOFEncryptTotp(30, 6, 10);
@@ -81,7 +82,7 @@ class PlgTwofactorauthTotp extends JPlugin
 		}
 
 		// These are used by Google Authenticator to tell accounts apart
-		$username = JFactory::getUser()->username;
+		$username = JFactory::getUser($user_id)->username;
 		$hostname = JFactory::getURI()->getHost();
 
 		// This is the URL to the QR code for Google Authenticator

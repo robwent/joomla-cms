@@ -885,7 +885,7 @@ class UsersModelUser extends JModelAdmin
 		$otpConfig = $this->getOtpConfig($user_id);
 
 		FOFPlatform::getInstance()->importPlugin('twofactorauth');
-		return FOFPlatform::getInstance()->runPlugins('onUserTwofactorShowConfiguration', array($otpConfig));
+		return FOFPlatform::getInstance()->runPlugins('onUserTwofactorShowConfiguration', array($otpConfig, $user_id));
 	}
 
 	/**
