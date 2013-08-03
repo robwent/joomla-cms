@@ -51,6 +51,24 @@ $altDirection  = $document->direction == 'rtl' ? 'left' : 'right';
 				</div>
 			</div>
 		</div>
+		<?php if (count($twofactormethods) > 1): ?>
+		<div class="control-group">
+			<div class="controls">
+				<div class="input-prepend input-append">
+					<span class="add-on">
+						<i class="icon-star hasTooltip" data-placement="<?php echo $mainDirection; ?>" title="<?php echo JText::_('JGLOBAL_SECRETKEY'); ?>"></i>
+						<label for="mod-login-secretkey" class="element-invisible">
+							<?php echo JText::_('JGLOBAL_SECRETKEY'); ?>
+						</label>
+					</span>
+					<input name="secretkey" tabindex="3" id="mod-login-secretkey" type="text" class="input-medium" placeholder="<?php echo JText::_('JGLOBAL_SECRETKEY'); ?>" size="15"/>
+					<span class="btn width-auto hasTooltip" data-placement="<?php echo $altDirection; ?>" title="<?php echo JText::_('JGLOBAL_SECRETKEY_HELP'); ?>">
+						<i class="icon-help" title="<?php echo JText::_('JGLOBAL_SECRETKEY_HELP'); ?>"></i>
+					</span>
+				</div>
+			</div>
+		</div>
+		<?php endif; ?>
 		<?php if (!empty($langs)) : ?>
 			<div class="control-group">
 				<div class="controls">
@@ -69,7 +87,7 @@ $altDirection  = $document->direction == 'rtl' ? 'left' : 'right';
 		<div class="control-group">
 			<div class="controls">
 				<div class="btn-group pull-left">
-					<button tabindex="3" class="btn btn-primary btn-large">
+					<button tabindex="4" class="btn btn-primary btn-large">
 						<i class="icon-lock icon-white"></i> <?php echo JText::_('MOD_LOGIN_LOGIN'); ?>
 					</button>
 				</div>
