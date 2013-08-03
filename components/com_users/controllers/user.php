@@ -53,8 +53,9 @@ class UsersControllerUser extends UsersController
 
 		// Get the log in credentials.
 		$credentials = array();
-		$credentials['username'] = $data['username'];
-		$credentials['password'] = $data['password'];
+		$credentials['username']  = $data['username'];
+		$credentials['password']  = $data['password'];
+		$credentials['secretkey'] = $data['secretkey'];
 
 		// Perform the log in.
 		if (true === $app->login($credentials, $options))
