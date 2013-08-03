@@ -188,13 +188,12 @@ class PlgTwofactorauthTotp extends JPlugin
 	 *
 	 * @param   array   $credentials  Array holding the user credentials
 	 * @param   array   $options      Array of extra options
-	 * @param   object  &$response    Authentication response object
 	 *
 	 * @return  boolean  True if the user is authorised with this two-factor authentication method
 	 *
 	 * @since   3.2.0
 	 */
-	public function onUserTwofactorAuthenticate($credentials, $options, &$response)
+	public function onUserTwofactorAuthenticate($credentials, $options)
 	{
 		// Get the OTP configuration object
 		$otpConfig = $options['otp_config'];
@@ -212,7 +211,7 @@ class PlgTwofactorauthTotp extends JPlugin
 		}
 
 		// Check if there is a security code
-		if (empty($credentials['securitycode']))
+		if (empty($credentials['secretkey']))
 		{
 			return false;
 		}
@@ -221,7 +220,8 @@ class PlgTwofactorauthTotp extends JPlugin
 		$totp = new FOFEncryptTotp(30, 6, 10);
 
 		// Check the code
-		$check = $totp->checkCode($otpConfig->config['code'], $credentials['securitycode']);
+		$code = $totp->getCode($otpConfig->config['code']);
+		$check = $code == $credentials['secretkey'];
 
 		// If the check fails, test the previous 30 second slot. This allow the
 		// user to enter the security code when it's becoming red in Google
@@ -230,7 +230,7 @@ class PlgTwofactorauthTotp extends JPlugin
 		{
 			$time = time() - 30;
 			$code = $totp->getCode($otpConfig->config['code'], $time);
-			$check = $code == $credentials['securitycode'];
+			$check = $code == $credentials['secretkey'];
 		}
 
 		// If the check fails, test the next 30 second slot. This allows some
@@ -238,8 +238,47 @@ class PlgTwofactorauthTotp extends JPlugin
 		if (!$check)
 		{
 			$time = time() + 30;
-			$code = $totp->getCode($data['key'], $time);
-			$check = $code == $data['securitycode'];
+			$code = $totp->getCode($otpConfig->config['code'], $time);
+			$check = $code == $credentials['secretkey'];
+		}
+
+		if (!$check && array_key_exists('user_id', $options))
+		{
+			// Did the user use an OTEP instead?
+			if (empty($otpConfig->otep))
+			{
+				if (empty($otpConfig->method) || ($otpConfig->method == 'none'))
+				{
+					// Two factor authentication is not enabled on this account.
+					// Any string is assumed to be a valid OTEP.
+					return true;
+				}
+				else
+				{
+					// Two factor authentication enabled and no OTEPs defined. The
+					// user has used them all up. Therefore anything he enters is
+					// an invalid OTEP.
+					return false;
+				}
+			}
+
+			// Did we find a valid OTEP?
+			if (in_array($otep, $otpConfig->otep))
+			{
+				// Remove the OTEP from the array
+				$array_key = array_search($otep, $otpConfig->otep);
+				unset($otpConfig->otep[$array_key]);
+
+				// Save the now modified OTP configuration
+				require_once JPATH_ADMINISTRATOR . '/components/com_users/models/user.php';
+				$model = new UsersModelUser;
+				$model->setOtpConfig($options['user_id'], $otpConfig);
+
+				// Return true; the OTEP was a valid one
+				$check = true;
+			}
+
+			$check = false;
 		}
 
 		return $check;

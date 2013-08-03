@@ -889,57 +889,6 @@ class UsersModelUser extends JModelAdmin
 	}
 
 	/**
-	 * Checks if a given string $otep is a valid One Time Emergency Password. If
-	 * it is, it will be immediately removed from the list of valid OTEPs.
-	 *
-	 * @param   integer  $user_id  The user ID to check
-	 * @param   string   $otep     The OTEP to check if it's valid
-	 *
-	 * @return  boolean  True if it's a valid OTEP
-	 */
-	public function checkAndRemoveOtep($user_id, $otep)
-	{
-		$user_id = (!empty($user_id)) ? $user_id : (int) $this->getState('user.id');
-
-		// Get the OTP configuration for the user
-		$otpConfig = $this->getOtpConfig($user_id);
-
-		// What happens if we don't have any OTEPs?
-		if (empty($otpConfig->otep))
-		{
-			if (empty($otpConfig->method) || ($otpConfig->method == 'none'))
-			{
-				// Two factor authentication is not enabled on this account.
-				// Any string is assumed to be a valid OTEP.
-				return true;
-			}
-			else
-			{
-				// Two factor authentication enabled and no OTEPs defined. The
-				// user has used them all up. Therefore anything he enters is
-				// an invalid OTEP.
-				return false;
-			}
-		}
-
-		// Did we find a valid OTEP?
-		if (in_array($otep, $otpConfig->otep))
-		{
-			// Remove the OTEP from the array
-			$array_key = array_search($otep, $otpConfig->otep);
-			unset($otpConfig->otep[$array_key]);
-
-			// Save the now modified OTP configuration
-			$this->setOtpConfig($user_id, $otpConfig);
-
-			// Return true; the OTEP was a valid one
-			return true;
-		}
-
-		return false;
-	}
-
-	/**
 	 * Generates a new set of One Time Emergency Passwords (OTEPs) for a given
 	 * user.
 	 *

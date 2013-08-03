@@ -54,6 +54,7 @@ class PlgAuthenticationJoomla extends JPlugin
 
 		if ($result)
 		{
+			// Check the password
 			$parts	= explode(':', $result->password);
 			$crypt	= $parts[0];
 			$salt	= @$parts[1];
@@ -80,14 +81,77 @@ class PlgAuthenticationJoomla extends JPlugin
 			}
 			else
 			{
+				// Invalid password
 				$response->status = JAuthentication::STATUS_FAILURE;
 				$response->error_message = JText::_('JGLOBAL_AUTH_INVALID_PASS');
 			}
 		}
 		else
 		{
+			// Invalid user
 			$response->status = JAuthentication::STATUS_FAILURE;
 			$response->error_message = JText::_('JGLOBAL_AUTH_NO_USER');
+		}
+
+		// Check the two factor authentication
+		if ($response->status == JAuthentication::STATUS_SUCCESS)
+		{
+			require_once JPATH_ADMINISTRATOR . '/components/com_users/helpers/users.php';
+
+			$methods = UsersHelper::getTwoFactorMethods();
+
+			if (count($methods) <= 1)
+			{
+				// No two factor authentication method is enabled
+				return;
+			}
+
+			// Load the user's OTP (one time password, a.k.a. two factor auth) configuration
+			if (!array_key_exists('otp_config', $options))
+			{
+				require_once JPATH_ADMINISTRATOR . '/components/com_users/models/user.php';
+				$model = new UsersModelUser;
+				$otpConfig = $model->getOtpConfig($result->id);
+				$options['otp_config'] = $otpConfig;
+			}
+			else
+			{
+				$otpConfig = $options['otp_config'];
+			}
+
+			// Check if the user has enabled two factor authentication
+			if (empty($otpConfig->method) || ($otpConfig->method == 'none'))
+			{
+				return;
+			}
+
+			// Load the Joomla! RAD layer
+			if (!defined('FOF_INCLUDED'))
+			{
+				include_once JPATH_LIBRARIES . '/fof/include.php';
+			}
+
+			// Try to validate the OTP
+			$options['user_id'] = $result->id;
+			FOFPlatform::getInstance()->importPlugin('twofactorauth');
+
+			$otpAuthReplies = FOFPlatform::getInstance()->runPlugins('onUserTwofactorAuthenticate', array($credentials, $options));
+
+			$check = false;
+
+			if (!empty($otpAuthReplies))
+			{
+				foreach ($otpAuthReplies as $authReply)
+				{
+					$check = $check || $authReply;
+				}
+			}
+
+			if (!$check)
+			{
+				$response->status = JAuthentication::STATUS_FAILURE;
+				$response->error_message = JText::_('JGLOBAL_AUTH_INVALID_SECRETKEY');
+			}
 		}
 	}
 }
