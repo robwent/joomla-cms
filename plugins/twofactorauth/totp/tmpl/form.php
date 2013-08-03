@@ -9,7 +9,7 @@
 
 defined('_JEXEC') or die;
 ?>
-<input type="hidden" name="totp[key]" value="<?php echo $secret ?>" />
+<input type="hidden" name="jform[twofactor][totp][key]" value="<?php echo $secret ?>" />
 
 <div class="well">
 	<?php echo JText::_('PLG_TWOFACTORAUTH_TOTP_INTRO') ?>
@@ -95,7 +95,7 @@ defined('_JEXEC') or die;
 			<?php echo JText::_('PLG_TWOFACTORAUTH_TOTP_STEP3_SECURITYCODE') ?>
 		</label>
 		<div class="controls">
-			<input type="text" class="input-small" name="totp[securitycode]" id="totpsecuritycode" autocomplete="0" autofocus="autofocus">
+			<input type="text" class="input-small" name="jform[twofactor][totp][securitycode]" id="totpsecuritycode" autocomplete="0" autofocus="autofocus">
 		</div>
 	</div>
 </fieldset>

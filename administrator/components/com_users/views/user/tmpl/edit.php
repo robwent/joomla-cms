@@ -101,7 +101,7 @@ $fieldsets = $this->form->getFieldsets();
 		<?php echo JHtml::_('bootstrap.endTab'); ?>
 		<?php endforeach; ?>
 
-		<?php if (!empty($this->tfaform)): ?>
+		<?php if (!empty($this->tfaform) && $this->item->id): ?>
 		<?php echo JHtml::_('bootstrap.addTab', 'myTab', 'twofactorauth', JText::_('COM_USERS_USER_TWO_FACTOR_AUTH', true)); ?>
 		<div class="control-group">
 			<div class="control-label">
@@ -111,7 +111,7 @@ $fieldsets = $this->form->getFieldsets();
 				</label>
 			</div>
 			<div class="controls">
-				<?php echo JHtml::_('select.genericlist', Usershelper::getTwoFactorMethods(), 'jform_twofactor_method', array('onchange' => 'Joomla.twoFactorMethodChange()'), 'value', 'text', $this->otpConfig->method, 'jform_twofactor_method', false) ?>
+				<?php echo JHtml::_('select.genericlist', Usershelper::getTwoFactorMethods(), 'jform[twofactor][method]', array('onchange' => 'Joomla.twoFactorMethodChange()'), 'value', 'text', $this->otpConfig->method, 'jform_twofactor_method', false) ?>
 			</div>
 		</div>
 		<div id="com_users_twofactor_forms_container">
@@ -122,6 +122,28 @@ $fieldsets = $this->form->getFieldsets();
 			</div>
 			<?php endforeach; ?>
 		</div>
+
+		<fieldset>
+			<legend>
+				<?php echo JText::_('COM_USERS_USER_OTEPS') ?>
+			</legend>
+			<div class="alert alert-info">
+				<?php echo JText::_('COM_USERS_USER_OTEPS_DESC') ?>
+			</div>
+			<?php if (empty($this->otpConfig->otep)): ?>
+			<div class="alert alert-warning">
+				<?php echo JText::_('COM_USERS_USER_OTEPS_WAIT_DESC') ?>
+			</div>
+			<?php else: ?>
+			<?php foreach ($this->otpConfig->otep as $otep): ?>
+			<span class="span3">
+				<?php echo $otep ?>
+			</span>
+			<?php endforeach; ?>
+			<div class="clearfix"></div>
+			<?php endif; ?>
+		</fieldset>
+
 		<?php echo JHtml::_('bootstrap.endTab'); ?>
 		<?php endif; ?>
 

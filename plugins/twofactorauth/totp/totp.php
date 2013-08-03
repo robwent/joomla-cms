@@ -119,13 +119,12 @@ class PlgTwofactorauthTotp extends JPlugin
 	 * page.
 	 *
 	 * @param   string  $method  The two factor auth method for which we'll show the config page
-	 * @param   array   $errors  Any error messages to show to the user
 	 *
 	 * @see UsersModelUser::setOtpConfig
 	 *
 	 * @return  boolean|stdClass  False if the method doesn't match or we have an error, OTP config object if it succeeds
 	 */
-	public function onUserTwofactorApplyConfiguration($method, &$errors)
+	public function onUserTwofactorApplyConfiguration($method)
 	{
 		if ($method != $this->methodName)
 		{
@@ -136,23 +135,42 @@ class PlgTwofactorauthTotp extends JPlugin
 		$input = JFactory::getApplication()->input;
 
 		// Load raw data
-		$data = $input->get('totp', array(), 'array');
+		$rawData = $input->get('jform', array(), 'array');
+		$data = $rawData['twofactor']['totp'];
 
 		// Create a new TOTP class with Google Authenticator compatible settings
 		$totp = new FOFEncryptTotp(30, 6, 10);
 
-		// Check the security code entered by the user
-		$check = $totp->checkCode($data['key'], $key['securitycode']);
+		// Check the security code entered by the user (exact time slot match)
+		$code = $totp->getCode($data['key']);
+		$check = $code == $data['securitycode'];
+
+		// If the check fails, test the previous 30 second slot. This allow the
+		// user to enter the security code when it's becoming red in Google
+		// Authenticator app (reaching the end of its 30 second lifetime)
+		if (!$check)
+		{
+			$time = time() - 30;
+			$code = $totp->getCode($data['key'], $time);
+			$check = $code == $data['securitycode'];
+		}
+
+		// If the check fails, test the next 30 second slot. This allows some
+		// time drift between the authentication device and the server
+		if (!$check)
+		{
+			$time = time() + 30;
+			$code = $totp->getCode($data['key'], $time);
+			$check = $code == $data['securitycode'];
+		}
 
 		if (!$check)
 		{
-			// Check failed; return the error message
-			$errors[] = JText::_('PLG_TWOFACTORAUTH_TOTP_ERR_VALIDATIONFAILED');
-
+			// Check failed. Do not change two factor authentication settings.
 			return false;
 		}
 
-		// Check succeedeed; return an OPT configuration object
+		// Check succeedeed; return an OTP configuration object
 		$otpConfig = (object)array(
 			'method'	=> 'totp',
 			'config'	=> array(
@@ -203,6 +221,27 @@ class PlgTwofactorauthTotp extends JPlugin
 		$totp = new FOFEncryptTotp(30, 6, 10);
 
 		// Check the code
-		return $totp->checkCode($otpConfig->config['code'], $credentials['securitycode']);
+		$check = $totp->checkCode($otpConfig->config['code'], $credentials['securitycode']);
+
+		// If the check fails, test the previous 30 second slot. This allow the
+		// user to enter the security code when it's becoming red in Google
+		// Authenticator app (reaching the end of its 30 second lifetime)
+		if (!$check)
+		{
+			$time = time() - 30;
+			$code = $totp->getCode($otpConfig->config['code'], $time);
+			$check = $code == $credentials['securitycode'];
+		}
+
+		// If the check fails, test the next 30 second slot. This allows some
+		// time drift between the authentication device and the server
+		if (!$check)
+		{
+			$time = time() + 30;
+			$code = $totp->getCode($data['key'], $time);
+			$check = $code == $data['securitycode'];
+		}
+
+		return $check;
 	}
 }

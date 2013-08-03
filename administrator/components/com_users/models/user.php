@@ -193,6 +193,52 @@ class UsersModelUser extends JModelAdmin
 			}
 		}
 
+		// handle the two factor authentication setup
+		if (array_key_exists('twofactor', $data))
+		{
+			$twoFactorMethod = $data['twofactor']['method'];
+
+			// Get the current One Time Password (two factor auth) configuration
+			$otpConfig = $this->getOtpConfig($pk);
+
+			if ($twoFactorMethod != 'none')
+			{
+				// Run the plugins
+				FOFPlatform::getInstance()->importPlugin('twofactorauth');
+				$otpConfigReplies = FOFPlatform::getInstance()->runPlugins('onUserTwofactorApplyConfiguration', array($twoFactorMethod));
+
+				// Look for a valid reply
+				foreach ($otpConfigReplies as $reply)
+				{
+					if (!is_object($reply) || empty($reply->method) || ($reply->method != $twoFactorMethod))
+					{
+						continue;
+					}
+
+					$otpConfig->method = $reply->method;
+					$otpConfig->config = $reply->config;
+
+					break;
+				}
+
+				// Save OTP configuration.
+				$this->setOtpConfig($pk, $otpConfig);
+
+				// Generate one time emergency passwords if required (depleted or not set)
+				if (empty($otpConfig->otep))
+				{
+					$oteps = $this->generateOteps();
+				}
+			}
+			else
+			{
+				$otpConfig->method = 'none';
+				$this->setOtpConfig($pk, $otpConfig);
+			}
+
+			unset($data['twofactor']);
+		}
+
 		// Bind the data.
 		if (!$user->bind($data))
 		{
@@ -722,6 +768,8 @@ class UsersModelUser extends JModelAdmin
 	 */
 	public function getOtpConfig($user_id = null)
 	{
+		$user_id = (!empty($user_id)) ? $user_id : (int) $this->getState('user.id');
+
 		// Initialise
 		$otpConfig = (object)array(
 			'method'	=> 'none',
@@ -729,19 +777,8 @@ class UsersModelUser extends JModelAdmin
 			'otep'		=> array(),
 		);
 
-		// Sanity check, we need a user ID
-		if (empty($user_id))
-		{
-			$user_id = $this->getItem()->id;
-		}
-
-		if (empty($user_id))
-		{
-			return $otpConfig;
-		}
-
 		// Get the raw data
-		$item = $this->getItem($user_id);
+		$item = JFactory::getUser($user_id);
 
 		// Make sure this user does have OTP enabled
 		if (empty($item->otpKey))
@@ -750,18 +787,23 @@ class UsersModelUser extends JModelAdmin
 		}
 
 		// Get the encrypted data
-		list($method, $encryptedConfig) = explode(':', $item, 2);
+		list($method, $encryptedConfig) = explode(':', $item->otpKey, 2);
 		$encryptedOtep = $item->otep;
 
 		// Create an encryptor class
 		$key = $this->getOtpConfigEncryptionKey();
-		$aes = new FOFEncryptAES($key, 256);
+		$aes = new FOFEncryptAes($key, 256);
 
 		// Decrypt the data
 		$decryptedConfig = $aes->decryptString($encryptedConfig);
 		$decryptedOtep = $aes->decryptString($encryptedOtep);
 
+		// Remove the null padding added during encryption
+		$decryptedConfig = rtrim($decryptedConfig, "\0");
+		$decryptedOtep = rtrim($decryptedOtep, "\0");
+
 		// Update the configuration object
+		$otpConfig->method = $method;
 		$otpConfig->config = @json_decode($decryptedConfig);
 		$otpConfig->otep = @json_decode($decryptedOtep);
 
@@ -771,6 +813,11 @@ class UsersModelUser extends JModelAdmin
 		if (is_null($otpConfig->config))
 		{
 			$otpConfig->config = array();
+		}
+
+		if (is_object($otpConfig->config))
+		{
+			$otpConfig->config = (array)$otpConfig->config;
 		}
 
 		// Return the configuration object
@@ -789,18 +836,13 @@ class UsersModelUser extends JModelAdmin
 	 */
 	public function setOtpConfig($user_id, $otpConfig)
 	{
-		// Get the user object
-		// Sanity check, we need a user ID
-		if (empty($user_id))
-		{
-			$user_id = $this->getItem()->id;
-		}
+		$user_id = (!empty($user_id)) ? $user_id : (int) $this->getState('user.id');
 
 		$user = JFactory::getUser($user_id);
 
 		// Create an encryptor class
 		$key = $this->getOtpConfigEncryptionKey();
-		$aes = new FOFEncryptAES($key, 256);
+		$aes = new FOFEncryptAes($key, 256);
 
 		// Create the encrypted option strings
 		$user->otpKey = '';
@@ -838,6 +880,8 @@ class UsersModelUser extends JModelAdmin
 	 */
 	public function getTwofactorform($user_id = null)
 	{
+		$user_id = (!empty($user_id)) ? $user_id : (int) $this->getState('user.id');
+
 		$otpConfig = $this->getOtpConfig($user_id);
 
 		FOFPlatform::getInstance()->importPlugin('twofactorauth');
@@ -853,8 +897,10 @@ class UsersModelUser extends JModelAdmin
 	 *
 	 * @return  boolean  True if it's a valid OTEP
 	 */
-	public function checkAndRemoteOtep($user_id, $otep)
+	public function checkAndRemoveOtep($user_id, $otep)
 	{
+		$user_id = (!empty($user_id)) ? $user_id : (int) $this->getState('user.id');
+
 		// Get the OTP configuration for the user
 		$otpConfig = $this->getOtpConfig($user_id);
 
@@ -904,6 +950,8 @@ class UsersModelUser extends JModelAdmin
 	 */
 	public function generateOteps($user_id, $count = 10)
 	{
+		$user_id = (!empty($user_id)) ? $user_id : (int) $this->getState('user.id');
+
 		// Initialise
 		$oteps = array();
 
