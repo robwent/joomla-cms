@@ -36,6 +36,7 @@ class UsersControllerUser extends UsersController
 		$data['return'] = base64_decode($app->input->post->get('return', '', 'BASE64'));
 		$data['username'] = JRequest::getVar('username', '', 'method', 'username');
 		$data['password'] = JRequest::getString('password', '', 'post', JREQUEST_ALLOWRAW);
+		$data['secretkey'] = JRequest::getString('secretkey', '', 'int');
 
 		// Set the return URL if empty.
 		if (empty($data['return']))
