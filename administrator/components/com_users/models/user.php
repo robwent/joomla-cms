@@ -227,7 +227,7 @@ class UsersModelUser extends JModelAdmin
 				// Generate one time emergency passwords if required (depleted or not set)
 				if (empty($otpConfig->otep))
 				{
-					$oteps = $this->generateOteps();
+					$oteps = $this->generateOteps($pk);
 				}
 			}
 			else
@@ -964,13 +964,26 @@ class UsersModelUser extends JModelAdmin
 			return $oteps;
 		}
 
-		for ($i = 0; $i++; $i < $count)
+		$salt = "0123456789";
+		$base = strlen($salt);
+		$length = 16;
+
+		for ($i = 0; $i < $count; $i++)
 		{
-			JUserHelper::getCryptedPassword($plaintext);
-			$oteps[] = JUserHelper::genRandomPassword(16);
+			$makepass = '';
+			$random = JCrypt::genRandomBytes($length + 1);
+			$shift = ord($random[0]);
+
+			for ($j = 1; $j <= $length; ++$j)
+			{
+				$makepass .= $salt[($shift + ord($random[$j])) % $base];
+				$shift += ord($random[$j]);
+			}
+
+			$oteps[] = $makepass;
 		}
 
-		$otpConfig->oteps = $oteps;
+		$otpConfig->otep = $oteps;
 
 		// Save the now modified OTP configuration
 		$this->setOtpConfig($user_id, $otpConfig);
