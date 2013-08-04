@@ -247,45 +247,6 @@ class PlgTwofactorauthTotp extends JPlugin
 			$check = $code == $credentials['secretkey'];
 		}
 
-		if (!$check && array_key_exists('user_id', $options))
-		{
-			// Did the user use an OTEP instead?
-			if (empty($otpConfig->otep))
-			{
-				if (empty($otpConfig->method) || ($otpConfig->method == 'none'))
-				{
-					// Two factor authentication is not enabled on this account.
-					// Any string is assumed to be a valid OTEP.
-					return true;
-				}
-				else
-				{
-					// Two factor authentication enabled and no OTEPs defined. The
-					// user has used them all up. Therefore anything he enters is
-					// an invalid OTEP.
-					return false;
-				}
-			}
-
-			// Did we find a valid OTEP?
-			if (in_array($otep, $otpConfig->otep))
-			{
-				// Remove the OTEP from the array
-				$array_key = array_search($otep, $otpConfig->otep);
-				unset($otpConfig->otep[$array_key]);
-
-				// Save the now modified OTP configuration
-				require_once JPATH_ADMINISTRATOR . '/components/com_users/models/user.php';
-				$model = new UsersModelUser;
-				$model->setOtpConfig($options['user_id'], $otpConfig);
-
-				// Return true; the OTEP was a valid one
-				$check = true;
-			}
-
-			$check = false;
-		}
-
 		return $check;
 	}
 }

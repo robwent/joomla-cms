@@ -782,8 +782,15 @@ class UsersModelUser extends JModelAdmin
 			'otep'		=> array(),
 		);
 
-		// Get the raw data
-		$item = JFactory::getUser($user_id);
+		// Get the raw data, without going through JUser (required in order to
+        // be able to modify the user record before logging in the user).
+        $db = $this->getDbo();
+        $query = $db->getQuery(true)
+            ->select('*')
+            ->from($db->qn('#__users'))
+            ->where($db->qn('id') . ' = ' . $db->q($user_id));
+		$db->setQuery($query);
+        $item = $db->loadObject();
 
 		// Make sure this user does have OTP enabled
 		if (empty($item->otpKey))
@@ -825,6 +832,16 @@ class UsersModelUser extends JModelAdmin
 			$otpConfig->config = (array)$otpConfig->config;
 		}
 
+		if (is_null($otpConfig->otep))
+		{
+			$otpConfig->otep = array();
+		}
+
+		if (is_object($otpConfig->otep))
+		{
+			$otpConfig->otep = (array)$otpConfig->otep;
+		}
+
 		// Return the configuration object
 		return $otpConfig;
 	}
@@ -843,25 +860,29 @@ class UsersModelUser extends JModelAdmin
 	{
 		$user_id = (!empty($user_id)) ? $user_id : (int) $this->getState('user.id');
 
-		$user = JFactory::getUser($user_id);
+		$updates = (object)array(
+            'id'        => $user_id,
+            'otpKey'    => '',
+            'otep'      => '',
+        );
 
 		// Create an encryptor class
 		$key = $this->getOtpConfigEncryptionKey();
 		$aes = new FOFEncryptAes($key, 256);
 
 		// Create the encrypted option strings
-		$user->otpKey = '';
-		$user->otep = '';
-
 		if (!empty($otpConfig->method) && ($otpConfig->method != 'none'))
 		{
 			$decryptedConfig = json_encode($otpConfig->config);
 			$decryptedOtep = json_encode($otpConfig->otep);
-			$user->otpKey = $otpConfig->method . ':' . $aes->encryptString($decryptedConfig);
-			$user->otep = $aes->encryptString($decryptedOtep);
+			$updates->otpKey = $otpConfig->method . ':' . $aes->encryptString($decryptedConfig);
+			$updates->otep = $aes->encryptString($decryptedOtep);
 		}
 
-		return $user->save(true);
+        $db = $this->getDbo();
+        $result = $db->updateObject('#__users', $updates, 'id');
+        
+		return $result;
 	}
 
 	/**
