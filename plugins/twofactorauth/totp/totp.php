@@ -49,6 +49,33 @@ class PlgTwofactorauthTotp extends JPlugin
 	 */
 	public function onUserTwofactorIdentify()
 	{
+		$section = (int)$this->params->get('section', 3);
+
+		$current_section = 0;
+
+		try
+		{
+			$app = JFactory::getApplication();
+
+			if ($app->isAdmin())
+			{
+				$current_section = 2;
+			}
+			elseif ($app->isSite())
+			{
+				$current_section = 1;
+			}
+		}
+		catch (Exception $exc)
+		{
+			$current_section = 0;
+		}
+
+		if (!($current_section & $section))
+		{
+			return false;
+		}
+
 		return (object)array(
 			'method'	=> $this->methodName,
 			'title'		=> JText::_('PLG_TWOFACTORAUTH_TOTP_METHOD_TITLE'),
@@ -87,7 +114,7 @@ class PlgTwofactorauthTotp extends JPlugin
 
 		// This is the URL to the QR code for Google Authenticator
 		$url = $totp->getUrl($username, $hostname, $secret);
-        
+
         // Is this a new TOTP setup? If so, we'll have to show the code
         // validation field.
         $new_totp = $otpConfig->method != 'totp';

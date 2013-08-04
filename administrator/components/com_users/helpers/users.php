@@ -219,6 +219,11 @@ class UsersHelper
 		{
 			foreach ($identities as $identity)
 			{
+				if (!is_object($identity))
+				{
+					continue;
+				}
+
 				$options[] = JHtml::_('select.option', $identity->method, $identity->title, 'value', 'text');
 			}
 		}
