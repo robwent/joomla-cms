@@ -170,6 +170,23 @@ class PlgTwofactorauthTotp extends JPlugin
 		$rawData = $input->get('jform', array(), 'array');
 		$data = $rawData['twofactor']['totp'];
 
+		// Warn if the securitycode is empty
+		if (array_key_exists('securitycode', $data) && empty($data['securitycode']))
+		{
+			try
+			{
+				$app = JFactory::getApplication();
+				$app->enqueueMessage(JText::_('PLG_TWOFACTORAUTH_TOTP_ERR_VALIDATIONFAILED'), 'error');
+			}
+			catch (Exception $exc)
+			{
+				// This only happens when we are in a CLI application. We cannot
+				// enqueue a message, so just do nothing.
+			}
+
+			return false;
+		}
+
 		// Create a new TOTP class with Google Authenticator compatible settings
 		$totp = new FOFEncryptTotp(30, 6, 10);
 
