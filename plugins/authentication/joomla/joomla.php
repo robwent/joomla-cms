@@ -123,6 +123,26 @@ class PlgAuthenticationJoomla extends JPlugin
 			// Check if the user has enabled two factor authentication
 			if (empty($otpConfig->method) || ($otpConfig->method == 'none'))
 			{
+				// Warn the user if he's using a secret code but he has not
+				// enabed two factor auth in his account.
+				if (!empty($credentials['secretkey']))
+				{
+					try
+					{
+						$app = JFactory::getApplication();
+
+						$this->loadLanguage();
+
+						$app->enqueueMessage(JText::_('PLG_AUTH_JOOMLA_ERR_SECRET_CODE_WITHOUT_TFA'), 'warning');
+					}
+					catch (Exception $exc)
+					{
+						// This happens when we are in CLI mode. In this case
+						// no warning is issued
+						return;
+					}
+				}
+
 				return;
 			}
 
@@ -149,7 +169,7 @@ class PlgAuthenticationJoomla extends JPlugin
 					$check = $check || $authReply;
 				}
 			}
-            
+
             // Fall back to one time emergency passwords
             if (!$check)
             {
@@ -170,15 +190,15 @@ class PlgAuthenticationJoomla extends JPlugin
                         return false;
                     }
                 }
-                
+
                 // Clean up the OTEP (remove dashes, spaces and other funny stuff
                 // our beloved users may have unwittingly stuffed in it)
                 $otep = $credentials['secretkey'];
                 $otep = filter_var($otep, FILTER_SANITIZE_NUMBER_INT);
                 $otep = str_replace('-', '', $otep);
-                
+
                 $check = false;
-                
+
                 // Did we find a valid OTEP?
                 if (in_array($otep, $otpConfig->otep))
                 {
