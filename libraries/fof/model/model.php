@@ -1817,7 +1817,9 @@ class FOFModel extends JObject
 			$alias = '';
 		}
 
-		$query->select('*')->from($db->qn($tableName) . $alias);
+		$select = $this->getTableAlias() ? $db->qn($this->getTableAlias()).'.*' : $db->qn($tableName).'.*';
+
+		$query->select($select)->from($db->qn($tableName) . $alias);
 
 		if (!$overrideLimits)
 		{
