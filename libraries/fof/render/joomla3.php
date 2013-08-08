@@ -84,4 +84,36 @@ class FOFRenderJoomla3 extends FOFRenderStrapper
 
 		echo "</div>\n";
 	}
+
+	/**
+	 * Renders the submenu (link bar)
+	 *
+	 * @param   string    $view    The active view name
+	 * @param   string    $task    The current task
+	 * @param   FOFInput  $input   The input object
+	 * @param   array     $config  Extra configuration variables for the toolbar
+	 *
+	 * @return  void
+	 */
+	protected function renderLinkbar($view, $task, $input, $config = array())
+	{
+		$style = 'joomla';
+
+		if (array_key_exists('linkbar_style', $config))
+		{
+			$style = $config['linkbar_style'];
+		}
+
+		switch ($style)
+		{
+			case 'joomla':
+				$this->renderLinkbar_joomla($view, $task, $input);
+				break;
+
+			case 'classic':
+			default:
+				$this->renderLinkbar_classic($view, $task, $input);
+				break;
+		}
+	}
 }

@@ -64,20 +64,6 @@ class FOFRenderStrapper extends FOFRenderAbstract
 			$this->renderButtons($view, $task, $input, $config);
 			$this->renderLinkbar($view, $task, $input, $config);
 		}
-
-		if (!FOFPlatform::getInstance()->isCli() && FOFPlatform::getInstance()->checkVersion(JVERSION, '3.0', 'ge'))
-		{
-			$sidebarEntries = JHtmlSidebar::getEntries();
-
-			if (!empty($sidebarEntries))
-			{
-				$html = '<div id="j-sidebar-container" class="span2">' . "\n";
-				$html .= "\t" . JHtmlSidebar::render() . "\n";
-				$html .= "</div>\n";
-				$html .= '<div id="j-main-container" class="span10">' . "\n";
-				echo $html;
-			}
-		}
 	}
 
 	/**
@@ -348,6 +334,21 @@ ENDJAVASCRIPT;
 			foreach ($links as $link)
 			{
 				JHtmlSidebar::addEntry($link['name'], $link['link'], $link['active']);
+
+				$dropdown = false;
+
+				if (array_key_exists('dropdown', $link))
+				{
+					$dropdown = $link['dropdown'];
+				}
+
+				if ($dropdown)
+				{
+					foreach ($link['items'] as $item)
+					{
+						JHtmlSidebar::addEntry('– ' . $item['name'], $item['link'], $item['active']);
+					}
+				}
 			}
 		}
 	}

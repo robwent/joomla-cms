@@ -12,7 +12,7 @@ defined('_JEXEC') or die();
 
 if (!defined('FOF_INCLUDED'))
 {
-    define('FOF_INCLUDED', 'rev80180AF-1375128389');
+    define('FOF_INCLUDED', 'rev98BF526-1375959020');
 
 	// Register a debug log
 	if (defined('JDEBUG') && JDEBUG)

@@ -562,8 +562,6 @@ class FOFTable extends JObject implements JTableInterface
 			$behaviors = $this->default_behaviors;
 		}
 
-		$behaviors = $this->configProvider->get($configKey, null);
-
 		if (is_array($behaviors) && count($behaviors))
 		{
 			foreach ($behaviors as $behavior)

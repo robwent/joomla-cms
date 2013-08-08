@@ -471,8 +471,6 @@ abstract class FOFView extends JObject
 
 		$result = $this->loadTemplate($tpl);
 
-		FOFPlatform::getInstance()->setErrorHandling(E_WARNING, 'callback');
-
 		if ($result instanceof Exception)
 		{
 			JError::raiseError($result->getCode(), $result->getMessage());

@@ -57,14 +57,15 @@ abstract class FOFPlatform implements FOFPlatformInterface
 	 *
 	 * @param   integer  $level      PHP error level (E_ALL)
 	 * @param   string   $log_level  What to do with the error (ignore, callback)
+	 * @param   array    $options    Options for the error handler
 	 *
 	 * @return  void
 	 */
-	public function setErrorHandling($level, $log_level)
+	public function setErrorHandling($level, $log_level, $options = array())
 	{
 		if ($this->checkVersion(JVERSION, '3.0', 'lt') )
 		{
-			JError::setErrorHandling($level, $log_level);
+			return JError::setErrorHandling($level, $log_level, $options);
 		}
 	}
 
