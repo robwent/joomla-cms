@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension version="3.2" type="plugin" group="system">
+	<name>PLG_SYSTEM_UPDATENOTIFICATION</name>
+	<author>Joomla! Project</author>
+	<creationDate>August 2013</creationDate>
+	<copyright>Copyright (C) 2005 - 2013 Open Source Matters. All rights reserved.</copyright>
+	<license>GNU General Public License version 2 or later; see LICENSE.txt</license>
+	<authorEmail>admin@joomla.org</authorEmail>
+	<authorUrl>www.joomla.org</authorUrl>
+	<version>3.2.0</version>
+	<description>PLG_SYSTEM_UPDATENOTIFICATION_XML_DESCRIPTION</description>
+	<files>
+		<filename plugin="updatenotification">updatenotification.php</filename>
+	</files>
+	<languages>
+		<language tag="en-GB">en-GB.plg_system_updatenotification.ini</language>
+		<language tag="en-GB">en-GB.plg_system_updatenotification.sys.ini</language>
+	</languages>
+	<config>
+		<fields name="params">
+			<fieldset name="basic">
+				<field name="sendemail" type="list" default="1"
+					label="PLG_SYSTEM_UPDATENOTIFICATION_SENDEMAIL_LABEL"
+					description="PLG_SYSTEM_UPDATENOTIFICATION_SENDEMAIL_DESC"
+				>
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+				<field name="language_override" type="text" default="" size="5"
+					   label="PLG_SYSTEM_UPDATENOTIFICATION_LANGUAGE_OVERRIDE_LABEL"
+					   description="PLG_SYSTEM_UPDATENOTIFICATION_LANGUAGE_OVERRIDE_DESC"
+				/>
+				<field name="email" type="text" default="" size="40"
+					label="PLG_SYSTEM_UPDATENOTIFICATION_EMAIL_LABEL"
+					description="PLG_SYSTEM_UPDATENOTIFICATION_EMAIL_DESC" />
+				<field name="verification" type="text" default="" size="40"
+					label="PLG_SYSTEM_UPDATENOTIFICATION_VERIFICATION_LABEL"
+					description="PLG_SYSTEM_UPDATENOTIFICATION_VERIFICATION_DESC" />
+				
+				<field name="lastrun" type="hidden" default="0" size="15" />
+			</fieldset>
+		</fields>
+	</config>
+</extension>
