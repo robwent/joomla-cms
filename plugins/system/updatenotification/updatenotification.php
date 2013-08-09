@@ -9,6 +9,9 @@
 
 defined('_JEXEC') or die();
 
+// Uncomment the following line to force the plugin to fire on every page load
+define('PLG_SYSTEM_UPDATENOTIFICATION_DEBUG', 1);
+
 class plgSystemUpdatenotification extends JPlugin
 {
 	/**
@@ -37,7 +40,7 @@ class plgSystemUpdatenotification extends JPlugin
 		}
 
 		// Update last run timestamp
-		$params->set('lastrun', $now);
+		$params->set('lastrun', $currentTimestamp);
 		$db = JFactory::getDBO();
 		$data = $params->toString('JSON');
 		$sql = $db->getQuery(true)
@@ -67,7 +70,7 @@ class plgSystemUpdatenotification extends JPlugin
 
 		// Fetch available updates
 		$updater = JUpdater::getInstance();
-		$results = $updater->findUpdates($eid, $cache_timeout);
+		$results = $updater->findUpdates(array($eid), $cache_timeout);
 
 		if (!$results)
 		{
@@ -113,8 +116,26 @@ class plgSystemUpdatenotification extends JPlugin
 			return;
 		}
 
+		// Load the correct language
+		$lang = $this->params->get('language_override', '');
+
+		if (empty($lang))
+		{
+			$this->loadLanguage();
+		}
+		else
+		{
+			$extension = 'plg_' . $this->_type . '_' . $this->_name;
+
+			$lang = JFactory::getLanguage();
+
+			$loadedLanguage = $lang->load(strtolower($extension), $basePath, $lang, false, false)
+			|| $lang->load(strtolower($extension), JPATH_PLUGINS . '/' . $this->_type . '/' . $this->_name, $lang, false, false)
+			|| $lang->load(strtolower($extension), $basePath, $lang->getDefault(), false, false)
+			|| $lang->load(strtolower($extension), JPATH_PLUGINS . '/' . $this->_type . '/' . $this->_name, $lang->getDefault(), false, false);
+		}
+
 		// Get the template message
-		$this->loadLanguage();
 		$email_subject	= JText::_('PLG_SYSTEM_UPDATENOTIFICATION_EMAIL_SUBJECT');
 		$email_body		= JText::_('PLG_SYSTEM_UPDATENOTIFICATION_EMAIL_BODY');
 
@@ -172,26 +193,46 @@ class plgSystemUpdatenotification extends JPlugin
 	{
 		$db = JFactory::getDBO();
 
+		// Get a list of all user groups
+		$sql = $db->getQuery(true)
+			->select($db->qn('id'))
+			->from($db->qn('#__usergroups'));
+		$db->setQuery($sql);
+		$allGroupIDs = $db->loadColumn();
+
+		// Make a list of groups which give Super User privileges
+		$superAdminGroups = array();
+
+		foreach ($allGroupIDs as $groupId)
+		{
+			if (JAccess::checkGroup($groupId, 'core.admin'))
+			{
+				$superAdminGroups[] = $db->q($groupId);
+			}
+		}
+
+		// Get a list of users belonging to those groups
 		$sql = $db->getQuery(true)
 			->select(array(
-				$db->qn('u').'.'.$db->qn('id'),
-				$db->qn('u').'.'.$db->qn('email')
+				$db->qn('u') . '.' . $db->qn('id') . ' AS ' . $db->qn('id'),
+				$db->qn('u') . '.' . $db->qn('email') . ' AS ' . $db->qn('email')
 			))->from($db->qn('#__user_usergroup_map').' AS '.$db->qn('g'))
-			->join(
-				'INNER',
-				$db->qn('#__users').' AS '.$db->qn('u').' ON ('.
-				$db->qn('g').'.'.$db->qn('user_id').' = '.$db->qn('u').'.'.$db->qn('id').')'
-			)->where($db->qn('g').'.'.$db->qn('group_id').' = '.$db->q('8'))
-			->where($db->qn('u').'.'.$db->qn('sendEmail').' = '.$db->q('1'))
-		;
+			->join('INNER',
+				$db->qn('#__users') . ' AS ' . $db->qn('u') . ' ON (' .
+					$db->qn('g') . '.' . $db->qn('user_id') . ' = ' .
+					$db->qn('u') . '.' . $db->qn('id').')')
+			->where($db->qn('g').'.'.$db->qn('group_id').' IN ('.
+				implode(',', $superAdminGroups) . ')')
+			->where($db->qn('u') . '.' . $db->qn('sendEmail') . ' = ' .
+				$db->q('1'));
 
 		if (!empty($email))
 		{
-			$sql->where($db->qn('u').'.'.$db->qn('email').' = '.$db->q($email));
+			$sql->where($db->qn('u') . '.' . $db->qn('email') . ' = ' . $db->q($email));
 		}
 
 		$db->setQuery($sql);
 
-		return $db->loadObjectList();
+		return $db->loadObjectList('id');
 	}
 }

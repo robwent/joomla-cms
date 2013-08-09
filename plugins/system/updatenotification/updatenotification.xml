@@ -26,10 +26,13 @@
 					<option value="0">JNO</option>
 					<option value="1">JYES</option>
 				</field>
-				<field name="language_override" type="text" default="" size="5"
+				<field name="language_override" type="language" client="administrator"
+					   default=""
 					   label="PLG_SYSTEM_UPDATENOTIFICATION_LANGUAGE_OVERRIDE_LABEL"
 					   description="PLG_SYSTEM_UPDATENOTIFICATION_LANGUAGE_OVERRIDE_DESC"
-				/>
+				>
+					<option value="">PLG_SYSTEM_UPDATENOTIFICATION_LANGUAGE_DEFAULT</option>
+				</field>
 				<field name="email" type="text" default="" size="40"
 					label="PLG_SYSTEM_UPDATENOTIFICATION_EMAIL_LABEL"
 					description="PLG_SYSTEM_UPDATENOTIFICATION_EMAIL_DESC" />
