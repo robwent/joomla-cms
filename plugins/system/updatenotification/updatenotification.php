@@ -10,7 +10,7 @@
 defined('_JEXEC') or die();
 
 // Uncomment the following line to force the plugin to fire on every page load
-define('PLG_SYSTEM_UPDATENOTIFICATION_DEBUG', 1);
+// define('PLG_SYSTEM_UPDATENOTIFICATION_DEBUG', 1);
 
 class plgSystemUpdatenotification extends JPlugin
 {
