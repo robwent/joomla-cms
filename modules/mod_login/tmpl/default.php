@@ -19,14 +19,14 @@ $altDirection  = $document->direction == 'rtl' ? 'left' : 'right';
 <form action="<?php echo JRoute::_('index.php', true, $params->get('usesecure')); ?>" method="post" id="login-form" class="form-inline">
 	<?php if ($params->get('pretext')) : ?>
 		<div class="pretext">
-		<p><?php echo $params->get('pretext'); ?></p>
+			<p><?php echo $params->get('pretext'); ?></p>
 		</div>
 	<?php endif; ?>
 	<div class="userdata">
 		<div id="form-login-username" class="control-group">
 			<div class="controls">
 				<?php if (!$params->get('usetext')) : ?>
-					<div class="input-prepend input-append">
+					<div class="input-prepend">
 						<span class="add-on">
 							<span class="icon-user tip" title="<?php echo JText::_('MOD_LOGIN_VALUE_USERNAME') ?>"></span>
 							<label for="modlgn-username" class="element-invisible"><?php echo JText::_('MOD_LOGIN_VALUE_USERNAME'); ?></label>
@@ -35,14 +35,14 @@ $altDirection  = $document->direction == 'rtl' ? 'left' : 'right';
 					</div>
 				<?php else: ?>
 					<label for="modlgn-username"><?php echo JText::_('MOD_LOGIN_VALUE_USERNAME') ?></label>
-						<input id="modlgn-username" type="text" name="username" class="input-small" tabindex="0" size="18" placeholder="<?php echo JText::_('MOD_LOGIN_VALUE_USERNAME') ?>" />
+					<input id="modlgn-username" type="text" name="username" class="input-small" tabindex="0" size="18" placeholder="<?php echo JText::_('MOD_LOGIN_VALUE_USERNAME') ?>" />
 				<?php endif; ?>
 			</div>
 		</div>
 		<div id="form-login-password" class="control-group">
 			<div class="controls">
 				<?php if (!$params->get('usetext')) : ?>
-					<div class="input-prepend input-append">
+					<div class="input-prepend">
 						<span class="add-on">
 							<span class="icon-lock tip" title="<?php echo JText::_('JGLOBAL_PASSWORD') ?>">
 							</span>
@@ -50,12 +50,11 @@ $altDirection  = $document->direction == 'rtl' ? 'left' : 'right';
 							</label>
 						</span>
 						<input id="modlgn-passwd" type="password" name="password" class="input-small" tabindex="0" size="18" placeholder="<?php echo JText::_('JGLOBAL_PASSWORD') ?>" />
-				</div>
+					</div>
 				<?php else: ?>
 					<label for="modlgn-passwd"><?php echo JText::_('JGLOBAL_PASSWORD') ?></label>
 					<input id="modlgn-passwd" type="password" name="password" class="input-small" tabindex="0" size="18" placeholder="<?php echo JText::_('JGLOBAL_PASSWORD') ?>" />
 				<?php endif; ?>
-
 			</div>
 		</div>
 		<?php if (count($twofactormethods) > 1): ?>
@@ -120,7 +119,7 @@ $altDirection  = $document->direction == 'rtl' ? 'left' : 'right';
 	</div>
 	<?php if ($params->get('posttext')) : ?>
 		<div class="posttext">
-		<p><?php echo $params->get('posttext'); ?></p>
+			<p><?php echo $params->get('posttext'); ?></p>
 		</div>
 	<?php endif; ?>
 </form>

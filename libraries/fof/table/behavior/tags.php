@@ -33,7 +33,7 @@ class FOFTableBehaviorTags extends FOFTableBehavior
 			{
 				$table->newTags = $src['tags'];
 			}
-			
+
 			// Check if the content type exists, and create it if it does not
 			$this->checkContentType($table, $options);
 
@@ -91,12 +91,12 @@ class FOFTableBehaviorTags extends FOFTableBehavior
 	 */
 	public function onAfterDelete(&$table, $oid)
 	{
-		$tagsHelper = new JHelperTags();
-		$tagsHelper->typeAlias = $table->getAssetKey();
-
 		// If this resource has tags, delete the tags first
 		if ($table->hasTags())
 		{
+			$tagsHelper = new JHelperTags();
+			$tagsHelper->typeAlias = $table->getAssetKey();
+
 			if (!$tagsHelper->deleteTagData($table, $oid))
 			{
 				$table->setError('Error deleting Tags');

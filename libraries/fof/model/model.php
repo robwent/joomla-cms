@@ -1173,6 +1173,48 @@ class FOFModel extends JObject
 			$allData = $data;
 		}
 
+		// Get the form if there is any
+		$form = $this->getForm($allData, false);
+
+		if ($form instanceof FOFForm)
+		{
+			// Make sure that $allData has for any field a key
+			$fieldset = $form->getFieldset();
+			$keys = array_keys($fieldset);
+
+			foreach ($keys as $nfield)
+			{
+				if (!array_key_exists($nfield, $allData))
+				{
+					$field = $form->getField($nfield);
+					$type  = strtolower($field->type);
+
+					switch ($type)
+					{
+						case 'checkbox':
+							$allData[$nfield] = 0;
+							break;
+
+						default:
+							$allData[$nfield] = '';
+							break;
+					}
+				}
+			}
+
+			$serverside_validate = strtolower($form->getAttribute('serverside_validate'));
+
+			if (in_array($serverside_validate, array('true', 'yes', '1', 'on')))
+			{
+				$validateResult = $this->validateForm($form, $allData);
+			}
+
+			if ($validateResult === false)
+			{
+				return false;
+			}
+		}
+
 		if (!$this->onBeforeSave($allData, $table))
 		{
 			return false;
@@ -1817,7 +1859,7 @@ class FOFModel extends JObject
 			$alias = '';
 		}
 
-		$select = $this->getTableAlias() ? $db->qn($this->getTableAlias()).'.*' : $db->qn($tableName).'.*';
+		$select = $this->getTableAlias() ? $db->qn($this->getTableAlias()) . '.*' : $db->qn($tableName) . '.*';
 
 		$query->select($select)->from($db->qn($tableName) . $alias);
 
@@ -2321,7 +2363,14 @@ class FOFModel extends JObject
 			// Get the validation messages from the form.
 			foreach ($form->getErrors() as $message)
 			{
-				$this->setError($message);
+				if ($message instanceof Exception)
+				{
+					$this->setError($message->getMessage());
+				}
+				else
+				{
+					$this->setError($message);
+				}
 			}
 
 			return false;

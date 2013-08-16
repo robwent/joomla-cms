@@ -510,6 +510,18 @@ ENDJAVASCRIPT;
 			return;
 		}
 
+		$this->renderLinkbarItems($toolbar);
+	}
+
+	/**
+	 * do the rendering job for the linkbar
+	 *
+	 * @param   FOFToolbar  $toolbar  A toolbar object
+	 *
+	 * @return  void
+	 */
+	private function renderLinkbarItems($toolbar)
+	{
 		$links = $toolbar->getLinks();
 
 		if (!empty($links))

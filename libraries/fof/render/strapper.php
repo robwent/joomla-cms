@@ -327,6 +327,70 @@ ENDJAVASCRIPT;
 			return;
 		}
 
+		$this->renderLinkbarItems($toolbar);
+	}
+
+	/**
+	 * Renders the submenu (link bar) for a category view when it is used in a
+	 * extension
+	 *
+	 * Note: this function has to be called from the addSubmenu function in
+	 * 		 the ExtensionNameHelper class located in
+	 * 		 administrator/components/com_ExtensionName/helpers/Extensionname.php
+	 *
+	 * Example Code:
+	 *
+	 *	class ExtensionNameHelper
+	 *	{
+	 * 		public static function addSubmenu($vName)
+	 *		{
+	 *			// Load FOF
+	 *			include_once JPATH_LIBRARIES . '/fof/include.php';
+	 *
+	 *			if (!defined('FOF_INCLUDED'))
+	 *			{
+	 *				JError::raiseError('500', 'FOF is not installed');
+	 *			}
+	 *
+	 *			$strapper = new FOFRenderStrapper;
+	 *			$strapper->renderCategoryLinkbar('com_babioonevent');
+	 *		}
+	 *	}
+	 *
+	 * @param   string  $extension  The name of the extension
+	 * @param   array   $config     Extra configuration variables for the toolbar
+	 *
+	 * @return  void
+	 */
+	public function renderCategoryLinkbar($extension, $config = array())
+	{
+		// On command line don't do anything
+		if (FOFPlatform::getInstance()->isCli())
+		{
+			return;
+		}
+
+		// Do not render a category submenu unless we are in the the admin area
+		if (!FOFPlatform::getInstance()->isBackend())
+		{
+			return;
+		}
+
+		$toolbar = FOFToolbar::getAnInstance($extension, $config);
+		$toolbar->renderSubmenu();
+
+		$this->renderLinkbarItems($toolbar);
+	}
+
+	/**
+	 * do the rendering job for the linkbar
+	 *
+	 * @param   FOFToolbar  $toolbar  A toolbar object
+	 *
+	 * @return  void
+	 */
+	private function renderLinkbarItems($toolbar)
+	{
 		$links = $toolbar->getLinks();
 
 		if (!empty($links))
@@ -594,7 +658,7 @@ ENDJS;
 								$options,
 								'value',
 								'text',
-								$form->getModel()->getState($headerField->name, ''), true
+								$model->getState($headerField->name, ''), true
 							)
 						);
 					}
@@ -635,22 +699,6 @@ ENDJS;
 		$filter_order_Dir	 = $form->getView()->getLists()->order_Dir;
 
 		$html .= '<form action="index.php" method="post" name="adminForm" id="adminForm">' . PHP_EOL;
-		$html .= "\t" . '<input type="hidden" name="option" value="' . $input->getCmd('option') . '" />' . PHP_EOL;
-		$html .= "\t" . '<input type="hidden" name="view" value="' . FOFInflector::pluralize($input->getCmd('view')) . '" />' . PHP_EOL;
-		$html .= "\t" . '<input type="hidden" name="task" value="' . $input->getCmd('task', 'browse') . '" />' . PHP_EOL;
-
-		// The id field is required in Joomla! 3 front-end to prevent the pagination limit box from screwing it up. Huh!!
-
-		if (FOFPlatform::getInstance()->checkVersion(JVERSION, '3.0', 'ge') && FOFPlatform::getInstance()->isFrontend())
-		{
-			$html .= "\t" . '<input type="hidden" name="id" value="' . $input->getCmd('id', '') . '" />' . PHP_EOL;
-		}
-
-		$html .= "\t" . '<input type="hidden" name="boxchecked" value="" />' . PHP_EOL;
-		$html .= "\t" . '<input type="hidden" name="hidemainmenu" value="" />' . PHP_EOL;
-		$html .= "\t" . '<input type="hidden" name="filter_order" value="' . $filter_order . '" />' . PHP_EOL;
-		$html .= "\t" . '<input type="hidden" name="filter_order_Dir" value="' . $filter_order_Dir . '" />' . PHP_EOL;
-		$html .= "\t" . '<input type="hidden" name="' . JFactory::getSession()->getFormToken() . '" value="1" />' . PHP_EOL;
 
 		if (FOFPlatform::getInstance()->checkVersion(JVERSION, '3.0', 'ge'))
 		{
@@ -754,7 +802,7 @@ ENDJS;
 		$html .= "\t\t\t<tbody>" . PHP_EOL;
 		$fields		 = $form->getFieldset('items');
 		$num_columns = count($fields);
-		$items		 = $form->getModel()->getItemList();
+		$items		 = $model->getItemList();
 
 		if ($count = count($items))
 		{
@@ -762,7 +810,7 @@ ENDJS;
 
 			foreach ($items as $i => $item)
 			{
-				$table_item = $form->getModel()->getTable();
+				$table_item = $model->getTable();
 				$table_item->bind($item);
 
 				$form->bind($item);
@@ -778,7 +826,7 @@ ENDJS;
 				if (FOFPlatform::getInstance()->checkVersion(JVERSION, '3.0', 'gt'))
 				{
 					$tmpFields = array();
-					$i = 1;
+					$j = 1;
 
 					foreach ($fields as $tmpField)
 					{
@@ -789,10 +837,10 @@ ENDJS;
 
 						else
 						{
-							$tmpFields[$i] = $tmpField;
+							$tmpFields[$j] = $tmpField;
 						}
 
-						$i++;
+						$j++;
 					}
 
 					$fields = $tmpFields;
@@ -822,7 +870,7 @@ ENDJS;
 		// Render the pagination bar, if enabled, on J! 2.5
 		if ($show_pagination && FOFPlatform::getInstance()->checkVersion(JVERSION, '3.0', 'lt'))
 		{
-			$pagination = $form->getModel()->getPagination();
+			$pagination = $model->getPagination();
 			$html .= "\t\t\t<tfoot>" . PHP_EOL;
 			$html .= "\t\t\t\t<tr><td colspan=\"$num_columns\">";
 
@@ -851,6 +899,23 @@ ENDJS;
 		{
 			$html .= "</div>\n";
 		}
+
+		$html .= "\t" . '<input type="hidden" name="option" value="' . $input->getCmd('option') . '" />' . PHP_EOL;
+		$html .= "\t" . '<input type="hidden" name="view" value="' . FOFInflector::pluralize($input->getCmd('view')) . '" />' . PHP_EOL;
+		$html .= "\t" . '<input type="hidden" name="task" value="' . $input->getCmd('task', 'browse') . '" />' . PHP_EOL;
+
+		// The id field is required in Joomla! 3 front-end to prevent the pagination limit box from screwing it up. Huh!!
+
+		if (FOFPlatform::getInstance()->checkVersion(JVERSION, '3.0', 'ge') && FOFPlatform::getInstance()->isFrontend())
+		{
+			$html .= "\t" . '<input type="hidden" name="id" value="' . $input->getCmd('id', '') . '" />' . PHP_EOL;
+		}
+
+		$html .= "\t" . '<input type="hidden" name="boxchecked" value="" />' . PHP_EOL;
+		$html .= "\t" . '<input type="hidden" name="hidemainmenu" value="" />' . PHP_EOL;
+		$html .= "\t" . '<input type="hidden" name="filter_order" value="' . $filter_order . '" />' . PHP_EOL;
+		$html .= "\t" . '<input type="hidden" name="filter_order_Dir" value="' . $filter_order_Dir . '" />' . PHP_EOL;
+		$html .= "\t" . '<input type="hidden" name="' . JFactory::getSession()->getFormToken() . '" value="1" />' . PHP_EOL;
 
 		// End the form
 		$html .= '</form>' . PHP_EOL;

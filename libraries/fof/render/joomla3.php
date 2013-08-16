@@ -47,14 +47,6 @@ class FOFRenderJoomla3 extends FOFRenderStrapper
 			return;
 		}
 
-		if (!FOFPlatform::getInstance()->isCli())
-		{
-			// Wrap output in a Joomla-versioned div
-			$version = new JVersion;
-			$version = str_replace('.', '', $version->RELEASE);
-			echo "<div class=\"joomla-version-$version\">\n";
-		}
-
 		// Render the submenu and toolbar
 		if ($input->getBool('render_toolbar', true))
 		{
@@ -75,14 +67,13 @@ class FOFRenderJoomla3 extends FOFRenderStrapper
 	 */
 	public function postRender($view, $task, $input, $config = array())
 	{
-		$format = $input->getCmd('format', 'html');
+		/*
+		We don't need to do anything here, if we are running Joomla3,
+		so overwrite the default with all the closing div's
 
-		if ($format != 'html' || FOFPlatform::getInstance()->isCli())
-		{
-			return;
-		}
-
-		echo "</div>\n";
+		I added it here because I am not 100% sure if it would break BC
+		when doing it in the default strapper
+		*/
 	}
 
 	/**
