@@ -418,15 +418,23 @@ class FOFTable extends JObject implements JTableInterface
 				$instance->setTriggerEvents($config['trigger_events']);
 			}
 
-			if (array_key_exists('has_tags', $config))
+			if (FOFPlatform::getInstance()->checkVersion(JVERSION, '3.1', 'ge'))
 			{
-				$instance->setHasTags($config['has_tags']);
-			}
+				if (array_key_exists('has_tags', $config))
+				{
+					$instance->setHasTags($config['has_tags']);
+				}
 
-			$altHasTags = $configProvider->get($configProviderKey . 'has_tags', null);
-			if ($altHasTags)
+				$altHasTags = $configProvider->get($configProviderKey . 'has_tags', null);
+
+				if ($altHasTags)
+				{
+					$instance->setHasTags($altHasTags);
+				}
+			}
+			else
 			{
-				$instance->setHasTags($altHasTags);
+				$instance->setHasTags(false);
 			}
 
 			$configProviderFieldmapKey = $option . '.tables.' . FOFInflector::singularize($type) . '.field';
@@ -2233,11 +2241,16 @@ class FOFTable extends JObject implements JTableInterface
 			{
 				// I always want the first part, no matter what
 				$parts = explode(' ', $matches[1]);
-				$t_table = $this->_db->qn(trim($parts[0]));
+				$t_table = $parts[0];
+
+				if($this->isQuoted($t_table))
+				{
+					$t_table = substr($t_table, 1, strlen($t_table) - 2);
+				}
 
 				if(!in_array($t_table, $j_tables))
 				{
-					$j_tables[] =  substr($t_table, 1, strlen($t_table) - 2);
+					$j_tables[] =  $t_table;
 				}
 			}
 		}
@@ -2313,21 +2326,28 @@ class FOFTable extends JObject implements JTableInterface
 
 				if(isset($tableField[1]))
 				{
-					$column = $tableField[1];
+					$column = trim($tableField[1]);
 				}
 				else
 				{
-					$column = $tableField[0];
+					$column = trim($tableField[0]);
 				}
 
-				// Always quote it, so I can safely remove the first and last char
-				$column = $db->qn(trim($column));
-				$column = substr($column, 1, strlen($column) - 2);
+				// Is this field quoted? If so, remove the quotes
+				if($this->isQuoted($column))
+				{
+					$column = substr($column, 1, strlen($column) - 2);
+				}
 
 				if(isset($parts[1]))
 				{
-					$alias = $db->qn(trim($parts[1]));
-					$alias = substr($alias, 1, strlen($alias) - 2);
+					$alias = trim($parts[1]);
+
+					// Is this field quoted? If so, remove the quotes
+					if($this->isQuoted($alias))
+					{
+						$alias = substr($alias, 1, strlen($alias) - 2);
+					}
 				}
 				else
 				{
@@ -2335,34 +2355,39 @@ class FOFTable extends JObject implements JTableInterface
 				}
 
 				$return[$column] = $alias;
-
-				/*// Grab the "standard" name
-				// @TODO Check this pattern since it's blind copied from forums
-				preg_match('/([\w]++)`?+(?:\s++as\s++[^,\s]++)?+\s*+($)/i', $t_field, $match);
-				$column = $match[1];
-				$column = preg_replace('#\sas\s?#i', '', $column);
-
-				// Trim whitespace
-				$alias  = preg_replace('#^[\s-`]+|[\s-`]+$#', '', $alias);
-				$column = preg_replace('#^[\s-`]+|[\s-`]+$#', '', $column);
-
-				// Do I want the column name with the original name + alias?
-
-				if ($extended && $alias)
-				{
-					$alias = $column . ' AS ' . $alias;
-				}
-
-				if (!$alias)
-				{
-					$alias = $column;
-				}
-
-				$return[$column] = $alias;*/
 			}
 		}
 
 		return $return;
+	}
+
+	/**
+	 * Is the field quoted?
+	 *
+	 * @param   string  $column     Column, passed by reference, so in later version of Joomla
+	 *                              I can always quote them
+	 *
+	 * @return  bool    Is the field quoted?
+	 */
+	protected function isQuoted(&$column)
+	{
+		// Under Joomla 3.2 I can safely quote the column again, then return true
+		if(FOFPlatform::getInstance()->checkVersion(JVERSION, '3.2', 'ge'))
+		{
+			$column = JFactory::getDbo()->qn($column);
+			return true;
+		}
+
+		// On previous version I need some "magic". If the first char is not a letter, a number
+		// an underscore or # (needed for table), then most likely the field is quoted
+		preg_match_all('/^[a-z0-9_#]/i', $column, $matches);
+
+		if(!$matches[0])
+		{
+			return true;
+		}
+
+		return false;
 	}
 
 	/**

@@ -562,7 +562,7 @@ class FOFToolbar
 	 *
 	 * @return  void
 	 */
-	protected function renderSubmenu()
+	public function renderSubmenu()
 	{
 		$views = $this->getMyViews();
 
